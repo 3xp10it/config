@@ -3,14 +3,14 @@
 #### ubuntu & mostLinux
 ```
 cd  
-wget https://raw.githubusercontent.com/3xp10it/.vimrc/master/.vimrc_linux -O .vimrc
+wget https://github.com/3xp10it/config/raw/master/.vimrc/.vimrc_linux -O .vimrc
 ```
 
 #### macOS
 ```
 [macOS下优先选择用MacVim，不用vim]  
 cd    
-wget https://raw.githubusercontent.com/3xp10it/.vimrc/master/.vimrc_MacVim -O .vimrc
+wget https://github.com/3xp10it/config/raw/master/.vimrc/.vimrc_MacVim -O .vimrc
 ```
 
 ### 0x02 Install[vimperator]
@@ -18,11 +18,11 @@ wget https://raw.githubusercontent.com/3xp10it/.vimrc/master/.vimrc_MacVim -O .v
 #### ubuntu & mostLinux
 ```
 cd   
-wget https://raw.githubusercontent.com/3xp10it/.vimrc/master/.vimperatorrc_linux -O .vimperatorrc
+wget https://github.com/3xp10it/config/raw/master/.vimrc/.vimperatorrc_linux -O .vimperatorrc
 ```
 #### macOS
 ```
 cd
-wget https://raw.githubusercontent.com/3xp10it/.vimrc/master/.vimperatorrc_macOS -O .vimperatorrc
+wget https://github.com/3xp10it/config/raw/master/.vimrc/.vimperatorrc_macOS -O .vimperatorrc
 ```
 
