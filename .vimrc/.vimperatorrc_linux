@@ -1,0 +1,23 @@
+"3.14.0 (created: 2017//03/10)
+"nmap ; <S-;>无效
+nmap mm ZZ 
+noremap J gT 
+noremap K gt 
+noremap h <S-Left> 
+noremap l <S-Right> 
+source! /root/.vimperatorrc.local 
+" vim: set ft=vimperator:
+inoremap <C-h> <Up>
+inoremap <C-l> <Down>
+inoremap <C-j> <Left>
+inoremap <C-k> <Right>
+
+
+set nextpattern=\s*下一页|下一张|下一篇|下页|后页\s*,^\bnext\b,\\bnext\\b,^>$,^(>& gt;|»)$,^(>|»),(>|»)$,\\bmore\\b
+set previouspattern=\s*上一页|上一张|上一篇|上页|前页\s*,^\bprev|previous\b, \\bprev|previous\\b,^<$,^(<<|«)$,^(<|«),(<|«)$
+nmap [ [[
+nmap ] ]]
+
+noremap bl :tabopen http://3xp10it.cc <CR>
+noremap gi :tabopen http://www.github.com/3xp10it <CR>
+noremap li :tabopen http://3xp10it.cc/bookmarks.html <CR>

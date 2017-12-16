@@ -1,0 +1,153 @@
+# Path to your oh-my-zsh installation.
+
+export ZSH=$HOME/.oh-my-zsh
+# # Set name of the theme to load.
+# # Look in ~/.oh-my-zsh/themes/
+# # Optionally, if you set this to "random", it'll load a random theme each
+# # time that oh-my-zsh is loaded.
+ZSH_THEME="random"
+#
+# # Uncomment the following line to use case-sensitive completion.
+# # CASE_SENSITIVE="true"
+#
+# # Uncomment the following line to use hyphen-insensitive completion. Case
+# # sensitive completion must be off. _ and - will be interchangeable.
+# # HYPHEN_INSENSITIVE="true"
+#
+# # Uncomment the following line to disable bi-weekly auto-update checks.
+# # DISABLE_AUTO_UPDATE="true"
+#
+# # Uncomment the following line to change how often to auto-update (in days).
+# # export UPDATE_ZSH_DAYS=13
+#
+# # Uncomment the following line to disable colors in ls.
+# # DISABLE_LS_COLORS="true"
+#
+# # Uncomment the following line to disable auto-setting terminal title.
+# # DISABLE_AUTO_TITLE="true"
+#
+# # Uncomment the following line to enable command auto-correction.
+# # ENABLE_CORRECTION="true"
+#
+# # Uncomment the following line to display red dots whilst waiting for completion.
+# # COMPLETION_WAITING_DOTS="true"
+#
+# # Uncomment the following line if you want to disable marking untracked files
+# # under VCS as dirty. This makes repository status check for large repositories
+# # much, much faster.
+# # DISABLE_UNTRACKED_FILES_DIRTY="true"
+#
+# # Uncomment the following line if you want to change the command execution time
+# # stamp shown in the history command output.
+# # The optional three formats: "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
+# # HIST_STAMPS="mm/dd/yyyy"
+#
+# # Would you like to use another custom folder than $ZSH/custom?
+# # ZSH_CUSTOM=/path/to/new-custom-folder
+#
+# # Which plugins would you like to load? (plugins can be found in ~/.oh-my-zsh/plugins/*)
+# # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
+# # Example format: plugins=(rails git textmate ruby lighthouse)
+# # Add wisely, as too many plugins slow down shell startup.
+plugins=(git)
+#
+# # User configuration
+#
+export PATH=$HOME/bin:/usr/local/bin:$PATH
+export PATH=/usr/local/lib:$PATH
+
+export PATH="/phpstudy/mysql/bin:$PATH"
+
+# # export MANPATH="/usr/local/man:$MANPATH"
+#
+source $ZSH/oh-my-zsh.sh
+#
+# # You may need to manually set your language environment
+export LC_ALL=zh_CN.UTF-8
+export LANG=zh_CN.UTF-8
+
+# # Preferred editor for local and remote sessions
+# # if [[ -n $SSH_CONNECTION  ]]; then
+# #   export EDITOR='vim'
+# # else
+# #   export EDITOR='mvim'
+# # fi
+#
+# # Compilation flags
+# # export ARCHFLAGS="-arch x86_64"
+#
+# # ssh
+# # export SSH_KEY_PATH="~/.ssh/dsa_id"
+#
+# # Set personal aliases, overriding those provided by oh-my-zsh libs,
+# # plugins, and themes. Aliases can be placed here, though oh-my-zsh
+# # users are encouraged to define aliases within the ZSH_CUSTOM folder.
+# # For a full list of active aliases, run `alias`.
+# #
+# # Example aliases
+# # alias zshconfig="mate ~/.zshrc"
+# # alias ohmyzsh="mate ~/.oh-my-zsh"
+alias ll='ls -al'
+alias la='ls -A'
+alias l='ls -CF'
+alias vi='vim'
+alias 2sqlmap='cd /usr/share/sqlmap'
+alias 2tamper='nautilus /usr/share/sqlmap/tamper'
+alias pg='ping www.google.com'
+alias pb='ping www.baidu.com'
+alias 2output='nautilus ~/.sqlmap/output' 
+alias 2log='cd ~/.sqlmap/output && ls -al' 
+alias 2images='nautilus /usr/share/images'
+alias 2tamper1='cd /usr/share/sqlmap/tamper'
+alias Cknife='java -jar /usr/share/Cknife/Cknife.jar'
+alias vs='vim ~/myblog/_posts/2016-09-25-notes.md'
+alias z='cd ~/Desktop || cd ~/桌面'
+export WORKON_HOME=~/.virtualenvs
+export PATH="$PATH:/phpstudy/mysql"
+export PATH=/phpstudy/server/php/bin:$PATH
+alias v="vim ~/tmp.txt"
+alias c="rm ~/.vimswap/tmp.txt.swp"
+alias b='cd ~/myblog'
+alias p='cd ~/myblog/_posts && ls -lh'
+alias 2tamper="cd /usr/share/sqlmap/tamper && ls -al"
+#echo "ifconfig" | `which zsh` | head -n 10 | awk '{print $2}' | awk '{print $0}' | head -n 2 | tail -n 1
+#upon in ubuntu
+#below in macos
+alias ip="ifconfig | ack '(?<=inet )(.*)(?= netmask)' -o"
+alias mt="cd /usr/share/mytools && ls -al"
+alias jt="python3 /usr/share/mytools/mysnippingtool.py"
+alias upa="bash /usr/share/mytools/up.sh"
+alias ubuntubak="bash /usr/share/mytools/ubuntubak.sh"
+alias bl="python3 /usr/share/mytools/blog.py"
+alias sm="sqlmap --smart --threads 4 --random-agent -v 3 --batch -u "
+alias smt="sqlmap --smart --threads 4 --random-agent -v 3 --batch --tamper='randomcase,between,space2dash' -u "
+alias smc="sqlmap --smart --threads 4 --random-agent -v 3 --batch --crawl=3 -u "
+alias smct="sqlmap --smart --threads 4 --random-agent -v 3 --batch --crawl=3 --tamper='randomcase,between,space2dash' -u "
+alias ns="python3 /usr/share/mytools/newscript.py"
+alias py="cd ~/mypypi/ && ls -al"
+alias s0="shutdown -r 0"
+alias bs="java -jar /usr/share/burpsuite/BurpLoader.jar"
+#ubuntu下pkill jekyll就可以了,macOS下运行的是ruby jekyll,因此pkill ruby才可
+alias pj="pkill jekyll;pkill ruby"
+#alias upl="b && sh updatelocal.sh"
+#alias upr="b && sh updateremote.sh"
+#alias upb="b && sh updatebak.sh"
+eval $(thefuck --alias)
+
+tmux
+alias od='echo "anything" | (tmux splitw -h -p 38 && tmux splitw -v -p 30 && tmux selectp -L && tmux splitw -v -p 30 && tmux selectp -U) && ranger'
+alias pp='pkill -9 python'
+alias 2p="cd $(pip3 show exp10it | grep -oP '(?<=Location: ).*')"
+
+#alias mvim='/Applications/MacVim.app/Contents/MacOS/Vim'
+#alias vim='mvim'
+export EDITOR=vim
+setxkbmap -option 'caps:ctrl_modifier' && xcape -e 'Caps_Lock=Escape' &
+
+alias py2="python2"
+alias py3="python3"
+alias giu="python3 /usr/share/mytools/gitTool.py --update"
+alias gic="python3 /usr/share/mytools/gitTool.py --commit"
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+export THEOS=/opt/theos
+export PATH=/opt/theos/bin/:$PATH
