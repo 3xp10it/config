@@ -2,4 +2,4 @@
 
 ### 使用方法
 
-wget https://raw.githubusercontent.com/3xp10it/config.fish/master/config.fish -O ~/.config/fish/config.fish
+wget https://github.com/3xp10it/config/raw/master/config.fish/config.fish -O ~/.config/fish/config.fish
