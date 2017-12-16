@@ -8,16 +8,16 @@ Install
 
 ```
 cd
-wget https://raw.githubusercontent.com/3xp10it/.tmux/master/ubuntuTmux/.tmux.conf
-wget https://raw.githubusercontent.com/3xp10it/.tmux/master/ubuntuTmux/.tmux.conf.local
+wget https://github.com/3xp10it/config/raw/master/.tmux/ubuntuTmux/.tmux.conf
+wget https://github.com/3xp10it/config/raw/master/.tmux/ubuntuTmux/.tmux.conf.local
 ```
 
 #### macOS
 
 ```
 cd
-wget https://raw.githubusercontent.com/3xp10it/.tmux/master/macosTmux/.tmux.conf
-wget https://raw.githubusercontent.com/3xp10it/.tmux/master/macosTmux/.tmux.conf.local
+wget https://github.com/3xp10it/config/raw/master/.tmux/macosTmux/.tmux.conf
+wget https://github.com/3xp10it/config/raw/master/.tmux/macosTmux/.tmux.conf.local
 ```
 
 Self-contained, pretty and versatile `.tmux.conf` configuration file.
