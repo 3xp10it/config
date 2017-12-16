@@ -6,12 +6,12 @@
 
 ```
 cd  
-wget https://raw.githubusercontent.com/3xp10it/.zshrc/master/.zshrc_macOS
+wget https://github.com/3xp10it/config/raw/master/.zshrc/.zshrc_macOS
 ```
 
 #### ubuntu & most linux
 
 ```
 cd 
-wget https://raw.githubusercontent.com/3xp10it/.zshrc/master/.zshrc_ubuntu
+wget https://github.com/3xp10it/config/raw/master/.zshrc/.zshrc_ubuntu
 ```
