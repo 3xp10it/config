@@ -124,7 +124,7 @@ alias smt="sqlmap --smart --threads 4 --random-agent -v 3 --batch --tamper='rand
 alias smc="sqlmap --smart --threads 4 --random-agent -v 3 --batch --crawl=3 -u "
 alias smct="sqlmap --smart --threads 4 --random-agent -v 3 --batch --crawl=3 --tamper='randomcase,between,space2dash' -u "
 alias ns="python3 /usr/share/mytools/newscript.py"
-alias py="cd ~/mypypi/ && ls -al"
+alias py="cd ~/exp10it/ && ls -al"
 alias s0="shutdown -r 0"
 alias bs="java -jar /usr/share/burpsuite/BurpLoader.jar"
 #ubuntu下pkill jekyll就可以了,macOS下运行的是ruby jekyll,因此pkill ruby才可
