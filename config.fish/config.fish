@@ -36,7 +36,7 @@ alias smt="sqlmap --smart --threads 4 --random-agent -v 3 --batch --tamper='rand
 alias smc="sqlmap --smart --threads 4 --random-agent -v 3 --batch --crawl=3 -u "
 alias smct="sqlmap --smart --threads 4 --random-agent -v 3 --batch --crawl=3 --tamper='randomcase,between,space2dash' -u "
 alias ns="python3 /usr/share/mytools/newscript.py"
-alias py="cd ~/mypypi/; and ls -al"
+alias py="cd ~/exp10it/; and ls -al"
 alias s0="shutdown -r +0"
 alias pj="pkill jekyll;pkill ruby"
 alias ip="ifconfig | ack '(?<=inet )(.*)(?= netmask)' -o"
