@@ -188,6 +188,9 @@ function Biaodian()
     silent! %s/！/!/g
 endfunction
 
+"textwidth用于中文换行
+set formatoptions+=mM
+
 "设置缩进的空格数
 set shiftwidth=4
 
@@ -196,10 +199,21 @@ set ts=4
 set expandtab
 
 "113字符长度换行用来适配博客md编写
-autocmd FileType markdown setlocal textwidth=113
+"autocmd FileType markdown setlocal textwidth=113
 
-"textwidth用于中文换行
-set formatoptions+=mM
+"markdown setting
+au BufNewFile,BufReadPost *.{md,mdown,mkd,mkdn,markdown,mdwn} set filetype=markdown
+au BufNewFile,BufReadPost,BufWrite *.{md,mdown,mkd,mkdn,markdown,mdwn} syntax match Comment /\%^---\_.\{-}---$/
+"au FileType markdown setlocal spell        " Spellchecking for Markdown
+au FileType markdown setlocal linebreak    " Avoid wrap breaking words
+au FileType markdown setlocal nolist       " Make sure linebreak work as expected
+"au FileType markdown setlocal showbreak=↳\ " Know where we're
+au FileType markdown setlocal textwidth=0  " Remove text width limit
+
+au FileType markdown setlocal formatoptions+=a
+
+
+
 
 
 "设置,w为保存
