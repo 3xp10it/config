@@ -89,7 +89,7 @@ Plugin 'plasticboy/vim-markdown'
 call vundle#end()            " required
 
 
-"下面这行要注意,有可能以后要改
+"下面这行要注意,有可能以后要改.打开文件类型检测功能
 filetype plugin indent on    " required
 " To ignore plugin indent changes, instead use:
 "filetype plugin on
