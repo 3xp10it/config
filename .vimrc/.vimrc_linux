@@ -96,6 +96,7 @@ Plugin 'tpope/vim-surround'
 "安装markdown相关插件
 Plugin 'godlygeek/tabular'
 Plugin 'plasticboy/vim-markdown'
+Plugin 'reedes/vim-pencil'
 
 call vundle#end()            " required
 
@@ -471,3 +472,14 @@ imap <c-x><c-l> <plug>(fzf-complete-line)
 " Advanced customization using autoload functions
 inoremap <expr> <c-x><c-k> fzf#vim#complete#word({'left': '15%'})
 
+
+"'plasticboy/vim-markdown'插件的设置
+let g:vim_markdown_folding_disabled = 1
+
+"vim-pencil插件的设置
+let g:pencil#wrapModeDefault = 'soft'   " default is 'hard'
+augroup pencil
+  autocmd!
+  autocmd FileType markdown,mkd call pencil#init()
+  autocmd FileType text         call pencil#init({'wrap': 'hard'})
+augroup END
