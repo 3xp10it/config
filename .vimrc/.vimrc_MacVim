@@ -473,3 +473,12 @@ inoremap <expr> <c-x><c-k> fzf#vim#complete#word({'left': '15%'})
 
 "'plasticboy/vim-markdown'插件的设置
 let g:vim_markdown_folding_disabled = 1
+
+"vim-pencil插件的设置
+let g:pencil#wrapModeDefault = 'soft'   " default is 'hard'
+augroup pencil
+  autocmd!
+  autocmd FileType markdown,mkd call pencil#init()
+  autocmd FileType text         call pencil#init({'wrap': 'hard'})
+augroup END
+
