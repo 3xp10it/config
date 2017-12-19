@@ -413,12 +413,12 @@ let g:list_of_insert_keys = []
 
 "python代码中每行超过80字符长度后用不同颜色显示
 
-au BufNewFile,BufReadPost *.py set filetype=python
+"au BufNewFile,BufReadPost *.py set filetype=python
 
-augroup FileType python vimrc_autocmds
-    autocmd CursorHold * highlight OverLength ctermbg=darkgrey guibg=#592929
-    autocmd CursorHold * match OverLength /\%80v.*/
-augroup END
+"augroup FileType python vimrc_autocmds
+"    autocmd CursorHold * highlight OverLength ctermbg=darkgrey guibg=#592929
+"    autocmd CursorHold * match OverLength /\%80v.*/
+"augroup END
 
 
 "vim-autosave插件的设置
