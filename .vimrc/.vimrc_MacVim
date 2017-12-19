@@ -126,18 +126,25 @@ set ignorecase smartcase
 "超过当前光标所在位置的移动用f+j+s+字符+hint,或者f+j+w|b的方法移动(f+j为esc的map)
 "需要先查看是否有插件与<c-h>冲突,检查方法为:verbose imap <c-h>,发现autopairs插件有关于<c-h>的设置,注释掉就可以
 
-"noremap <c-h> <left>
-"noremap <c-j> <down>
-"noremap <c-k> <up>
-"noremap <c-l> <right>
+" for wrap is on
+noremap  <buffer> <silent> k gk
+" for wrap is on
+noremap  <buffer> <silent> j gj
+" for wrap is on
+noremap  <buffer> <silent> 0 g0
+" for wrap is on
+noremap  <buffer> <silent> $ g$
+
 inoremap <c-h> <left>
+" for wrap is on
 inoremap <c-j> <esc>gjli
+" for wrap is on
 inoremap <c-k> <esc>gkli
 inoremap <c-l> <right>
-noremap <c-h> <left>
-noremap <c-j> <esc>gjl
-noremap <c-k> <esc>gkl
-noremap <c-l> <right>
+cnoremap <c-h> <left>
+cnoremap <c-j> <down>
+cnoremap <c-k> <up>
+cnoremap <c-l> <right>
 
 
 
