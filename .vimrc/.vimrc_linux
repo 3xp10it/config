@@ -90,14 +90,12 @@ Plugin 'w0rp/ale'
 "下面这个插件用来高亮光标所在区域
 "https://github.com/junegunn/limelight.vim
 Plugin 'junegunn/limelight.vim'
-" All of your Plugins must be added before the following line
 
-"下面这个插件用来自动切换中英输入法,使用需要查看:
-"https://github.com/3xp10it/AutoIM
-"Plugin '3xp10it/AutoIM'
-"Plugin 'vimim/vimim'
-"下面这个插件并不好用
-"Plugin 'ybian/smartim'
+"安装添加替换成对符号插件vim-surround
+Plugin 'tpope/vim-surround'
+"安装markdown相关插件
+Plugin 'godlygeek/tabular'
+Plugin 'plasticboy/vim-markdown'
 
 call vundle#end()            " required
 
