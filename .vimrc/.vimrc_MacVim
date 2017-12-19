@@ -84,6 +84,7 @@ Plugin 'tpope/vim-surround'
 "安装markdown相关插件
 Plugin 'godlygeek/tabular'
 Plugin 'plasticboy/vim-markdown'
+Plugin 'reedes/vim-pencil'
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
@@ -470,3 +471,5 @@ imap <c-x><c-l> <plug>(fzf-complete-line)
 " Advanced customization using autoload functions
 inoremap <expr> <c-x><c-k> fzf#vim#complete#word({'left': '15%'})
 
+"'plasticboy/vim-markdown'插件的设置
+let g:vim_markdown_folding_disabled = 1
