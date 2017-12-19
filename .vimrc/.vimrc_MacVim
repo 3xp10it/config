@@ -210,9 +210,6 @@ au FileType markdown setlocal nolist       " Make sure linebreak work as expecte
 "au FileType markdown setlocal showbreak=↳\ " Know where we're
 au FileType markdown setlocal textwidth=0  " Remove text width limit
 
-au FileType markdown setlocal formatoptions+=a
-
-
 
 
 
