@@ -1,146 +1,85 @@
 "下面这段是vundle要求的,加到vimrc的开头
-""""""""""""""for vundle""""""""""""""""
 set nocompatible              " be iMproved, required
 "用了fish shell后要加下面一行,要不然在运行:BundleInstall时会出错,不用fish shell时将这行删掉
 set shell=/bin/bash
 
-filetype off                  " required
+filetype off" required
 
 " set the runtime path to include Vundle and initialize
 set rtp+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
-" alternatively, pass a path where Vundle should install plugins "call vundle#begin('~/some/path/here')
-" let Vundle manage Vundle, required
 Plugin 'VundleVim/Vundle.vim'
-" The following are examples of different formats supported.
-" Keep Plugin commands between vundle#begin/end.
-" plugin on GitHub repo
 Plugin 'tpope/vim-fugitive'
-"下面用vundle安装incsearch插件
-Plugin 'haya14busa/incsearch.vim'
-"下面用vundle安装incsearch-fuzzy插件
-Plugin 'haya14busa/incsearch-fuzzy.vim'
-"下面用vundle安装easymotion插件
-Plugin 'easymotion/vim-easymotion'
-"下面用vundle安装incsearch-easymotion<space+/>,<z+/>
-Plugin 'haya14busa/incsearch-easymotion.vim'
-"下面用vundle安装autoformat代码自动对齐插件<f3>
-Plugin 'Chiel92/vim-autoformat'
-"下面用vundle安装auto-pairs括号自动配对插件
-Plugin 'jiangmiao/auto-pairs'
-"下面用vundle安装Valloric/YouCompleteMe插件
+Plugin 'haya14busa/incsearch.vim'"incsearch插件
+Plugin 'haya14busa/incsearch-fuzzy.vim'"incsearch-fuzzy插件
+Plugin 'easymotion/vim-easymotion'"安装easymotion插件
+Plugin 'haya14busa/incsearch-easymotion.vim'"<space+/>,<z+/>
+Plugin 'Chiel92/vim-autoformat'"代码自动对齐插件<f3>
+Plugin 'jiangmiao/auto-pairs'"括号自动配对插件
 Plugin 'Valloric/YouCompleteMe'
-"下面用vundle安装indentLine代码对齐线插件
-Plugin 'Yggdroot/indentLine'
-"下面用vundle安装vim中文文档
-Plugin 'vimcn/vimcdoc'
-"下面用vundle安装ctrlp快速打开文件插件,<c-p>
-"http://www.cnblogs.com/sammei/p/4978289.html
-Plugin 'ctrlpvim/ctrlp.vim'
-"下面用vundle安装配色插件
-Plugin 'flazz/vim-colorschemes'
-"下面安装经典主题,比上面的好
-Plugin 'dracula/vim'
-"下面这个插件用来快速切换配色<f8>
-Plugin 'felixhummel/setcolors.vim'
-"下面这个插件用来强制改变jjjjjjjjjjkkkkkkkkkkkllllllll的坏习惯
-Plugin 'takac/vim-hardtime'
+Plugin 'Yggdroot/indentLine'"安装indentLine代码对齐线插件
+Plugin 'vimcn/vimcdoc'"安装vim中文文档
+Plugin 'ctrlpvim/ctrlp.vim'"ctrlp快速打开文件插件,<c-p>
+Plugin 'flazz/vim-colorschemes'"配色插件
+Plugin 'dracula/vim'"安装经典主题,比上面的好
+Plugin 'felixhummel/setcolors.vim'"快速切换配色<f8>
+Plugin 'takac/vim-hardtime'"强制改变jjjjjjjjjjkkkkkkkkkkkllllllll的坏习惯
+
 "下面两个插件用来美化状态栏
 Plugin 'vim-airline/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
+
 "下面2个用来安装fzf插件,fzf不仅要装到vim中,还要装到系统中,安装方法https://github.com/junegunn/fzf
 "https://github.com/junegunn/fzf.vim
 Plugin 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plugin 'junegunn/fzf.vim'
-"下面这个用来安装undotree插件
-"https://github.com/mbbill/undotree
-Plugin 'mbbill/undotree'
-"下面安装彩虹括号插件
-Plugin 'luochen1990/rainbow'
-"下面这个插件用来安装快速编辑对齐插件(非代码对齐)
-"http://www.cnblogs.com/juandx/p/5630837.html
-Plugin 'junegunn/vim-easy-align'
-"下面安装ack正则工具
-"要记得安装https://github.com/ggreer/the_silver_searcher
-Plugin 'mileszs/ack.vim'
 
+Plugin 'mbbill/undotree'"安装undotree插件
+Plugin 'luochen1990/rainbow'"安装彩虹括号插件
+Plugin 'junegunn/vim-easy-align'"这个插件用来安装快速编辑对齐插件(非代码对齐),http://www.cnblogs.com/juandx/p/5630837.html
+Plugin 'mileszs/ack.vim'"安装ack正则工具,要记得安装https://github.com/ggreer/the_silver_searcher
+Plugin 'ascenator/L9', {'name': 'newL9'}" Install L9 and avoid a Naming conflict if you've already installed a different version somewhere else.
+Plugin 'iamcco/markdown-preview.vim'"这个插件用来markdown实时预览
+Plugin 'w0rp/ale'"这个插件比syntastic更好,静态检查语法,但是要vim8以上才可用
+Plugin 'junegunn/limelight.vim'"这个插件用来高亮光标所在区域
+Plugin 'CodeFalling/fcitx-vim-osx'"由于squirrel不好用了,后来换成下面这个实现自动切换中英文输入法
+Plugin 'tpope/vim-surround'"安装添加替换成对符号插件vim-surround
 
-" Install L9 and avoid a Naming conflict if you've already installed a
-" different version somewhere else.
-Plugin 'ascenator/L9', {'name': 'newL9'}
-"下面这个插件用来markdown实时预览
-Plugin 'iamcco/markdown-preview.vim'
-"下面这个插件用来静态检查语法
-"Plugin 'vim-syntastic/syntastic'
-"下面这个插件比syntastic更好,但是要vim8以上才可用
-Plugin 'w0rp/ale'
-"下面这个插件用来高亮光标所在区域
-"https://github.com/junegunn/limelight.vim
-Plugin 'junegunn/limelight.vim'
-"由于squirrel不好用了,后来换成下面这个实现自动切换中英文输入法
-Plugin 'CodeFalling/fcitx-vim-osx'
-"安装添加替换成对符号插件vim-surround
-Plugin 'tpope/vim-surround'
 "安装markdown相关插件
 Plugin 'godlygeek/tabular'
 Plugin 'plasticboy/vim-markdown'
 Plugin 'reedes/vim-pencil'
-
-" All of your Plugins must be added before the following line
-call vundle#end()            " required
-
+call vundle#end()
+""""""""""""for vundle end""""""""""""
 
 "下面这行要注意,有可能以后要改.打开文件类型检测功能
 filetype plugin indent on    " required
 " To ignore plugin indent changes, instead use:
 "filetype plugin on
-"
-" Brief help
-" :PluginList       - lists configured plugins
-" :PluginInstall    - installs plugins; append `!` to update or just :PluginUpdate
-" :PluginSearch foo - searches for foo; append `!` to refresh local cache
-" :PluginClean      - confirms removal of unused plugins; append `!` to auto-approve removal
-"
-" see :h vundle for more details or wiki for FAQ
-" Put your non-Plugin stuff after this line
 
-""""""""""""for vundle end""""""""""""
-
-"autocmd BufRead,BufNewFile * set noimdisable
-
-""""""""macos start"""""
-" fix mac vim delete error, so as set backspace=indent,eol,start
+"for macOS,fix mac vim delete error, so as set backspace=indent,eol,start
 set backspace=2
-""""""""macos end"""""""
 
 "下面高亮光标所在行
 set cursorline
 
-
 set ruler"macvim默认不开启ruler,vim默认开启ruler
-"设置leader键为,
-let mapleader=","
+let mapleader=',' "设置leader键为,
 set number"显示行号
 syntax on"自动语法高亮,语法检验
 set autoindent"自动缩进 lal niaho slk 
 set tabstop=4"tab键占4个字符
-"设置查找时忽略大小写,但是如果输入的查找内容中有大写则变成大小时敏感
-set ignorecase smartcase
+set ignorecase smartcase"设置查找时忽略大小写,但是如果输入的查找内容中有大写则变成大小时敏感
 
+" for wrap is on,可用vim-pencil插件代替
+"noremap  <buffer> <silent> k gk
+"noremap  <buffer> <silent> j gj
+"noremap  <buffer> <silent> 0 g0
+"noremap  <buffer> <silent> $ g$
 
 "下面是插入模式的3个字符内移动的快捷键,结合vim-hardtime在vim-hardtime中设置去除Left,Down,Up,Right的禁用
 "超过当前光标所在位置的移动用f+j+s+字符+hint,或者f+j+w|b的方法移动(f+j为esc的map)
 "需要先查看是否有插件与<c-h>冲突,检查方法为:verbose imap <c-h>,发现autopairs插件有关于<c-h>的设置,注释掉就可以
-
-" for wrap is on
-noremap  <buffer> <silent> k gk
-" for wrap is on
-noremap  <buffer> <silent> j gj
-" for wrap is on
-noremap  <buffer> <silent> 0 g0
-" for wrap is on
-noremap  <buffer> <silent> $ g$
-
 inoremap <c-h> <left>
 " for wrap is on
 inoremap <c-j> <esc>gjli
@@ -152,35 +91,21 @@ cnoremap <c-j> <down>
 cnoremap <c-k> <up>
 cnoremap <c-l> <right>
 
-
-
 "下面设置插入模式下的单词跳转并进入插入模式
-
 inoremap <c-b> <esc>lbi
 "inoremap <c-e> <esc>lei
 inoremap <c-w> <esc>lwi
 
-"<c-0>无效,于是用<c-a>
-"ctrl+a在插入模式下跳到当前行开关并进入插入模式
-"ctrl+e在插入模式下跳到当前行末尾并进入插入模式
-inoremap <c-a> <esc>I
-inoremap <c-e> <esc>A
-
+inoremap <c-a> <esc>I "ctrl+a在插入模式下跳到当前行开关并进入插入模式,"<c-0>无效,于是用<c-a>
+inoremap <c-e> <esc>A "ctrl+e在插入模式下跳到当前行末尾并进入插入模式
 
 "方便操作
 map ; :
 map mm ZZ
 noremap ' `
-
 map sy "+y
 map sp "+p
-
-
-
-"在光标处换行,不用再切换到insert模式再enter
-nnoremap <enter> i<enter><esc>
-
-
+nnoremap <enter> i<enter><esc>"在光标处换行,不用再切换到insert模式再enter
 
 "md文件中文符号换成英文
 au BufRead *.md call Biaodian()
@@ -202,11 +127,8 @@ function Biaodian()
     silent! %s/！/!/g
 endfunction
 
-"textwidth用于中文换行
-set formatoptions+=mM
-
-"设置缩进的空格数
-set shiftwidth=4
+set formatoptions+=mM"textwidth用于中文换行
+set shiftwidth=4"设置缩进的空格数
 
 "设置tab键为4个空格
 set ts=4
@@ -221,25 +143,15 @@ au FileType markdown setlocal nolist       " Make sure linebreak work as expecte
 "au FileType markdown setlocal showbreak=↳\ " Know where we're
 au FileType markdown setlocal textwidth=0  " Remove text width limit
 
-
-
-"设置,w为保存
-"nmap <leader>w :w<CR>
-
-
 "下面4个插件最后浓缩成的两个典型使用方法:
 "space+/:fuzz search+easymotion功能
 "z/:fuzz search功能
-"
-"四个easymotion插件incsearch incsearch-fuzzy vim-easymotion incsearch-easymotion相关设置
-"目前只能用incsearch和easymotion,并用如下配置
 
-"111111incsearch插件设置
-""""""""""start of incsearch"""""""""
+"四个easymotion插件incsearch incsearch-fuzzy vim-easymotion incsearch-easymotion相关设置
+"incsearch插件设置
 map /  <Plug>(incsearch-forward)
 map ?  <Plug>(incsearch-backward)
 map g/ <Plug>(incsearch-stay)
-
 set hlsearch
 let g:incsearch#auto_nohlsearch = 1
 map n  <Plug>(incsearch-nohl-n)
@@ -248,29 +160,15 @@ map *  <Plug>(incsearch-nohl-*)
 map #  <Plug>(incsearch-nohl-#)
 map g* <Plug>(incsearch-nohl-g*)
 map g# <Plug>(incsearch-nohl-g#)
-
 function! s:noregexp(pattern) abort
     return '\V' . escape(a:pattern, '\')
 endfunction
-
 function! s:config() abort
     return {'converters': [function('s:noregexp')]}
 endfunction
-
 noremap <silent><expr> z/ incsearch#go(<SID>config())
-"""""""""end of incsearch""""""""""
 
-
-
-"222222incsearch-fuzzy插件设置
-"https://github.com/haya14busa/incsearch-fuzzy.vim
-"暂时因为看上去没有什么效果而没用它,暂时认为222222和333333这两个插件无法正常工作是由于222222插件无法正常工作
-"而222222不工作是由于没有找到incsearch#config#fuzzy#converter()函数(报这个错),于是vim-->:h
-"incsearch-config-fuzzy,发现没有incsearch-config-fuzzy的说明,猜想有一点可能是incsearch-fuzzy插件没有装好,于是
-":BundleInstall,居然可以安装,说明之前这个incsearch-fuzzy插件的确没有装好,然后发现安装完incsearch-fuzzy后就不会
-"报没有找到incsearch#config#fuzzy#converter()函数的错误了,然后一切都好了,333333插件也可以用了
-"""""""""start of incsearch-fuzzy"""""""""
-"fuzzy
+"incsearch-fuzzy插件设置
 map z/ <Plug>(incsearch-fuzzy-/)
 map z? <Plug>(incsearch-fuzzy-?)
 map zg/ <Plug>(incsearch-fuzzy-stay)
@@ -287,24 +185,11 @@ function! s:config_fuzzyall(...) abort
                 \   ],
                 \ }), get(a:, 1, {}))
 endfunction
-
 noremap <silent><expr> z/ incsearch#go(<SID>config_fuzzyall())
 noremap <silent><expr> z? incsearch#go(<SID>config_fuzzyall({'command': '?'}))
 noremap <silent><expr> zg? incsearch#go(<SID>config_fuzzyall({'is_stay': 1}))
-"""""""""end of incsearch-fuzzy"""""""""
 
-
-"333333incsearch-easymotion插件的设置
-""""""""""start of incsearch-easymotion""""""""""
-"https://github.com/haya14busa/incsearch-easymotion.vim
-"暂时因为没有什么效果而没用它,可能是与什么插件不兼容或与系统不兼容
-"后来可以用了,因为上面的incsearch-fuzzy插件第一次没有装好
-"map z/ <Plug>(incsearch-easymotion-/)
-"map z? <Plug>(incsearch-easymotion-?)
-"map zg/ <Plug>(incsearch-easymotion-stay)
-"上面这三行不能加,加了则不能通过z/来fuzz search了,如果加了上面这三行,没有什么特殊效果
-"无论有没有加上面这三行,都可以通过space+/实现[fuzz search并easymotion的效果]
-
+"incsearch-easymotion插件的设置
 """incsearch.vim x fuzzy x vim-easymotion
 function! s:config_easyfuzzymotion(...) abort
     return extend(copy({
@@ -316,20 +201,12 @@ function! s:config_easyfuzzymotion(...) abort
                 \ }), get(a:, 1, {}))
 endfunction
 noremap <silent><expr> <Space>/ incsearch#go(<SID>config_easyfuzzymotion())
-""""""""""end of incsearch-easymotion""""""""""
 
-
-"444444下面是easymotion插件的相关设置
-""""""""""""""""""start of easymotion""""""""""""""""""
-"下面这句暂时不确定用意
+"下面是easymotion插件的相关设置
 let g:EasyMotion_do_mapping = 0 " Disable default mappings
-
-"三键到任意地方
-nmap s <Plug>(easymotion-overwin-f)
-"四键到任意地方
-"nmap s <Plug>(easymotion-overwin-f2)
-"设置大小写不敏感
-let g:EasyMotion_smartcase = 1
+nmap s <Plug>(easymotion-overwin-f)"三键到任意地方
+"nmap s <Plug>(easymotion-overwin-f2)"四键到任意地方
+let g:EasyMotion_smartcase = 1"设置大小写不敏感
 " JK motions: Line motions
 map <Leader>j <Plug>(easymotion-j)
 map <Leader>k <Plug>(easymotion-k)
@@ -338,14 +215,9 @@ map <Leader>l <Plug>(easymotion-bd-jk)
 nmap <Leader>l <Plug>(easymotion-overwin-line)
 
 "下面设置fuzzsearch,这个有点叼,结合incsearch,incsearch-fuzzy,easymotion,incsearch-easymotion四个插件
-"但是目前并没有让4个插件都起作用
-"目前只有incsearch+easymotion
-"后来这四个插件完美运行了,因为incsearch-fuzzy插件之前没有装好
-"incsearch-fuzzy和incsearch-easymotion这两个插件暂时没有用
 " You can use other keymappings like <C-l> instead of <CR> if you want to
 " use these mappings as default search and somtimes want to move cursor with
 " EasyMotion.
-
 function! s:incsearch_config(...) abort
     return incsearch#util#deepextend(deepcopy({
                 \   'modules': [incsearch#config#easymotion#module({'overwin': 1})],
@@ -355,17 +227,12 @@ function! s:incsearch_config(...) abort
                 \   'is_expr': 0
                 \ }), get(a:, 1, {}))
 endfunction
-
 noremap <silent><expr> /  incsearch#go(<SID>incsearch_config())
 noremap <silent><expr> ?  incsearch#go(<SID>incsearch_config({'command': '?'}))
 noremap <silent><expr> g/ incsearch#go(<SID>incsearch_config({'is_stay': 1}))
-""""""""""""""""""end of easymotion""""""""""""""""""
 
-"代码对齐插件相关设置
-noremap <F3> :Autoformat<CR>
+noremap <F3> :Autoformat<CR>"代码对齐插件相关设置
 
-
-"""""""""start of YCM""""""""""
 "YouCompleteMe相关设置
 set runtimepath+=~/.vim/bundle/YouCompleteMe
 autocmd InsertLeave * if pumvisible() == 0|pclose|endif "离开插入模式后自动关闭预览窗口"
@@ -387,17 +254,6 @@ nnoremap <c-j> :YcmCompleter GoToDefinitionElseDeclaration<CR>|     " 跳转到�
 let g:ycm_server_keep_logfiles = 1
 let g:ycm_server_log_level = 'debug'
 "let g:ycm_min_num_of_chars_for_completion=2                 " 从第2个键入字符就开始罗列匹配项
-"""""""""end of YCM""""""""""
-"vim-colorschemes插件配色
-"colorscheme evening
-"由于使用https://draculatheme.com/主题,这里需要注释掉上面的colorscheme插件的设置
-
-"setcolors插件设置自动换配色,vim-colorschemes插件相当于配色库,setcolor插件用于变换其他配色,如果不安装
-"vim-colorschemes插件只安装setcolor插件则没有好的效果
-"考虑到对眼睛不好,暂时关闭下面的自动换色
-"autocmd CursorHold * call NextColor(1)
-"在setcolors.vim中将最开始的设置改成如下值
-"let s:mycolors = ['Benokai','molokai','evening', 'feral', 'flatlandia', 'flattown', 'murphy', 'flatui', 'freya', 'fu','genericdc','1989','256-grayvim','256-jungle','CandyPaper','Chasing_Logic','ChocolateLiquor','ChocolatePapaya','openbsd','BlackSea','black_angus','0x7A69-dark']  " colorscheme names that we use to set color
 
 "下面开启打开文件时自动跳转到上次编辑的地方,vim在/etc/vim/vimrc文件中默认设置关闭
 if has("autocmd")
@@ -411,33 +267,23 @@ let g:list_of_normal_keys = ["h", "j", "k", "l", "-", "+"]
 let g:list_of_visual_keys = ["h", "j", "k", "l", "-", "+"]
 let g:list_of_insert_keys = []
 
-
-"python代码中每行超过80字符长度后用不同颜色显示
-
-"au BufNewFile,BufReadPost *.py set filetype=python
-
-"augroup FileType python vimrc_autocmds
+"超过80字符长度后用不同颜色显示
+"augroup vimrc_autocmds
 "    autocmd CursorHold * highlight OverLength ctermbg=darkgrey guibg=#592929
 "    autocmd CursorHold * match OverLength /\%80v.*/
 "augroup END
 
-
-"vim-autosave插件的设置
-":let g:autosave_timer= 1
-"弃用上面的插件,用下面的自动保存命令
+"自动保存命令
 set updatetime=200
 au CursorHold * silent! update
 
-"下面是markdown预览插件的相关设置
-"如果f5失效则先按f6再按f5
+"下面是markdown预览插件的相关设置,如果f5失效则先按f6再按f5
 nmap <silent> <F5> <Plug>MarkdownPreview        " 普通模式
 imap <silent> <F5> <Plug>MarkdownPreview        " 插入模式
 nmap <silent> <F6> <Plug>StopMarkdownPreview    " 普通模式
 imap <silent> <F6> <Plug>StopMarkdownPreview    " 插入模式
-"set backupcopy=yes
-"
-"下面设置airline-theme
-let g:airline_theme='bubblegum'
+
+let g:airline_theme='bubblegum'"设置airline-theme
 
 "下面设置w0rp/ale
 let g:airline#extensions#ale#enabled = 1
@@ -481,4 +327,3 @@ augroup pencil
   autocmd FileType markdown,mkd call pencil#init()
   autocmd FileType text         call pencil#init({'wrap': 'hard'})
 augroup END
-
