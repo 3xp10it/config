@@ -79,6 +79,11 @@ Plugin 'w0rp/ale'
 Plugin 'junegunn/limelight.vim'
 "由于squirrel不好用了,后来换成下面这个实现自动切换中英文输入法
 Plugin 'CodeFalling/fcitx-vim-osx'
+"安装添加替换成对符号插件vim-surround
+Plugin 'tpope/vim-surround'
+"安装markdown相关插件
+Plugin 'godlygeek/tabular'
+Plugin 'plasticboy/vim-markdown'
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
