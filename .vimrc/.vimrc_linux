@@ -141,13 +141,13 @@ set ignorecase smartcase
 "noremap <c-k> <up>
 "noremap <c-l> <right>
 inoremap <c-h> <left>
-inoremap <c-j> <down>
-inoremap <c-k> <up>
+inoremap <c-j> <esc>gjli
+inoremap <c-k> <esc>gkli
 inoremap <c-l> <right>
-cnoremap <c-h> <left>
-cnoremap <c-j> <down>
-cnoremap <c-k> <up>
-cnoremap <c-l> <right>
+noremap <c-h> <left>
+noremap <c-j> <esc>gjl
+noremap <c-k> <esc>gkl
+noremap <c-l> <right>
 
 
 
