@@ -403,9 +403,12 @@ let g:list_of_insert_keys = []
 
 
 "每行超过111字符长度后用不同颜色显示
-augroup vimrc_autocmds
+
+au BufNewFile,BufReadPost *.py set filetype=python
+
+augroup FileType python vimrc_autocmds
     autocmd CursorHold * highlight OverLength ctermbg=darkgrey guibg=#592929
-    autocmd CursorHold * match OverLength /\%114v.*/
+    autocmd CursorHold * match OverLength /\%80v.*/
 augroup END
 
 
