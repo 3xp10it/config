@@ -146,8 +146,7 @@ au FileType markdown setlocal textwidth=0  " Remove text width limit
 "下面4个插件最后浓缩成的两个典型使用方法:
 "space+/:fuzz search+easymotion功能
 "z/:fuzz search功能
-
-"四个easymotion插件incsearch incsearch-fuzzy vim-easymotion incsearch-easymotion相关设置
+"
 "incsearch插件设置
 map /  <Plug>(incsearch-forward)
 map ?  <Plug>(incsearch-backward)
@@ -169,6 +168,7 @@ endfunction
 noremap <silent><expr> z/ incsearch#go(<SID>config())
 
 "incsearch-fuzzy插件设置
+"fuzzy
 map z/ <Plug>(incsearch-fuzzy-/)
 map z? <Plug>(incsearch-fuzzy-?)
 map zg/ <Plug>(incsearch-fuzzy-stay)
@@ -203,10 +203,14 @@ endfunction
 noremap <silent><expr> <Space>/ incsearch#go(<SID>config_easyfuzzymotion())
 
 "下面是easymotion插件的相关设置
+"下面这句暂时不确定用意
 let g:EasyMotion_do_mapping = 0 " Disable default mappings
-nmap s <Plug>(easymotion-overwin-f)"三键到任意地方
-"nmap s <Plug>(easymotion-overwin-f2)"四键到任意地方
-let g:EasyMotion_smartcase = 1"设置大小写不敏感
+"三键到任意地方
+nmap s <Plug>(easymotion-overwin-f)
+"四键到任意地方
+"nmap s <Plug>(easymotion-overwin-f2)
+"设置大小写不敏感
+let g:EasyMotion_smartcase = 1
 " JK motions: Line motions
 map <Leader>j <Plug>(easymotion-j)
 map <Leader>k <Plug>(easymotion-k)
