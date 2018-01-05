@@ -114,7 +114,7 @@ alias 2tamper="cd /usr/share/sqlmap/tamper && ls -al"
 #upon in ubuntu
 #below in macos
 alias ip="ifconfig | ack '(?<=inet )(.*)(?= netmask)' -o"
-alias mt="cd /usr/share/mytools && ls -al"
+alias mt="cd ~/mytools && ls -al"
 alias jt="python3 /usr/share/mytools/mysnippingtool.py"
 alias upa="bash /usr/share/mytools/up.sh"
 alias ubuntubak="bash /usr/share/mytools/ubuntubak.sh"
