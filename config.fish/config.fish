@@ -48,8 +48,8 @@ alias mvim='/Applications/MacVim.app/Contents/MacOS/Vim'
 alias vim='mvim'
 alias py2="python2"
 alias py3="python3"
-alias giu="python3 /usr/share/mytools/gitTool.py --update"
-alias gic="python3 /usr/share/mytools/gitTool.py --commit"
+alias giu="python3 ~/mytools/GitTool.py --update"
+alias gic="python3 ~/mytools/GitTool.py --commit"
 export EDITOR=vim
 export THEOS=/opt/theos
 set PATH $THEOS $PATH 
