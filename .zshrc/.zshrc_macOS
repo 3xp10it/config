@@ -52,6 +52,7 @@ alias giu="python3 ~/mytools/GitTool.py --update"
 alias gic="python3 ~/mytools/GitTool.py --commit"
 alias ida="sudo \"$(find /Applications -name 'IDA Pro*' 2>/dev/null)/ida.app/Contents/MacOS/ida\""
 alias ida64="sudo \"$(find /Applications -name 'IDA Pro*' 2>/dev/null)/ida.app/Contents/MacOS/ida64\""
+alias ex="cd ~/exploit"
 export EDITOR=vim
 export THEOS=/opt/theos
 export PATH=/opt/theos/bin/:$PATH
