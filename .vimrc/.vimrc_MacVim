@@ -12,20 +12,33 @@ set rtp+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
 Plugin 'VundleVim/Vundle.vim'
 Plugin 'tpope/vim-fugitive'
-Plugin 'haya14busa/incsearch.vim'"incsearch插件
-Plugin 'haya14busa/incsearch-fuzzy.vim'"incsearch-fuzzy插件
-Plugin 'easymotion/vim-easymotion'"安装easymotion插件
-Plugin 'haya14busa/incsearch-easymotion.vim'"<space+/>,<z+/>
-Plugin 'Chiel92/vim-autoformat'"代码自动对齐插件<f3>
-Plugin 'jiangmiao/auto-pairs'"括号自动配对插件
+"incsearch插件
+Plugin 'haya14busa/incsearch.vim'
+"incsearch-fuzzy插件
+Plugin 'haya14busa/incsearch-fuzzy.vim'
+"安装easymotion插件
+Plugin 'easymotion/vim-easymotion'
+"<space+/>,<z+/>
+Plugin 'haya14busa/incsearch-easymotion.vim'
+"代码自动对齐插件<f3>
+Plugin 'Chiel92/vim-autoformat'
+"括号自动配对插件
+Plugin 'jiangmiao/auto-pairs'
 Plugin 'Valloric/YouCompleteMe'
-Plugin 'Yggdroot/indentLine'"安装indentLine代码对齐线插件
-Plugin 'vimcn/vimcdoc'"安装vim中文文档
-Plugin 'ctrlpvim/ctrlp.vim'"ctrlp快速打开文件插件,<c-p>
-Plugin 'flazz/vim-colorschemes'"配色插件
-Plugin 'dracula/vim'"安装经典主题,比上面的好
-Plugin 'felixhummel/setcolors.vim'"快速切换配色<f8>
-Plugin 'takac/vim-hardtime'"强制改变jjjjjjjjjjkkkkkkkkkkkllllllll的坏习惯
+"安装indentLine代码对齐线插件
+Plugin 'Yggdroot/indentLine'
+"安装vim中文文档
+Plugin 'vimcn/vimcdoc'
+"ctrlp快速打开文件插件,<c-p>
+Plugin 'ctrlpvim/ctrlp.vim'
+"配色插件
+Plugin 'flazz/vim-colorschemes'
+"安装经典主题,比上面的好
+Plugin 'dracula/vim'
+"快速切换配色<f8>
+Plugin 'felixhummel/setcolors.vim'
+"强制改变jjjjjjjjjjkkkkkkkkkkkllllllll的坏习惯
+Plugin 'takac/vim-hardtime'
 
 "下面两个插件用来美化状态栏
 Plugin 'vim-airline/vim-airline'
@@ -36,16 +49,26 @@ Plugin 'vim-airline/vim-airline-themes'
 Plugin 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plugin 'junegunn/fzf.vim'
 
-Plugin 'mbbill/undotree'"安装undotree插件
-Plugin 'luochen1990/rainbow'"安装彩虹括号插件
-Plugin 'junegunn/vim-easy-align'"这个插件用来安装快速编辑对齐插件(非代码对齐),http://www.cnblogs.com/juandx/p/5630837.html
-Plugin 'mileszs/ack.vim'"安装ack正则工具,要记得安装https://github.com/ggreer/the_silver_searcher
-Plugin 'ascenator/L9', {'name': 'newL9'}" Install L9 and avoid a Naming conflict if you've already installed a different version somewhere else.
-Plugin 'iamcco/markdown-preview.vim'"这个插件用来markdown实时预览
-Plugin 'w0rp/ale'"这个插件比syntastic更好,静态检查语法,但是要vim8以上才可用
-Plugin 'junegunn/limelight.vim'"这个插件用来高亮光标所在区域
-Plugin 'CodeFalling/fcitx-vim-osx'"由于squirrel不好用了,后来换成下面这个实现自动切换中英文输入法
-Plugin 'tpope/vim-surround'"安装添加替换成对符号插件vim-surround
+"安装undotree插件
+Plugin 'mbbill/undotree'
+"安装彩虹括号插件
+Plugin 'luochen1990/rainbow'
+"这个插件用来安装快速编辑对齐插件(非代码对齐),http://www.cnblogs.com/juandx/p/5630837.html
+Plugin 'junegunn/vim-easy-align'
+"安装ack正则工具,要记得安装https://github.com/ggreer/the_silver_searcher
+Plugin 'mileszs/ack.vim'
+" Install L9 and avoid a Naming conflict if you've already installed a different version somewhere else.
+Plugin 'ascenator/L9', {'name': 'newL9'}
+"这个插件用来markdown实时预览
+Plugin 'iamcco/markdown-preview.vim'
+"这个插件比syntastic更好,静态检查语法,但是要vim8以上才可用
+Plugin 'w0rp/ale'
+"这个插件用来高亮光标所在区域
+Plugin 'junegunn/limelight.vim'
+"由于squirrel不好用了,后来换成下面这个实现自动切换中英文输入法
+Plugin 'CodeFalling/fcitx-vim-osx'
+"安装添加替换成对符号插件vim-surround
+Plugin 'tpope/vim-surround'
 
 "安装markdown相关插件
 Plugin 'godlygeek/tabular'
@@ -55,7 +78,8 @@ call vundle#end()
 """"""""""""for vundle end""""""""""""
 
 "下面这行要注意,有可能以后要改.打开文件类型检测功能
-filetype plugin indent on    " required
+" required
+filetype plugin indent on    
 " To ignore plugin indent changes, instead use:
 "filetype plugin on
 
@@ -65,13 +89,20 @@ set backspace=2
 "下面高亮光标所在行
 set cursorline
 
-set ruler"macvim默认不开启ruler,vim默认开启ruler
-let mapleader=',' "设置leader键为,
-set number"显示行号
-syntax on"自动语法高亮,语法检验
-set autoindent"自动缩进 lal niaho slk 
-set tabstop=4"tab键占4个字符
-set ignorecase smartcase"设置查找时忽略大小写,但是如果输入的查找内容中有大写则变成大小时敏感
+"macvim默认不开启ruler,vim默认开启ruler
+set ruler
+"设置leader键为,
+let mapleader=',' 
+"显示行号
+set number
+"自动语法高亮,语法检验
+syntax on
+"自动缩进 lal niaho slk 
+set autoindent
+"tab键占4个字符
+set tabstop=4
+"设置查找时忽略大小写,但是如果输入的查找内容中有大写则变成大小时敏感
+set ignorecase smartcase
 
 " for wrap is on,可用vim-pencil插件代替
 "noremap  <buffer> <silent> k gk
@@ -144,11 +175,16 @@ set expandtab
 "markdown setting
 au BufNewFile,BufReadPost *.{md,mdown,mkd,mkdn,markdown,mdwn} set filetype=markdown
 au BufNewFile,BufReadPost,BufWrite *.{md,mdown,mkd,mkdn,markdown,mdwn} syntax match Comment /\%^---\_.\{-}---$/
-"au FileType markdown setlocal spell        " Spellchecking for Markdown
-au FileType markdown setlocal linebreak    " Avoid wrap breaking words
-au FileType markdown setlocal nolist       " Make sure linebreak work as expected
-"au FileType markdown setlocal showbreak=↳\ " Know where we're
-au FileType markdown setlocal textwidth=0  " Remove text width limit
+"" Spellchecking for Markdown
+"au FileType markdown setlocal spell        
+" Avoid wrap breaking words
+au FileType markdown setlocal linebreak    
+" Make sure linebreak work as expected
+au FileType markdown setlocal nolist       
+"" Know where we're
+"au FileType markdown setlocal showbreak=↳\ 
+" Remove text width limit
+au FileType markdown setlocal textwidth=0  
 
 "下面4个插件最后浓缩成的两个典型使用方法:
 "space+/:fuzz search+easymotion功能
@@ -211,7 +247,8 @@ noremap <silent><expr> <Space>/ incsearch#go(<SID>config_easyfuzzymotion())
 
 "下面是easymotion插件的相关设置
 "下面这句暂时不确定用意
-let g:EasyMotion_do_mapping = 0 " Disable default mappings
+" Disable default mappings
+let g:EasyMotion_do_mapping = 0 
 "三键到任意地方
 nmap s <Plug>(easymotion-overwin-f)
 "四键到任意地方
@@ -242,31 +279,42 @@ noremap <silent><expr> /  incsearch#go(<SID>incsearch_config())
 noremap <silent><expr> ?  incsearch#go(<SID>incsearch_config({'command': '?'}))
 noremap <silent><expr> g/ incsearch#go(<SID>incsearch_config({'is_stay': 1}))
 
-noremap <F3> :Autoformat<CR>"代码对齐插件相关设置
+"代码对齐插件相关设置
+noremap <F3> :Autoformat<CR>
 
 "YouCompleteMe相关设置
 set runtimepath+=~/.vim/bundle/YouCompleteMe
-autocmd InsertLeave * if pumvisible() == 0|pclose|endif     "离开插入模式后自动关闭预览窗口
-let g:ycm_collect_identifiers_from_tags_files = 1           " 开启 YCM 基于标签引擎
-let g:ycm_collect_identifiers_from_comments_and_strings = 1 " 注释与字符串中的内容也用于补全
+"离开插入模式后自动关闭预览窗口
+autocmd InsertLeave * if pumvisible() == 0|pclose|endif     
+" 开启 YCM 基于标签引擎
+let g:ycm_collect_identifiers_from_tags_files = 1           
+" 注释与字符串中的内容也用于补全
+let g:ycm_collect_identifiers_from_comments_and_strings = 1 
 "let g:syntastic_ignore_files=[".*\.py$"]
-let g:ycm_seed_identifiers_with_syntax = 1                  " 语法关键字补全
+" 语法关键字补全
+let g:ycm_seed_identifiers_with_syntax = 1                  
 let g:ycm_complete_in_comments = 1
 let g:ycm_confirm_extra_conf = 0
-let g:ycm_key_list_select_completion = ['<c-n>', '<Down>']  " 映射按键, 没有这个会拦截掉tab, 导致其他插件的tab不能用.
+" 映射按键, 没有这个会拦截掉tab, 导致其他插件的tab不能用.
+let g:ycm_key_list_select_completion = ['<c-n>', '<Down>']  
 let g:ycm_key_list_previous_completion = ['<c-p>', '<Up>']
-let g:ycm_complete_in_comments = 1                          " 在注释输入中也能补全
-let g:ycm_complete_in_strings = 1                           " 在字符串输入中也能补全
-let g:ycm_collect_identifiers_from_comments_and_strings = 1 " 注释和字符串中的文字也会被收入补全
+" 在注释输入中也能补全
+let g:ycm_complete_in_comments = 1                          
+" 在字符串输入中也能补全
+let g:ycm_complete_in_strings = 1                           
+" 注释和字符串中的文字也会被收入补全
+let g:ycm_collect_identifiers_from_comments_and_strings = 1 
 let g:ycm_global_ycm_extra_conf='~/.vim/bundle/YouCompleteMe/third_party/ycmd/cpp/ycm/.ycm_extra_conf.py'
-let g:ycm_show_diagnostics_ui = 0                           " 禁用语法检查
+" 禁用语法检查
+let g:ycm_show_diagnostics_ui = 0                           
 " 回车即选中当前项
 inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<CR>" |            
 " 跳转到定义处
 nnoremap <c-j> :YcmCompleter GoToDefinitionElseDeclaration<CR>|     
 let g:ycm_server_keep_logfiles = 1
 let g:ycm_server_log_level = 'debug'
-"let g:ycm_min_num_of_chars_for_completion=2                 " 从第2个键入字符就开始罗列匹配项
+"" 从第2个键入字符就开始罗列匹配项
+"let g:ycm_min_num_of_chars_for_completion=2                 
 
 "下面开启打开文件时自动跳转到上次编辑的地方,vim在/etc/vim/vimrc文件中默认设置关闭
 if has("autocmd")
@@ -315,7 +363,8 @@ if has("persistent_undo")
 endif
 
 "下面设置彩虹括号插件
-let g:rainbow_active = 1 "0 if you want to enable it later via :RainbowToggle
+"0 if you want to enable it later via :RainbowToggle
+let g:rainbow_active = 1 
 
 "下面设置ack.vim插件使用ag (The Silver Searcher) 
 if executable('ag') 
@@ -339,7 +388,8 @@ inoremap <expr> <c-x><c-k> fzf#vim#complete#word({'left': '15%'})
 let g:vim_markdown_folding_disabled = 1
 
 "vim-pencil插件的设置
-let g:pencil#wrapModeDefault = 'soft'   " default is 'hard'
+" default is 'hard'
+let g:pencil#wrapModeDefault = 'soft'   
 augroup pencil
   autocmd!
   autocmd FileType markdown,mkd call pencil#init()
