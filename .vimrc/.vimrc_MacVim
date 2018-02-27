@@ -1,9 +1,11 @@
 "下面这段是vundle要求的,加到vimrc的开头
-set nocompatible              " be iMproved, required
+set nocompatible              
+
 "用了fish shell后要加下面一行,要不然在运行:BundleInstall时会出错,不用fish shell时将这行删掉
 set shell=/bin/bash
 
-filetype off" required
+" required
+filetype off
 
 " set the runtime path to include Vundle and initialize
 set rtp+=~/.vim/bundle/Vundle.vim
@@ -96,8 +98,10 @@ inoremap <c-b> <esc>lbi
 "inoremap <c-e> <esc>lei
 inoremap <c-w> <esc>lwi
 
-inoremap <c-a> <esc>I "ctrl+a在插入模式下跳到当前行开关并进入插入模式,"<c-0>无效,于是用<c-a>
-inoremap <c-e> <esc>A "ctrl+e在插入模式下跳到当前行末尾并进入插入模式
+"ctrl+a在插入模式下跳到当前行开关并进入插入模式,"<c-0>无效,于是用<c-a>
+inoremap <c-a> <esc>I 
+"ctrl+e在插入模式下跳到当前行末尾并进入插入模式 
+inoremap <c-e> <esc>A 
 
 "方便操作
 map ; :
@@ -105,7 +109,8 @@ map mm ZZ
 noremap ' `
 map sy "+y
 map sp "+p
-nnoremap <enter> i<enter><esc>"在光标处换行,不用再切换到insert模式再enter
+"在光标处换行,不用再切换到insert模式再enter
+nnoremap <enter> i<enter><esc>
 
 "md文件中文符号换成英文
 au BufRead *.md call Biaodian()
@@ -127,8 +132,10 @@ function Biaodian()
     silent! %s/！/!/g
 endfunction
 
-set formatoptions+=mM"textwidth用于中文换行
-set shiftwidth=4"设置缩进的空格数
+"textwidth用于中文换行
+set formatoptions+=mM
+"设置缩进的空格数
+set shiftwidth=4
 
 "设置tab键为4个空格
 set ts=4
@@ -239,7 +246,7 @@ noremap <F3> :Autoformat<CR>"代码对齐插件相关设置
 
 "YouCompleteMe相关设置
 set runtimepath+=~/.vim/bundle/YouCompleteMe
-autocmd InsertLeave * if pumvisible() == 0|pclose|endif "离开插入模式后自动关闭预览窗口"
+autocmd InsertLeave * if pumvisible() == 0|pclose|endif     "离开插入模式后自动关闭预览窗口
 let g:ycm_collect_identifiers_from_tags_files = 1           " 开启 YCM 基于标签引擎
 let g:ycm_collect_identifiers_from_comments_and_strings = 1 " 注释与字符串中的内容也用于补全
 "let g:syntastic_ignore_files=[".*\.py$"]
@@ -253,8 +260,10 @@ let g:ycm_complete_in_strings = 1                           " 在字符串输入
 let g:ycm_collect_identifiers_from_comments_and_strings = 1 " 注释和字符串中的文字也会被收入补全
 let g:ycm_global_ycm_extra_conf='~/.vim/bundle/YouCompleteMe/third_party/ycmd/cpp/ycm/.ycm_extra_conf.py'
 let g:ycm_show_diagnostics_ui = 0                           " 禁用语法检查
-inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<CR>" |            " 回车即选中当前项
-nnoremap <c-j> :YcmCompleter GoToDefinitionElseDeclaration<CR>|     " 跳转到定义处
+" 回车即选中当前项
+inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<CR>" |            
+" 跳转到定义处
+nnoremap <c-j> :YcmCompleter GoToDefinitionElseDeclaration<CR>|     
 let g:ycm_server_keep_logfiles = 1
 let g:ycm_server_log_level = 'debug'
 "let g:ycm_min_num_of_chars_for_completion=2                 " 从第2个键入字符就开始罗列匹配项
@@ -282,12 +291,17 @@ set updatetime=200
 au CursorHold * silent! update
 
 "下面是markdown预览插件的相关设置,如果f5失效则先按f6再按f5
-nmap <silent> <F5> <Plug>MarkdownPreview        " 普通模式
-imap <silent> <F5> <Plug>MarkdownPreview        " 插入模式
-nmap <silent> <F6> <Plug>StopMarkdownPreview    " 普通模式
-imap <silent> <F6> <Plug>StopMarkdownPreview    " 插入模式
+" 普通模式
+nmap <silent> <F5> <Plug>MarkdownPreview        
+" 插入模式
+imap <silent> <F5> <Plug>MarkdownPreview        
+" 普通模式
+nmap <silent> <F6> <Plug>StopMarkdownPreview    
+" 插入模式
+imap <silent> <F6> <Plug>StopMarkdownPreview    
 
-let g:airline_theme='bubblegum'"设置airline-theme
+"设置airline-theme
+let g:airline_theme='bubblegum'
 
 "下面设置w0rp/ale
 let g:airline#extensions#ale#enabled = 1
