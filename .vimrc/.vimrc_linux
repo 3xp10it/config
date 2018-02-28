@@ -1,8 +1,8 @@
 "下面这段是vundle要求的,加到vimrc的开头
 " be iMproved, required
-set nocompatible              
+set nocompatible
 " required
-filetype off                  
+filetype off
 
 " set the runtime path to include Vundle and initialize
 set rtp+=~/.vim/bundle/Vundle.vim
@@ -71,7 +71,7 @@ call vundle#end()
 
 "下面这行要注意,有可能以后要改
 " required
-filetype plugin indent on    
+filetype plugin indent on
 " To ignore plugin indent changes, instead use: filetype plugin on
 "设置leader键为,
 let mapleader=','
@@ -155,11 +155,11 @@ set expandtab
 au BufNewFile,BufReadPost *.{md,mdown,mkd,mkdn,markdown,mdwn} set filetype=markdown
 au BufNewFile,BufReadPost,BufWrite *.{md,mdown,mkd,mkdn,markdown,mdwn} syntax match Comment /\%^---\_.\{-}---$/
 " Avoid wrap breaking words
-au FileType markdown setlocal linebreak    
+au FileType markdown setlocal linebreak
 " Make sure linebreak work as expected
-au FileType markdown setlocal nolist       
+au FileType markdown setlocal nolist
 " Remove text width limit
-au FileType markdown setlocal textwidth=0  
+au FileType markdown setlocal textwidth=0
 
 "下面4个插件最后浓缩成的两个典型使用方法:
 "space+/:fuzz search+easymotion功能
@@ -223,7 +223,7 @@ noremap <silent><expr> <Space>/ incsearch#go(<SID>config_easyfuzzymotion())
 "下面是easymotion插件的相关设置
 "下面这句暂时不确定用意
 " Disable default mappings
-let g:EasyMotion_do_mapping = 0 
+let g:EasyMotion_do_mapping = 0
 "三键到任意地方
 nmap s <Plug>(easymotion-overwin-f)
 "四键到任意地方
@@ -260,34 +260,34 @@ noremap <F3> :Autoformat<CR>
 "YouCompleteMe相关设置
 set runtimepath+=~/.vim/bundle/YouCompleteMe
 "离开插入模式后自动关闭预览窗口
-autocmd InsertLeave * if pumvisible() == 0|pclose|endif	    
+autocmd InsertLeave * if pumvisible() == 0|pclose|endif
 " 开启 YCM 基于标签引擎
-let g:ycm_collect_identifiers_from_tags_files = 1           
+let g:ycm_collect_identifiers_from_tags_files = 1
 " 注释与字符串中的内容也用于补全
-let g:ycm_collect_identifiers_from_comments_and_strings = 1 
+let g:ycm_collect_identifiers_from_comments_and_strings = 1
 "let g:syntastic_ignore_files=[".*\.py$"]
 " 语法关键字补全
-let g:ycm_seed_identifiers_with_syntax = 1                  
+let g:ycm_seed_identifiers_with_syntax = 1
 let g:ycm_complete_in_comments = 1
 let g:ycm_confirm_extra_conf = 0
 " 映射按键, 没有这个会拦截掉tab, 导致其他插件的tab不能用.
-let g:ycm_key_list_select_completion = ['<c-n>', '<Down>']  
+let g:ycm_key_list_select_completion = ['<c-n>', '<Down>']
 let g:ycm_key_list_previous_completion = ['<c-p>', '<Up>']
 " 在注释输入中也能补全
-let g:ycm_complete_in_comments = 1                          
+let g:ycm_complete_in_comments = 1
 " 在字符串输入中也能补全
-let g:ycm_complete_in_strings = 1                           
+let g:ycm_complete_in_strings = 1
 " 注释和字符串中的文字也会被收入补全
-let g:ycm_collect_identifiers_from_comments_and_strings = 1 
+let g:ycm_collect_identifiers_from_comments_and_strings = 1
 let g:ycm_global_ycm_extra_conf='~/.vim/bundle/YouCompleteMe/third_party/ycmd/cpp/ycm/.ycm_extra_conf.py'
 " 禁用语法检查
-let g:ycm_show_diagnostics_ui = 0                           
+let g:ycm_show_diagnostics_ui = 0
 " 回车即选中当前项
-inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<CR>" |            
+inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<CR>" |
 " 跳转到定义处
-nnoremap <c-j> :YcmCompleter GoToDefinitionElseDeclaration<CR>|     
+nnoremap <c-j> :YcmCompleter GoToDefinitionElseDeclaration<CR>|
 "" 从第2个键入字符就开始罗列匹配项
-"let g:ycm_min_num_of_chars_for_completion=2                 
+"let g:ycm_min_num_of_chars_for_completion=2
 
 "下面开启打开文件时自动跳转到上次编辑的地方,vim在/etc/vim/vimrc文件中默认设置关闭
 if has("autocmd")
@@ -313,13 +313,13 @@ au CursorHold * silent! update
 
 "下面是markdown预览插件的相关设置,如果f5失效则先按f6再按f5
 " 普通模式
-nmap <silent> <F5> <Plug>MarkdownPreview        
+nmap <silent> <F5> <Plug>MarkdownPreview
 " 插入模式
-imap <silent> <F5> <Plug>MarkdownPreview        
+imap <silent> <F5> <Plug>MarkdownPreview
 " 普通模式
-nmap <silent> <F6> <Plug>StopMarkdownPreview    
+nmap <silent> <F6> <Plug>StopMarkdownPreview
 " 插入模式
-imap <silent> <F6> <Plug>StopMarkdownPreview    
+imap <silent> <F6> <Plug>StopMarkdownPreview
 
 "设置airline-theme
 let g:airline_theme='bubblegum'
@@ -336,10 +336,10 @@ if has("persistent_undo")
 endif
 
 "下面设置彩虹括号插件
-let g:rainbow_active = 1 
+let g:rainbow_active = 1
 
-"下面设置ack.vim插件使用ag (The Silver Searcher) 
-if executable('ag') 
+"下面设置ack.vim插件使用ag (The Silver Searcher)
+if executable('ag')
     let g:ackprg = 'ag --nogroup --nocolor --column'
 endif
 
@@ -361,7 +361,7 @@ let g:vim_markdown_folding_disabled = 1
 
 "vim-pencil插件的设置
 " default is 'hard'
-let g:pencil#wrapModeDefault = 'soft'   
+let g:pencil#wrapModeDefault = 'soft'
 augroup pencil
   autocmd!
   autocmd FileType markdown,mkd call pencil#init()
