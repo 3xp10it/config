@@ -135,7 +135,7 @@ alias pj="pkill jekyll;pkill ruby"
 eval $(thefuck --alias)
 
 tmux
-alias od='echo "anything" | (tmux splitw -h -p 38 && tmux splitw -v -p 30 && tmux selectp -L && tmux splitw -v -p 30 && tmux selectp -U) && ranger'
+alias od='echo "anything" | (tmux splitw -h -p 38 && tmux splitw -v -p 30 && tmux selectp -L && tmux splitw -v -p 30 && tmux selectp -U)'
 alias pp='pkill -9 python'
 alias 2p="cd $(pip3 show exp10it | grep -oP '(?<=Location: ).*')"
 
