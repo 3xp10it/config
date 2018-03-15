@@ -40,7 +40,7 @@ alias py="cd ~/exp10it/; and ls -al"
 alias s0="shutdown -r +0"
 alias pj="pkill jekyll;pkill ruby"
 alias ip="ifconfig | ack '(?<=inet )(.*)(?= netmask)' -o"
-alias od='tmux splitw -h -p 38; and tmux splitw -v -p 30; and tmux selectp -L; and tmux splitw -v -p 30; and tmux selectp -t 1; and zsh'
+alias od='tmux splitw -h -p 38; and tmux splitw -v -p 30; and tmux selectp -L; and tmux splitw -v -p 30; and tmux selectp -t 1'
 alias pp='pkill -9 python'
 alias 2p="cd (pip3 show exp10it | egrep 'Location:' | egrep -o '/.*')"
 
