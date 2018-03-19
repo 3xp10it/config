@@ -136,7 +136,7 @@ inoremap <c-e> <esc>A
 
 "方便操作
 map ; :
-map mm ZZ
+map mm :wq!
 noremap ' `
 map sy "+y
 map sp "+p
