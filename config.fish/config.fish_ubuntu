@@ -50,4 +50,5 @@ alias gic="python3 ~/mytools/GitTool.py --commit"
 alias ida="sudo (locate ida | grep '/ida\$')"
 alias ida64="sudo (locate ida64 | grep '/ida64\$')"
 alias ge="cd ~/godseye"
+setxkbmap -option 'caps:ctrl_modifier' && xcape -e 'Caps_Lock=Escape' &
 export EDITOR=vim
