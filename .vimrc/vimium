@@ -1,5 +1,6 @@
 # Insert your preferred key mappings here.
 map d removeTab
+map u restoreTab
 map <c-d> scrollPageDown
 map <c-u> scrollPageUp
 map cc createTab http://3xp10it.cc
