@@ -53,6 +53,7 @@ alias gic="python3 ~/mytools/GitTool.py --commit"
 alias ida="sudo (locate ida | grep '/ida\$')"
 alias ida64="sudo (locate ida64 | grep '/ida64\$')"
 alias ge="cd ~/godseye"
+alias up="git add .; and git commit -a -m 'up'; and git push -u origin master"
 export EDITOR=vim
 export THEOS=/opt/theos
 set PATH $THEOS $PATH 
