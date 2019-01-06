@@ -386,6 +386,7 @@ inoremap <expr> <c-x><c-k> fzf#vim#complete#word({'left': '15%'})
 
 "'plasticboy/vim-markdown'插件的设置
 let g:vim_markdown_folding_disabled = 1
+let g:vim_markdown_conceal = 0
 
 "vim-pencil插件的设置
 " default is 'hard'
