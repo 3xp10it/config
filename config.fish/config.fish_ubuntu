@@ -51,5 +51,6 @@ alias ida="sudo (locate ida | grep '/ida\$')"
 alias ida64="sudo (locate ida64 | grep '/ida64\$')"
 alias ge="cd ~/godseye"
 alias up="git add .; and git commit -a -m 'up'; and git push -u origin master"
+alias efficient="cd ~/efficient; and python3 efficient.py"
 setxkbmap -option 'caps:ctrl_modifier'; and xcape -e 'Caps_Lock=Escape' &
 export EDITOR=vim
