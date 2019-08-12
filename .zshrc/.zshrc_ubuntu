@@ -152,6 +152,7 @@ alias ida="sudo $(locate ida | grep '/ida$')"
 alias ida64="sudo $(locate ida64 | grep '/ida64$')"
 alias ge="cd ~/godseye"
 alias up="git add . && git commit -a -m 'up' && git push -u origin master"
+alias efficient="cd ~/efficient && python3 efficient.py"
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 export THEOS=/opt/theos
 export PATH=/opt/theos/bin/:$PATH
