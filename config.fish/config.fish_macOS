@@ -27,7 +27,6 @@ alias b='cd ~/myblog'
 alias p='cd ~/myblog/_posts; and ls -lh'
 alias 2tamper="cd /usr/share/sqlmap/tamper; and ls -al"
 alias mt="cd ~/mytools; and ls -al"
-alias jt="python3 ~/mytools/mysnippingtool.py"
 alias upa="bash ~/mytools/up.sh"
 alias macosbak="bash ~/mytools/macosbak.sh"
 alias bl="python3 ~/mytools/blog.py"
