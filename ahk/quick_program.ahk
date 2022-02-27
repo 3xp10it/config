@@ -61,7 +61,20 @@ if ProcessExist("WeChat.exe")=0
     Run, %WeChat_path%
 else
 {
-	winshow,%WeChat%
+    winshow,%WeChat%
     winactivate,%WeChat%
 }
 }
+
+
+;win+b 打开bug
+#b::switchToBug()
+switchToBug()
+{
+Bug_path:="\\192.168.50.206\news\bug.txt"
+If WinExist("bug.txt -")
+    WinActivate
+else
+    Run, %Bug_path%
+}
+
