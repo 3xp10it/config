@@ -72,9 +72,21 @@ else
 switchToBug()
 {
 Bug_path:="\\192.168.50.206\news\bug.txt"
-If WinExist("bug.txt -")
+if WinExist("bug.txt -")
     WinActivate
 else
     Run, %Bug_path%
 }
 
+
+
+;win+t 打开同花顺
+#t::switchToTHS()
+switchToTHS()
+{
+THS_path:="D:\THS\hexin.exe"
+if WinExist("v8.90.71")
+    WinActivate
+else
+    Run, %THS_path%
+}
