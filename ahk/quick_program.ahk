@@ -78,15 +78,19 @@ else
     Run, %Bug_path%
 }
 
-
+DetectHiddenText On
 
 ;win+t 打开同花顺
 #t::switchToTHS()
 switchToTHS()
 {
 THS_path:="D:\THS\hexin.exe"
-if WinExist("v8.90.71")
-    WinActivate
-else
+IfWinNotExist, ahk_exe %THS_path%
+{
     Run, %THS_path%
+}
+else
+{
+    WinActivate
+}
 }
