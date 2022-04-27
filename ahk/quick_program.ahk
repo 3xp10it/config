@@ -92,5 +92,7 @@ IfWinNotExist, ahk_exe %THS_path%
 else
 {
     WinActivate
+    WinActivate
+    WinActivate
 }
 }
