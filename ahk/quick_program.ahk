@@ -83,13 +83,13 @@ Run, %THS_path%
 }
 }
 
- ;win+f打开东方财富股吧
-#f::switchToGB()
+ ;win+f打开东方财富股吧和韭菜公社
+#f::switchToGBJC()
 
-switchToGB()
+switchToGBJC()
 {
 SetTitleMatchMode RegEx
-if WinExist("guba.*")
+if WinExist("guba_jiucai.*")
 {
     WinActivate
 }
