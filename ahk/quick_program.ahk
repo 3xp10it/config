@@ -34,8 +34,8 @@ else
 
 
  
-;win+m 打开微信
-#m::switchToWechat()
+;win+w 打开微信
+#w::switchToWechat()
 switchToWechat()
 {
 
@@ -56,7 +56,8 @@ else
 switchToBug()
 {
 Bug_path:="\\192.168.0.6\news\bug.txt"
-if WinExist("bug.txt -")
+SetTitleMatchMode RegEx
+if WinExist(".*bug.txt.*")
     WinActivate
 else
     Run, %Bug_path%
@@ -80,6 +81,22 @@ WinActivate
 else
 {
 Run, %THS_path%
+}
+}
+
+;ctrl+t 打开tl50
+^t::switchToTL50()
+switchToTL50()
+{
+tl50_path:="D:\Program Files\tl50\tl50v2.exe"
+SetTitleMatchMode RegEx
+if WinExist(".*1817355*")
+{
+WinActivate
+}
+else
+{
+Run, %tl50_path%
 }
 }
 
