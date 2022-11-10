@@ -84,6 +84,17 @@ Run, %THS_path%
 }
 }
 
+;win+ctrl+t打开tide.py
+#^t::tide()
+tide()
+{
+
+dir := "Z:\"
+script  = %dir%\tide.py
+SetWorkingDir %dir%
+Run, %ComSpec% /k python "%script%" && exit
+}
+
 ;ctrl+t 打开tl50
 ^t::switchToTL50()
 switchToTL50()
@@ -111,3 +122,4 @@ if WinExist("guba_jiucai.*")
     WinActivate
 }
 }
+
