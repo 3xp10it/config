@@ -55,8 +55,8 @@ else
 
 DetectHiddenText On
 
-;win+t 打开同花顺
-#t::switchToTHS()
+;win+f 打开同花顺
+#f::switchToTHS()
 
 
 switchToTHS()
@@ -101,8 +101,8 @@ Run, %tl50_path%
 }
 }
 
- ;win+f打开东方财富股吧和韭菜公社
-#f::switchToGBJC()
+ ;win+t打开东方财富股吧和韭菜公社
+#t::switchToGBJC()
 
 switchToGBJC()
 {
