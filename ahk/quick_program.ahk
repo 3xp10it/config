@@ -74,8 +74,8 @@ Run, %THS_path%
 }
 }
 
-;win+ctrl+t打开tide.py
-#^t::tide()
+;win+ctrl+f打开tide.py
+#^f::tide()
 tide()
 {
 
