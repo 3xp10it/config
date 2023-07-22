@@ -101,6 +101,24 @@ Run, %tl50_path%
 }
 }
 
+;win+z 打开znz
+#z::switchToZNZ()
+switchToZNZ()
+{
+znz:="ahk_exe WavMain.exe"
+znz_path:="D:\Compass\WavMain\WavMain.exe"
+
+SetTitleMatchMode RegEx
+
+if ProcessExist("WavMain.exe")=0
+    Run, %znz_path%
+else
+{
+    winshow,%znz%
+    winactivate,%znz%
+}
+}
+
  ;win+t打开东方财富股吧和韭菜公社
 #t::switchToGBJC()
 
