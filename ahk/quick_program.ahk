@@ -72,6 +72,11 @@ else
 {
 Run, %THS_path%
 }
+if WinExist("guba_jiucai.*")
+{
+    ;顺便把guba_jiucai窗口最小化
+    WinMinimize
+}
 }
 
 ;win+ctrl+f打开tide.py
