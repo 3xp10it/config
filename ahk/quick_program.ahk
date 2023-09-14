@@ -133,6 +133,7 @@ SetTitleMatchMode RegEx
 if WinExist("guba_jiucai.*")
 {
     WinActivate
+    WinSet, AlwaysOnTop, On, guba_jiucai.*
 }
 }
 
