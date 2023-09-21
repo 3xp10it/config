@@ -10,13 +10,23 @@ ProcessExist(exe){          ;一个自定义函数,根据自定义函数的返�
 #g::switchToChrome()
 switchToChrome()
 {
-IfWinNotExist, ahk_exe chrome.exe
-	Run, chrome.exe
+SetTitleMatchMode RegEx
+if WinExist("guba_jiucai.*")
+{
+    ;顺便把guba_jiucai窗口最小化
+    WinMinimize
+}
 
-if WinActive("ahk_exe chrome.exe")
-	Sendinput ^{tab}
+SetTitleMatchMode, 2
+IfWinExist, ahk_exe chrome.exe
+{
+    WinActivate
+}
 else
-	WinActivate ahk_exe chrome.exe
+{
+    Run, chrome.exe
+}
+
 }
 
 
