@@ -74,7 +74,7 @@ switchToTHS()
 THS_path:="D:\THS\hexin.exe"
 ;注意：SetTitleMatchMode一定要放在WinExist前面一行，放远了可能不会生效；这里也可以通过使用WinExist("ahk_exe D:\THS\hexin.exe")来获取同花顺的窗口，但这样可能会获取到短线精灵，除了同花顺主界面属于hexin.exe外，弹窗式的短线精灵也属于hexin.exe，所以实际不能使用ahk_exe来获取，只能用窗口特征来获取，还需要注意的是，ahk代码中不支持中文，所以用中文字符串来匹配是无法成功的
 SetTitleMatchMode RegEx
-if WinExist(".*v8\.90\.71.*")
+if WinExist(".*v9\.20\.60.*")
 {
 WinActivate
 }
