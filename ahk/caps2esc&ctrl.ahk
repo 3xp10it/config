@@ -1,3 +1,5 @@
+;注意，本文件要以ansi编码保存，否则与中文相关的操作会失败
+
 ; Sends Esc if capslock is pressed alone
 ; Sends Ctrl+key if capslock is pressed with another key
 ; TODO: work with arrow keys and other modifiers (e.g. shift, control)
