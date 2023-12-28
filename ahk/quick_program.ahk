@@ -1,3 +1,5 @@
+;注意，本文件要以ansi编码保存，否则与中文相关的操作会失败
+
 ProcessExist(exe){          ;一个自定义函数,根据自定义函数的返回值作为#if成立依据原GetPID
     Process, Exist,% exe
     return ErrorLevel
@@ -74,7 +76,7 @@ switchToTHS()
 THS_path:="D:\THS\hexin.exe"
 ;注意：SetTitleMatchMode一定要放在WinExist前面一行，放远了可能不会生效；这里也可以通过使用WinExist("ahk_exe D:\THS\hexin.exe")来获取同花顺的窗口，但这样可能会获取到短线精灵，除了同花顺主界面属于hexin.exe外，弹窗式的短线精灵也属于hexin.exe，所以实际不能使用ahk_exe来获取，只能用窗口特征来获取，还需要注意的是，ahk代码中不支持中文，所以用中文字符串来匹配是无法成功的
 SetTitleMatchMode RegEx
-if WinExist(".*v9\.20\.60.*")
+if WinExist(".*v9\.20\.72.*")
 {
 WinActivate
 }
@@ -87,6 +89,20 @@ if WinExist("guba_jiucai.*")
     ;顺便把guba_jiucai窗口最小化
     WinMinimize
 }
+
+;把实时新闻移到原来的位置
+SetTitleMatchMode, 2
+WinGet,hwnd,ID,实时新闻
+if (hwnd)
+{
+    WinGet, Style, Style, ahk_id %hwnd%
+    if (!(Style & 0x20000000))    ;没有最小化才移动窗口
+    {
+        WinMove, ahk_id %hwnd%, , 681, 513, 1244, 600
+    }
+    
+}
+
 }
 
 ;win+ctrl+f打开tide.py
@@ -100,21 +116,7 @@ SetWorkingDir %dir%
 Run, %ComSpec% /k python "%script%" && exit
 }
 
-;ctrl+t 打开tl50
-^t::switchToTL50()
-switchToTL50()
-{
-tl50_path:="D:\Program Files\tl50\tl50v2.exe"
-SetTitleMatchMode RegEx
-if WinExist(".*1817355*")
-{
-WinActivate
-}
-else
-{
-Run, %tl50_path%
-}
-}
+
 
 ;win+z 打开znz
 #z::switchToZNZ()
@@ -139,11 +141,27 @@ else
 
 switchToGBJC()
 {
+
 SetTitleMatchMode RegEx
 if WinExist("guba_jiucai.*")
 {
     WinActivate
     WinSet, AlwaysOnTop, On, guba_jiucai.*
 }
+
+;把实时新闻移到右上角
+SetTitleMatchMode, 2
+WinGet,hwnd,ID,实时新闻
+if (hwnd)
+{
+    WinGet, Style, Style, ahk_id %hwnd%
+    if (!(Style & 0x20000000))    ;没有最小化才移动窗口
+    {
+        WinMove, ahk_id %hwnd%, , 2652, 0, 797, 468
+    }
+    
+}
+
+
 }
 
