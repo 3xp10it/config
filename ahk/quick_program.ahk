@@ -53,16 +53,24 @@ else
 }
 
 
-;win+b 打开bug
-#b::switchToBug()
-switchToBug()
+;win+b 打开yijt.txt
+#b::switchToyijt()
+switchToyijt()
 {
-Bug_path:="\\192.168.0.6\news\bug.txt"
-SetTitleMatchMode RegEx
-if WinExist(".*bug.txt.*")
+yijt_path:="\\192.168.0.6\news\yijt.txt"
+targetWindowTitle := "yijt.txt - 记事本"
+if WinExist("yijt.txt - 记事本")
     WinActivate
 else
-    Run, %Bug_path%
+    Run, %yijt_path%
+    WinWait, %targetWindowTitle%, , 5
+
+;把yijt.txt移到右上角
+if WinExist("yijt.txt - 记事本")
+    WinGet,hwnd,ID,%targetWindowTitle%
+    WinMove, ahk_id %hwnd%, , 2653, 0, 796, 478
+    WinSet, TopMost, Off, ahk_id %hwnd%
+    WinSet, TopMost, On, ahk_id %hwnd%
 }
 
 DetectHiddenText On
@@ -158,6 +166,8 @@ if (hwnd)
     if (!(Style & 0x20000000))    ;没有最小化才移动窗口
     {
         WinMove, ahk_id %hwnd%, , 2653, 0, 796, 478
+        WinSet, TopMost, Off, ahk_id %hwnd%
+        WinSet, TopMost, On, ahk_id %hwnd%
     }
     
 }
