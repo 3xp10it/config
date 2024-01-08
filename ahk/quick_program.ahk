@@ -53,20 +53,20 @@ else
 }
 
 
-;win+b 打开yijt.txt
-#b::switchToyijt()
-switchToyijt()
+;win+b 打开tyij.txt
+#b::switchTotyij()
+switchTotyij()
 {
-yijt_path:="\\192.168.0.6\news\yijt.txt"
-targetWindowTitle := "yijt.txt - 记事本"
-if WinExist("yijt.txt - 记事本")
+tyij_path:="\\192.168.0.6\news\tyij.txt"
+targetWindowTitle := "tyij.txt - 记事本"
+if WinExist("tyij.txt - 记事本")
     WinActivate
 else
-    Run, %yijt_path%
+    Run, %tyij_path%
     WinWait, %targetWindowTitle%, , 5
 
-;把yijt.txt移到右上角
-if WinExist("yijt.txt - 记事本")
+;把tyij.txt移到右上角
+if WinExist("tyij.txt - 记事本")
     WinGet,hwnd,ID,%targetWindowTitle%
     WinMove, ahk_id %hwnd%, , 2653, 0, 796, 478
     WinSet, TopMost, Off, ahk_id %hwnd%
