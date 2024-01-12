@@ -60,16 +60,16 @@ switchToryij()
 ryij_path:="\\192.168.0.6\news\ryij.txt"
 if WinExist("ryij.txt - 记事本")
 {
-    targetWindowTitle := "ryij.txt - 记事本"
     ;MsgBox,"esist ryij.txt"
-    ;WinActivate
+    targetWindowTitle := "ryij.txt - 记事本"
+    WinActivate
     WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
     WinSet, TopMost, On, %targetWindowTitle%
 }
 else if WinExist("*ryij.txt - 记事本") {
-    targetWindowTitle := "*ryij.txt - 记事本"
-    ;WinActivate
     ;MsgBox,"exist *ryij.txt"
+    targetWindowTitle := "*ryij.txt - 记事本"
+    WinActivate
     WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
     WinSet, TopMost, On, %targetWindowTitle%
 }
@@ -183,6 +183,6 @@ if WinExist("guba_jiucai.*")
     WinActivate
     WinSet, TopMost, On, guba_jiucai.*
 }
-
+;SetTitleMatchMode, 2
 
 }
