@@ -58,19 +58,30 @@ else
 switchToryij()
 {
 ryij_path:="\\192.168.0.6\news\ryij.txt"
-targetWindowTitle := "ryij.txt - 记事本"
 if WinExist("ryij.txt - 记事本")
-    WinActivate
-else
+{
+    targetWindowTitle := "ryij.txt - 记事本"
+    ;MsgBox,"esist ryij.txt"
+    ;WinActivate
+    WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
+    WinSet, TopMost, On, %targetWindowTitle%
+}
+else if WinExist("*ryij.txt - 记事本") {
+    targetWindowTitle := "*ryij.txt - 记事本"
+    ;WinActivate
+    ;MsgBox,"exist *ryij.txt"
+    WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
+    WinSet, TopMost, On, %targetWindowTitle%
+}
+else {
+    ;MsgBox,"no ryij.txt and no *ryij.txt"
     Run, %ryij_path%
     WinWait, %targetWindowTitle%, , 5
+    targetWindowTitle := "ryij.txt - 记事本"
+    WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
+    WinSet, TopMost, On, %targetWindowTitle%
+}
 
-;把ryij.txt移到右上角
-if WinExist("ryij.txt - 记事本")
-    WinGet,hwnd,ID,%targetWindowTitle%
-    WinMove, ahk_id %hwnd%, , 2653, 0, 796, 478
-    WinSet, TopMost, Off, ahk_id %hwnd%
-    WinSet, TopMost, On, ahk_id %hwnd%
 }
 
 DetectHiddenText On
@@ -150,13 +161,6 @@ else
 switchToGBJC()
 {
 
-SetTitleMatchMode RegEx
-if WinExist("guba_jiucai.*")
-{
-    WinActivate
-    WinSet, AlwaysOnTop, On, guba_jiucai.*
-}
-
 ;把实时新闻移到右上角
 SetTitleMatchMode, 2
 WinGet,hwnd,ID,实时新闻
@@ -166,10 +170,18 @@ if (hwnd)
     if (!(Style & 0x20000000))    ;没有最小化才移动窗口
     {
         WinMove, ahk_id %hwnd%, , 2653, 0, 796, 478
-        WinSet, TopMost, Off, ahk_id %hwnd%
+        WinActivate
         WinSet, TopMost, On, ahk_id %hwnd%
     }
     
+}
+
+
+SetTitleMatchMode RegEx
+if WinExist("guba_jiucai.*")
+{
+    WinActivate
+    WinSet, TopMost, On, guba_jiucai.*
 }
 
 
