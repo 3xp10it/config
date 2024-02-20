@@ -60,21 +60,36 @@ switchToryij()
 ryij_path:="\\192.168.0.6\news\ryij.txt"
 if WinExist("ryij.txt - 记事本")
 {
-    ;MsgBox,"esist ryij.txt"
+    ;MsgBox,"exist ryij.txt - 记事本"
     targetWindowTitle := "ryij.txt - 记事本"
     WinActivate
     WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
     WinSet, TopMost, On, %targetWindowTitle%
 }
+else if WinExist("ryij - 记事本")
+{
+    ;MsgBox,"exist ryij - 记事本"
+    targetWindowTitle := "ryij - 记事本"
+    WinActivate
+    WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
+    WinSet, TopMost, On, %targetWindowTitle%
+}
 else if WinExist("*ryij.txt - 记事本") {
-    ;MsgBox,"exist *ryij.txt"
+    ;MsgBox,"exist *ryij.txt - 记事本"
     targetWindowTitle := "*ryij.txt - 记事本"
     WinActivate
     WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
     WinSet, TopMost, On, %targetWindowTitle%
 }
+else if WinExist("*ryij - 记事本") {
+    ;MsgBox,"exist *ryij - 记事本"
+    targetWindowTitle := "*ryij - 记事本"
+    WinActivate
+    WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
+    WinSet, TopMost, On, %targetWindowTitle%
+}
 else {
-    ;MsgBox,"no ryij.txt and no *ryij.txt"
+    ;MsgBox,"no ryij.txt - 记事本 and no *ryij.txt - 记事本" and no ryij - 记事本 and no *ryij - 记事本"
     Run, %ryij_path%
     WinWait, %targetWindowTitle%, , 5
     targetWindowTitle := "ryij.txt - 记事本"
