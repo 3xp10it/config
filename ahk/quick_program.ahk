@@ -177,6 +177,19 @@ else
 }
 }
 
+
+;win+s 打开实时新闻
+#s::switchTorealnews()
+switchTorealnews()
+{
+if WinExist("实时新闻")
+{
+    ;MsgBox,"exist 实时新闻"
+    WinActivate
+    WinSet, TopMost, On, %targetWindowTitle%
+}
+}
+
  ;win+t打开东方财富股吧和韭菜公社
 #t::switchToGBJC()
 
