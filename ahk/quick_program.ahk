@@ -91,8 +91,15 @@ else if WinExist("*ryij - 记事本") {
 else {
     ;MsgBox,"no ryij.txt - 记事本 and no *ryij.txt - 记事本" and no ryij - 记事本 and no *ryij - 记事本"
     Run, %ryij_path%
-    WinWait, %targetWindowTitle%, , 5
+    SetTitleMatchMode, RegEx
+    WinWait,ryij.*记事本, , 2
+    if WinExist("ryij.txt - 记事本") {
     targetWindowTitle := "ryij.txt - 记事本"
+    }
+    else if WinExist("ryij - 记事本") {
+    targetWindowTitle := "ryij - 记事本"
+    }
+
     WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
     WinSet, TopMost, On, %targetWindowTitle%
 }
