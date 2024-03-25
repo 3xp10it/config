@@ -41,14 +41,19 @@ else
 switchToWechat()
 {
 
-WeChat:="ahk_class WeChatMainWndForPC"
+;WeChat:="ahk_class WeChatMainWndForPC"
+;WeChat:="ahk_exe WeChat.exe"
+WeChat:="微信"
 WeChat_path:="D:\Program Files\Tencent\WeChat\WeChat.exe"
 if ProcessExist("WeChat.exe")=0
     Run, %WeChat_path%
 else
 {
-    winshow,%WeChat%
-    winactivate,%WeChat%
+if WinExist("ahk_class WeChatLoginWndForPC") or WinExist("ahk_class WeChatMainWndForPC")
+{
+    WinShow
+    WinActivate
+}
 }
 }
 
