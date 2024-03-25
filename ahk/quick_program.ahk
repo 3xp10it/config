@@ -1,10 +1,13 @@
 ;注意，本文件要以ansi编码保存，否则与中文相关的操作会失败
 
+cmds_should_show_realnews:="0"
+
+
+
 ProcessExist(exe){          ;一个自定义函数,根据自定义函数的返回值作为#if成立依据原GetPID
     Process, Exist,% exe
     return ErrorLevel
 }
-
 
 
 
@@ -62,6 +65,7 @@ if WinExist("ahk_class WeChatLoginWndForPC") or WinExist("ahk_class WeChatMainWn
 #b::switchToryij()
 switchToryij()
 {
+global cmds_should_show_realnews
 ryij_path:="\\192.168.0.6\news\ryij.txt"
 if WinExist("ryij.txt - 记事本")
 {
@@ -108,7 +112,7 @@ else {
     WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
     WinSet, TopMost, On, %targetWindowTitle%
 }
-
+cmds_should_show_realnews:="1"
 }
 
 DetectHiddenText On
@@ -187,12 +191,26 @@ else
 #s::switchTorealnews()
 switchTorealnews()
 {
+global cmds_should_show_realnews
+;MsgBox,%cmds_should_show_realnews%
+if (cmds_should_show_realnews=="0")
+{
 if WinExist("实时新闻")
 {
-    ;MsgBox,"exist 实时新闻"
+WinMinimize
+cmds_should_show_realnews:="1"
+}
+}
+else if (cmds_should_show_realnews=="1")
+{
+if WinExist("实时新闻")
+{
     WinActivate
     WinSet, TopMost, On, %targetWindowTitle%
+    cmds_should_show_realnews:="0"
 }
+}
+
 }
 
  ;win+t打开东方财富股吧和韭菜公社
