@@ -113,6 +113,7 @@ else {
     WinSet, TopMost, On, %targetWindowTitle%
 }
 cmds_should_show_realnews:="1"
+
 }
 
 DetectHiddenText On
@@ -191,26 +192,31 @@ else
 #s::switchTorealnews()
 switchTorealnews()
 {
+SetTitleMatchMode, 2
+if WinExist("实时新闻")
+{
 global cmds_should_show_realnews
 ;MsgBox,%cmds_should_show_realnews%
-if (cmds_should_show_realnews=="0")
+
+WinGet,hwnd,ID,实时新闻
+WinGet, Style, Style, ahk_id %hwnd%
+if (Style & 0x20000000)    ;最小化了时，可能是人为手动点窗口上的最小化导致也可能是按win+s导致最小化
 {
-if WinExist("实时新闻")
+cmds_should_show_realnews:="1"
+}
+
+if (cmds_should_show_realnews=="0")
 {
 WinMinimize
 cmds_should_show_realnews:="1"
 }
-}
 else if (cmds_should_show_realnews=="1")
-{
-if WinExist("实时新闻")
 {
     WinActivate
     WinSet, TopMost, On, %targetWindowTitle%
     cmds_should_show_realnews:="0"
 }
 }
-
 }
 
  ;win+t打开东方财富股吧和韭菜公社
