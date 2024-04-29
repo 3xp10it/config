@@ -217,6 +217,24 @@ else if (cmds_should_show_realnews=="1")
     cmds_should_show_realnews:="0"
 }
 }
+else
+{
+;MsgBox,"realnews window is closed or not open"
+whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+whr.SetTimeouts(30000,60000,30000,30000)
+whr.Open("GET", "http://192.168.0.7:3333/show_realtime_news_window", true)
+whr.Send()
+try
+{
+whr.WaitForResponse()
+;MsgBox % whr.ResponseText
+}
+catch e
+{
+;MsgBox,"http request error"
+}
+
+}
 }
 
  ;win+t打开东方财富股吧和韭菜公社
