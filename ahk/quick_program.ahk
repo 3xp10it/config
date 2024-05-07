@@ -54,8 +54,19 @@ else
 {
 if WinExist("ahk_class WeChatLoginWndForPC") or WinExist("ahk_class WeChatMainWndForPC")
 {
+if WinExist("ahk_class WeChatMainWndForPC")
+{
+if not WinActive(ahk_class WeChatMainWndForPC)      ;被挡住或最小化了
+{
     WinShow
     WinActivate
+}
+else
+{
+    WinMinimize
+}
+}
+
 }
 }
 }
