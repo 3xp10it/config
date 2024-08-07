@@ -197,8 +197,8 @@ Run, %ComSpec% /k python "%script%" && exit
 
 
 
-;win+z 打开znz
-#z::switchToZNZ()
+;win+a 打开znz
+#a::switchToZNZ()
 switchToZNZ()
 {
 znz:="ahk_exe WavMain.exe"
