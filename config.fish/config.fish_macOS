@@ -21,7 +21,7 @@ alias 2tamper1='cd /usr/share/sqlmap/tamper'
 alias Cknife='java -jar /usr/share/Cknife/Cknife.jar'
 alias vs='vim ~/note/note.md'
 alias z='cd ~/Desktop; or cd ~/桌面'
-alias v="vim ~/tmp.txt"
+alias v="vim ~/news/bug.txt"
 alias c="rm ~/.vimswap/tmp.txt.swp"
 alias b='cd ~/myblog'
 alias p='cd ~/myblog/_posts; and ls -lh'
@@ -58,7 +58,9 @@ export EDITOR=vim
 export THEOS=/opt/theos
 set PATH $THEOS $PATH 
 set PATH /opt/theos/bin/ $PATH
+export PATH="/opt/local/bin:/opt/local/sbin:$PATH"
 ulimit -n 1024
+
 
 #brew加速
 export HOMEBREW_NO_AUTO_UPDATE=true
@@ -69,4 +71,3 @@ export HOMEBREW_BOTTLE_DOMAIN="https://mirrors.ustc.edu.cn/homebrew-bottles"
 export HOMEBREW_API_DOMAIN="https://mirrors.ustc.edu.cn/homebrew-bottles/api"
 # hide
 export HOMEBREW_NO_ENV_HINTS="1"
-
