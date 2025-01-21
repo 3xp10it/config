@@ -210,8 +210,11 @@ if ProcessExist("WavMain.exe")=0
     Run, %znz_path%
 else
 {
-    winshow,%znz%
-    winactivate,%znz%
+    SetTitleMatchMode RegEx
+    if WinExist(".*0AMV.*")
+    {
+    WinActivate
+    }
 }
 }
 
