@@ -1,6 +1,10 @@
 ;注意，本文件要以ansi编码保存，否则与中文相关的操作会失败
+;注意，全局变量只能放在文件最前面，否则会出错
 
 cmds_should_show_realnews:="0"
+
+global overlay1 := 0  ; 标题栏遮罩句柄
+global overlay2 := 0  ; 顶部白条遮罩句柄
 
 
 
@@ -253,7 +257,7 @@ else
 ;MsgBox,"realnews window is closed or not open"
 whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
 whr.SetTimeouts(30000,60000,30000,30000)
-whr.Open("GET", "http://192.168.0.7:3333/show_realtime_news_window", true)
+whr.Open("GET", "http://192.168.1.7:3333/show_realtime_news_window", true)
 whr.Send()
 try
 {
@@ -319,3 +323,42 @@ if (hwnd)
     
 }
 }
+
+
+
+
+
+
+; ############## 同花顺遮罩模块 ##############
+; 两个全局变量要放在文件最前面，否则会出错
+
+; 创建遮罩热键（可自定义组合键）
+#1::  ; win+1 创建遮罩
+  DestroyOverlays()
+  CreateOverlay(overlay1, 224, 967, 236, 33, 255)  ; 短线精灵标题栏
+  CreateOverlay(overlay2, 0, 0, 1725, 21, 255)    ; 顶部长白条
+return
+
+#2::DestroyOverlays()  ; win+2 移除遮罩
+
+CreateOverlay(ByRef hwnd, x, y, w, h, transparency) {
+  Gui, New, +HwndguiHwnd
+  hwnd := guiHwnd
+  Gui, Color, 002b36
+  Gui, +ToolWindow -Caption +AlwaysOnTop +E0x20  ; +E0x20允许鼠标穿透
+  Gui, Show, x%x% y%y% w%w% h%h% NA
+  WinSet, Transparent, %transparency%, ahk_id %guiHwnd%
+}
+
+DestroyOverlays() {
+  global overlay1, overlay2
+  if (overlay1 != 0) {
+    Gui, %overlay1%:Destroy
+    overlay1 := 0
+  }
+  if (overlay2 != 0) {
+    Gui, %overlay2%:Destroy
+    overlay2 := 0
+  }
+}
+; ############## 模块结束 ##############
