@@ -272,37 +272,6 @@ catch e
 }
 }
 
- ;win+t打开东方财富股吧和韭菜公社
-#t::switchToGBJC()
-
-switchToGBJC()
-{
-
-;把实时新闻移到右上角
-SetTitleMatchMode, 2
-WinGet,hwnd,ID,实时新闻
-if (hwnd)
-{
-    WinGet, Style, Style, ahk_id %hwnd%
-    if (!(Style & 0x20000000))    ;没有最小化才移动窗口
-    {
-        WinMove, ahk_id %hwnd%, , 2653, 0, 796, 478
-        WinActivate
-        WinSet, TopMost, On, ahk_id %hwnd%
-    }
-    
-}
-
-
-SetTitleMatchMode RegEx
-if WinExist("guba_jiucai.*")
-{
-    WinActivate
-    WinSet, TopMost, On, guba_jiucai.*
-}
-;SetTitleMatchMode, 2
-
-}
 
 ;win+ctrl+t只把实时新闻移到右上角
 #^t::moveRealnews()
@@ -325,6 +294,23 @@ if (hwnd)
 }
 
 
+
+ ;win+t打开东方财富股吧和韭菜公社
+#t::switchToGBJC()
+
+switchToGBJC()
+{
+moveRealnews()
+
+SetTitleMatchMode RegEx
+if WinExist("guba_jiucai.*")
+{
+    WinActivate
+    WinSet, TopMost, On, guba_jiucai.*
+}
+;SetTitleMatchMode, 2
+
+}
 
 
 
