@@ -7,6 +7,7 @@ global overlay1 := 0  ; 标题栏遮罩句柄
 global overlay2 := 0  ; 顶部白条遮罩句柄
 global overlay3 := 0  ; "上翻 下翻 顶部 底部"
 global overlay4 := 0  ; "查看完整报价"
+global overlay5 := 0  ; "千档盘口红绿点"
 
 
 
@@ -328,6 +329,7 @@ if WinExist("guba_jiucai.*")
   CreateOverlay(overlay2, 0, 0, 1725, 21, 255)    ; 顶部长白条
   CreateOverlay(overlay3, 224, 761, 462, 28, 255)    ; "上翻 下翻 顶部 底部"
   CreateOverlay(overlay4, 224, 689, 462, 25, 255)    ; "查看完整报价"
+  CreateOverlay(overlay5, 615, 790, 71, 173, 255)    ; "千档盘口红绿点"
 return
 
 #2::DestroyOverlays()  ; win+2 移除遮罩
@@ -358,6 +360,10 @@ DestroyOverlays() {
   if (overlay4 != 0) {
     Gui, %overlay4%:Destroy
     overlay4 := 0
+  }
+  if (overlay5 != 0) {
+    Gui, %overlay5%:Destroy
+    overlay5 := 0
   }
 }
 ; ############## 模块结束 ##############
