@@ -5,6 +5,9 @@ cmds_should_show_realnews:="0"
 
 global overlay1 := 0  ; 标题栏遮罩句柄
 global overlay2 := 0  ; 顶部白条遮罩句柄
+global overlay3 := 0  ; "上翻 下翻 顶部 底部"
+global overlay4 := 0  ; "查看完整报价"
+
 
 
 
@@ -321,8 +324,10 @@ if WinExist("guba_jiucai.*")
 ; 创建遮罩热键（可自定义组合键）
 #1::  ; win+1 创建遮罩
   DestroyOverlays()
-  CreateOverlay(overlay1, 224, 967, 236, 33, 255)  ; 短线精灵标题栏
+  CreateOverlay(overlay1, 224, 967, 462, 33, 255)  ; 短线精灵标题栏
   CreateOverlay(overlay2, 0, 0, 1725, 21, 255)    ; 顶部长白条
+  CreateOverlay(overlay3, 224, 761, 462, 28, 255)    ; "上翻 下翻 顶部 底部"
+  CreateOverlay(overlay4, 224, 689, 462, 25, 255)    ; "查看完整报价"
 return
 
 #2::DestroyOverlays()  ; win+2 移除遮罩
@@ -337,7 +342,7 @@ CreateOverlay(ByRef hwnd, x, y, w, h, transparency) {
 }
 
 DestroyOverlays() {
-  global overlay1, overlay2
+  global overlay1, overlay2, overlay3
   if (overlay1 != 0) {
     Gui, %overlay1%:Destroy
     overlay1 := 0
@@ -345,6 +350,14 @@ DestroyOverlays() {
   if (overlay2 != 0) {
     Gui, %overlay2%:Destroy
     overlay2 := 0
+  }
+  if (overlay3 != 0) {
+    Gui, %overlay3%:Destroy
+    overlay3 := 0
+  }
+  if (overlay4 != 0) {
+    Gui, %overlay4%:Destroy
+    overlay4 := 0
   }
 }
 ; ############## 模块结束 ##############
