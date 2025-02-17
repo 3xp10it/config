@@ -326,7 +326,7 @@ if WinExist("guba_jiucai.*")
 #1::  ; win+1 创建遮罩
   DestroyOverlays()
   CreateOverlay(overlay1, 224, 967, 462, 33, 255)  ; 短线精灵标题栏
-  CreateOverlay(overlay2, 0, 0, 1725, 21, 255)    ; 顶部长白条
+  CreateOverlay(overlay2, 0, 0, 1766, 21, 255)    ; 顶部长白条
   CreateOverlay(overlay3, 224, 761, 462, 28, 255)    ; "上翻 下翻 顶部 底部"
   CreateOverlay(overlay4, 224, 689, 462, 25, 255)    ; "查看完整报价"
   CreateOverlay(overlay5, 615, 790, 71, 173, 255)    ; "千档盘口红绿点"
