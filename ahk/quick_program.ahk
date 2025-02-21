@@ -8,6 +8,10 @@ global overlay2 := 0  ; 顶部白条遮罩句柄
 global overlay3 := 0  ; "上翻 下翻 顶部 底部"
 global overlay4 := 0  ; "查看完整报价"
 global overlay5 := 0  ; "千档盘口红绿点"
+global overlay6 := 0  ; "预警铃铛"
+global overlay7 := 0  ; "逐笔成交明细买单卖单"
+global overlay8 := 0  ; "逐笔成交明细时间序列"
+
 
 
 
@@ -330,6 +334,9 @@ if WinExist("guba_jiucai.*")
   CreateOverlay(overlay3, 224, 761, 462, 28, 255)    ; "上翻 下翻 顶部 底部"
   CreateOverlay(overlay4, 224, 689, 462, 25, 255)    ; "查看完整报价"
   CreateOverlay(overlay5, 615, 790, 71, 173, 255)    ; "千档盘口红绿点"
+  CreateOverlay(overlay6, 667, 667, 18, 20, 150)    ; "预警铃铛"
+  CreateOverlay(overlay7, 490, 90, 195, 402, 90)    ; "逐笔成交明细买单卖单"
+  CreateOverlay(overlay8, 225, 90, 147, 205, 150)    ;"逐笔成交明细时间序列"
 return
 
 #2::DestroyOverlays()  ; win+2 移除遮罩
@@ -364,6 +371,18 @@ DestroyOverlays() {
   if (overlay5 != 0) {
     Gui, %overlay5%:Destroy
     overlay5 := 0
+  }
+  if (overlay6 != 0) {
+    Gui, %overlay6%:Destroy
+    overlay6 := 0
+  }
+  if (overlay7 != 0) {
+    Gui, %overlay7%:Destroy
+    overlay7 := 0
+  }
+  if (overlay8 != 0) {
+    Gui, %overlay8%:Destroy
+    overlay8 := 0
   }
 }
 ; ############## 模块结束 ##############
