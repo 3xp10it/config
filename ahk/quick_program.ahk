@@ -346,7 +346,7 @@ return
 CreateOverlay(ByRef hwnd, x, y, w, h, transparency) {
   Gui, New, +HwndguiHwnd
   hwnd := guiHwnd
-  Gui, Color, 002b36
+  Gui, Color, 242424
   Gui, +ToolWindow -Caption +AlwaysOnTop +E0x20  ; +E0x20允许鼠标穿透
   Gui, Show, x%x% y%y% w%w% h%h% NA
   WinSet, Transparent, %transparency%, ahk_id %guiHwnd%
