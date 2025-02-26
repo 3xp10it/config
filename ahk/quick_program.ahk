@@ -12,6 +12,9 @@ global overlay6 := 0  ; "预警铃铛"
 global overlay7 := 0  ; "逐笔成交明细买单卖单"
 global overlay8 := 0  ; "逐笔成交明细时间序列"
 global overlay9 := 0  ; "委买队列"
+global overlay10 := 0  ; "成交量下拉框背景"
+global overlay11 := 0  ; "涨速排名下拉框背景"
+global overlay12 := 0  ; "自选股表单设置背景"
 
 
 
@@ -339,6 +342,9 @@ if WinExist("guba_jiucai.*")
   CreateOverlay(overlay7, 490, 90, 195, 402, 90)    ; "逐笔成交明细买单卖单"
   CreateOverlay(overlay8, 225, 90, 147, 205, 150)    ;"逐笔成交明细时间序列"
   CreateOverlay(overlay9, 460, 1053, 224, 44, 150)    ;"委买队列"
+  CreateOverlay(overlay10, 1757, 443, 107, 20, 225)    ; "成交量下拉框背景"
+  CreateOverlay(overlay11, 112, 1201, 107, 18, 225)    ; "涨速排名下拉框背景"
+  CreateOverlay(overlay12, 1, 490, 44, 20, 225)    ; "自选股表单设置背景"
 return
 
 #2::DestroyOverlays()  ; win+2 移除遮罩
@@ -346,7 +352,7 @@ return
 CreateOverlay(ByRef hwnd, x, y, w, h, transparency) {
   Gui, New, +HwndguiHwnd
   hwnd := guiHwnd
-  Gui, Color, 242424
+  Gui, Color, cce8cf
   Gui, +ToolWindow -Caption +AlwaysOnTop +E0x20  ; +E0x20允许鼠标穿透
   Gui, Show, x%x% y%y% w%w% h%h% NA
   WinSet, Transparent, %transparency%, ahk_id %guiHwnd%
@@ -389,6 +395,18 @@ DestroyOverlays() {
   if (overlay9 != 0) {
     Gui, %overlay9%:Destroy
     overlay9 := 0
+  }
+  if (overlay10 != 0) {
+    Gui, %overlay10%:Destroy
+    overlay10 := 0
+  }
+  if (overlay11 != 0) {
+    Gui, %overlay11%:Destroy
+    overlay11 := 0
+  }
+  if (overlay12 != 0) {
+    Gui, %overlay12%:Destroy
+    overlay12 := 0
   }
 }
 ; ############## 模块结束 ##############
