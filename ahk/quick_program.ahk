@@ -4,7 +4,8 @@
 cmds_should_show_realnews:="0"
 
 global overlay1 := 0  ; 标题栏遮罩句柄
-global overlay2 := 0  ; 顶部白条遮罩句柄
+global overlay2_1 := 0  ; 顶部白条遮罩句柄@left
+global overlay2_2 := 0  ; 顶部白条遮罩句柄@right
 global overlay3 := 0  ; "上翻 下翻 顶部 底部"
 global overlay4 := 0  ; "查看完整报价"
 global overlay5 := 0  ; "千档盘口红绿点"
@@ -334,7 +335,8 @@ if WinExist("guba_jiucai.*")
 #1::  ; win+1 创建遮罩
   DestroyOverlays()
   CreateOverlay(overlay1, 224, 967, 462, 33, 255)  ; 短线精灵标题栏
-  CreateOverlay(overlay2, 0, 0, 1766, 21, 255)    ; 顶部长白条
+  CreateOverlay(overlay2_1, 0, 0, 128, 21, 255)    ; 顶部长白条@left
+  CreateOverlay(overlay2_2, 166, 0, 1563, 21, 255)    ; 顶部长白条@right
   CreateOverlay(overlay3, 224, 761, 462, 28, 255)    ; "上翻 下翻 顶部 底部"
   CreateOverlay(overlay4, 224, 689, 462, 25, 255)    ; "查看完整报价"
   CreateOverlay(overlay5, 615, 789, 71, 178, 255)    ; "千档盘口红绿点"
@@ -364,9 +366,13 @@ DestroyOverlays() {
     Gui, %overlay1%:Destroy
     overlay1 := 0
   }
-  if (overlay2 != 0) {
-    Gui, %overlay2%:Destroy
-    overlay2 := 0
+  if (overlay2_1 != 0) {
+    Gui, %overlay2_1%:Destroy
+    overlay2_1 := 0
+  }
+  if (overlay2_2 != 0) {
+    Gui, %overlay2_2%:Destroy
+    overlay2_2 := 0
   }
   if (overlay3 != 0) {
     Gui, %overlay3%:Destroy
