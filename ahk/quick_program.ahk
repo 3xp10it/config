@@ -236,6 +236,28 @@ else
 }
 
 
+
+;win+c 打开tl50
+#c::switchToTL50()
+switchToTL50()
+{
+tl50:="ahk_exe tl50v2.exe"
+tl50_path:="D:\Program Files\天狼50\天狼50证券分析系统\tl50v2.exe"
+
+SetTitleMatchMode RegEx
+
+if ProcessExist("tl50v2.exe")=0
+    Run, %tl50_path%
+else
+{
+    SetTitleMatchMode RegEx
+    if WinExist(".*天狼50.*")
+    {
+    WinActivate
+    }
+}
+}
+
 ;win+s 打开实时新闻
 #s::switchTorealnews()
 switchTorealnews()
