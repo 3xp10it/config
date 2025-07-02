@@ -192,6 +192,12 @@ if WinExist(".*天狼50.*")
     WinMinimize
 }
 
+if WinExist(".*0AMV.*")
+{
+    ;顺便把0amv窗口最小化
+    WinMinimize
+}
+
 ;把实时新闻移到原来的位置
 SetTitleMatchMode, 2
 WinGet,hwnd,ID,实时新闻
@@ -237,6 +243,7 @@ else
     if WinExist(".*0AMV.*")
     {
     WinActivate
+    WinSet, TopMost, On, .*0AMV.*
     }
 }
 }
