@@ -186,6 +186,12 @@ if WinExist("guba_jiucai.*")
     WinMinimize
 }
 
+if WinExist(".*天狼50.*")
+{
+    ;顺便把天狼50窗口最小化
+    WinMinimize
+}
+
 ;把实时新闻移到原来的位置
 SetTitleMatchMode, 2
 WinGet,hwnd,ID,实时新闻
@@ -241,6 +247,7 @@ else
 #c::switchToTL50()
 switchToTL50()
 {
+
 tl50:="ahk_exe tl50v2.exe"
 tl50_path:="D:\Program Files\天狼50\天狼50证券分析系统\tl50v2.exe"
 
@@ -254,8 +261,11 @@ else
     if WinExist(".*天狼50.*")
     {
     WinActivate
+    WinSet, TopMost, On, .*天狼50.*
     }
 }
+
+
 }
 
 ;win+s 打开实时新闻
