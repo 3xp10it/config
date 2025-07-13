@@ -382,7 +382,7 @@ if WinExist("guba_jiucai.*")
   CreateOverlay(overlay6, 667, 667, 18, 20, 150)    ; "预警铃铛"
   CreateOverlay(overlay7, 490, 90, 195, 402, 90)    ; "逐笔成交明细买单卖单"
   CreateOverlay(overlay8, 225, 90, 147, 205, 150)    ;"逐笔成交明细时间序列"
-  CreateOverlay(overlay9, 460, 1053, 224, 44, 150)    ;"委买队列"
+  ;CreateOverlay(overlay9, 460, 1053, 224, 44, 150)    ;"委买队列"
   CreateOverlay(overlay10, 1757, 443, 107, 20, 225)    ; "成交量下拉框背景"
   CreateOverlay(overlay11, 112, 1201, 107, 18, 225)    ; "涨速排名下拉框背景"
   CreateOverlay(overlay12, 1, 490, 44, 20, 225)    ; "自选股表单设置背景"
@@ -437,10 +437,10 @@ DestroyOverlays() {
     Gui, %overlay8%:Destroy
     overlay8 := 0
   }
-  if (overlay9 != 0) {
-    Gui, %overlay9%:Destroy
-    overlay9 := 0
-  }
+  ;if (overlay9 != 0) {
+    ;Gui, %overlay9%:Destroy
+    ;overlay9 := 0
+  ;}
   if (overlay10 != 0) {
     Gui, %overlay10%:Destroy
     overlay10 := 0
