@@ -385,7 +385,7 @@ if WinExist("guba_jiucai.*")
   ;CreateOverlay(overlay9, 460, 1053, 224, 44, 150)    ;"委买队列"
   CreateOverlay(overlay10, 1757, 443, 107, 20, 225)    ; "成交量下拉框背景"
   ;CreateOverlay(overlay11, 112, 1201, 107, 18, 225)    ; "涨速排名下拉框背景"
-  CreateOverlay(overlay11, 338, 1049, 107, 18, 225)    ; "涨速排名下拉框背景"
+  CreateOverlay(overlay11, 336, 1050, 109, 18, 225)    ; "涨速排名下拉框背景"
   CreateOverlay(overlay12, 1, 490, 44, 20, 225)    ; "自选股表单设置背景"
 return
 
