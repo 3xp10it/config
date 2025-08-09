@@ -61,35 +61,17 @@ else
 switchToWechat()
 {
 
-;WeChat:="ahk_class WeChatMainWndForPC"
-;WeChat:="ahk_exe WeChat.exe"
+;WeChat:="ahk_class Qt51514QWindowIcon"
+;WeChat:="ahk_exe Weixin.exe"
 WeChat:="微信"
-WeChat_path:="D:\Program Files\Tencent\WeChat\WeChat.exe"
-if ProcessExist("WeChat.exe")=0
+WeChat_path:="D:\Program Files\Tencent\Weixin\Weixin.exe"
+if ProcessExist("Weixin.exe")=0
     Run, %WeChat_path%
 else
 {
-if WinExist("ahk_class WeChatLoginWndForPC") or WinExist("ahk_class WeChatMainWndForPC")
+if WinExist("ahk_class Qt51514QWindowIcon")
 {
-
-if WinExist("ahk_class WeChatMainWndForPC")
-{
-if not WinActive(ahk_class WeChatMainWndForPC)      ;被挡住或最小化了
-{
-    WinShow
-    WinActivate
-}
-else
-{
-    WinMinimize
-}
-}
-
-else
-{
-if WinExist("ahk_class WeChatLoginWndForPC")
-{
-if not WinActive(ahk_class WeChatLoginWndForPC)      ;被挡住或最小化了
+if not WinActive(ahk_class Qt51514QWindowIcon)      ;被挡住或最小化了
 {
     WinShow
     WinActivate
@@ -100,11 +82,7 @@ else
 }
 }
 }
-
 }
-}
-}
-
 
 ;win+b 打开ryij.txt
 #b::switchToryij()
