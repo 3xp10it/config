@@ -315,7 +315,7 @@ if (hwnd)
     WinGet, Style, Style, ahk_id %hwnd%
     if (!(Style & 0x20000000))    ;没有最小化才移动窗口
     {
-        WinMove, ahk_id %hwnd%, , 2665, 0, 784, 452
+        WinMove, ahk_id %hwnd%, , 2665, 0, 784, 397
         WinActivate
         WinSet, TopMost, On, ahk_id %hwnd%
     }
