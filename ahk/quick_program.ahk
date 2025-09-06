@@ -11,7 +11,7 @@ global overlay4 := 0  ; "查看完整报价"
 global overlay5 := 0  ; "千档盘口红绿点"
 global overlay6 := 0  ; "预警铃铛"
 global overlay7 := 0  ; "逐笔成交明细买单卖单"
-;global overlay8 := 0  ; "逐笔成交明细时间序列"
+global overlay8 := 0  ; "逐笔成交明细左边的白框"
 global overlay9 := 0  ; "委买队列"
 global overlay10 := 0  ; "成交量下拉框背景"
 global overlay11 := 0  ; "涨速排名下拉框背景"
@@ -184,7 +184,7 @@ if (hwnd)
     WinGet, Style, Style, ahk_id %hwnd%
     if (!(Style & 0x20000000))    ;没有最小化才移动窗口
     {
-        WinMove, ahk_id %hwnd%, , 687, 514, 1229, 601
+        WinMove, ahk_id %hwnd%, , 798, 514, 1138, 599
     }
     
 }
@@ -351,17 +351,17 @@ if WinExist("guba_jiucai.*")
 ; 创建遮罩热键（可自定义组合键）
 #1::  ; win+1 创建遮罩
   DestroyOverlays()
-  CreateOverlay(overlay1, 446, 970, 240,30, 255)  ; 短线精灵标题栏
+  CreateOverlay(overlay1, 389, 970, 238, 31, 255)  ; 短线精灵标题栏
   CreateOverlay(overlay2_1, 0, 0, 128, 21, 255)    ; 顶部长白条@left
-  CreateOverlay(overlay2_2, 166, 0, 1563, 21, 255)    ; 顶部长白条@right
-  CreateOverlay(overlay3, 233, 764, 453, 23, 255)    ; "上翻 下翻 顶部 底部"
-  CreateOverlay(overlay4, 234, 689, 452, 25, 255)    ; "查看完整报价"
-  CreateOverlay(overlay5, 617, 789, 69, 178, 255)    ; "千档盘口红绿点"
-  CreateOverlay(overlay6, 667, 667, 18, 20, 150)    ; "预警铃铛"
-  CreateOverlay(overlay7, 495, 90, 190, 402, 90)    ; "逐笔成交明细买单卖单"
-  ;CreateOverlay(overlay8, 234, 90, 138, 205, 150)    ;"逐笔成交明细时间序列"
+  CreateOverlay(overlay2_2, 166, 0, 1579, 21, 255)    ; 顶部长白条@right
+  CreateOverlay(overlay3, 233, 764, 394, 23, 255)    ; "上翻 下翻 顶部 底部"
+  CreateOverlay(overlay4, 234, 689, 392, 25, 255)    ; "查看完整报价"
+  CreateOverlay(overlay5, 571, 789, 56, 178, 255)    ; "千档盘口红绿点"
+  CreateOverlay(overlay6, 611, 667, 15, 20, 150)    ; "预警铃铛"
+  CreateOverlay(overlay7, 460, 90, 165, 351, 90)    ; "逐笔成交明细买单卖单"
+  CreateOverlay(overlay8, 233, 51, 14, 21, 255)    ;"逐笔成交明细左边的白框"
   ;CreateOverlay(overlay9, 460, 1053, 224, 44, 150)    ;"委买队列"
-  CreateOverlay(overlay10, 1757, 443, 107, 20, 225)    ; "成交量下拉框背景"
+  CreateOverlay(overlay10, 1775, 443, 108, 20, 225)    ; "成交量下拉框背景"
   CreateOverlay(overlay11, 120, 1211, 109,18, 225)    ; "涨速排名下拉框背景"
   CreateOverlay(overlay12, 1, 490, 44, 20, 225)    ; "自选股表单设置背景"
 return
@@ -411,10 +411,10 @@ DestroyOverlays() {
     Gui, %overlay7%:Destroy
     overlay7 := 0
   }
-  ;if (overlay8 != 0) {
-    ;Gui, %overlay8%:Destroy
-    ;overlay8 := 0
-  ;}
+  if (overlay8 != 0) {
+    Gui, %overlay8%:Destroy
+    overlay8 := 0
+  }
   ;if (overlay9 != 0) {
     ;Gui, %overlay9%:Destroy
     ;overlay9 := 0
