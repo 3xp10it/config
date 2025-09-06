@@ -3,7 +3,7 @@
 
 cmds_should_show_realnews:="0"
 
-global overlay1 := 0  ; 标题栏遮罩句柄
+global overlay1 := 0  ; 短线精灵标题栏
 global overlay2_1 := 0  ; 顶部白条遮罩句柄@left
 global overlay2_2 := 0  ; 顶部白条遮罩句柄@right
 global overlay3 := 0  ; "上翻 下翻 顶部 底部"
@@ -153,6 +153,7 @@ SetTitleMatchMode RegEx
 if WinExist(".*9\.30\.72.*")
 {
 WinActivate
+
 }
 else
 {
@@ -184,7 +185,7 @@ if (hwnd)
     WinGet, Style, Style, ahk_id %hwnd%
     if (!(Style & 0x20000000))    ;没有最小化才移动窗口
     {
-        WinMove, ahk_id %hwnd%, , 798, 514, 1138, 599
+        WinMove, ahk_id %hwnd%, , 795, 514, 1141, 599
     }
     
 }
@@ -273,12 +274,45 @@ cmds_should_show_realnews:="1"
 if (cmds_should_show_realnews=="0")
 {
 WinMinimize
+;将大单窗口移动到短线精灵左边
+SetTitleMatchMode RegEx
+if WinExist("大单.*")
+{
+    targetWindowTitle := "大单.*"
+    WinMove, %targetWindowTitle%, , 232, 787, 168, 595
+    WinGet, targetWindowID, ID, 大单.*
+    WinSet, AlwaysOnTop, On, ahk_id %targetWindowID%
+    if WinExist("排板")
+    {
+        ;注意，ths的主窗口title包含“排板”,orderlist的title是“排板”，这里要改为精确匹配否则有时候会将ths置顶
+        SetTitleMatchMode, 1
+        WinGet, orderlistWindowID, ID, 排板
+        WinSet, AlwaysOnTop, Off, ahk_id %orderlistWindowID%
+    }
+
+}
 cmds_should_show_realnews:="1"
 }
 else if (cmds_should_show_realnews=="1")
 {
+    ;下面这个WinActivate是打开实时新闻窗口
     WinActivate
-    WinSet, TopMost, On, %targetWindowTitle%
+
+    ;恢复大单窗口原来的位置
+    SetTitleMatchMode RegEx
+    if WinExist("大单.*")
+    {
+        targetWindowTitle := "大单.*"
+        WinMove, %targetWindowTitle%, , 628, 514, 167, 599
+        if WinExist("排板")
+        {
+            ;注意，ths的主窗口title包含“排板”,orderlist的title是“排板”，这里要改为精确匹配否则有时候会将ths置顶
+            SetTitleMatchMode, 1
+            WinGet, orderlistWindowID, ID, 排板
+            WinSet, AlwaysOnTop, On, ahk_id %orderlistWindowID%
+        }
+
+    }
     cmds_should_show_realnews:="0"
 }
 }
@@ -315,7 +349,7 @@ if (hwnd)
     WinGet, Style, Style, ahk_id %hwnd%
     if (!(Style & 0x20000000))    ;没有最小化才移动窗口
     {
-        WinMove, ahk_id %hwnd%, , 2665, 0, 784, 397
+        WinMove, ahk_id %hwnd%, , 2666, 0, 783, 1140
         WinActivate
         WinSet, TopMost, On, ahk_id %hwnd%
     }
@@ -351,14 +385,14 @@ if WinExist("guba_jiucai.*")
 ; 创建遮罩热键（可自定义组合键）
 #1::  ; win+1 创建遮罩
   DestroyOverlays()
-  CreateOverlay(overlay1, 389, 970, 238, 31, 255)  ; 短线精灵标题栏
+  CreateOverlay(overlay1, 380, 970, 247, 31, 255)  ; 短线精灵标题栏
   CreateOverlay(overlay2_1, 0, 0, 128, 21, 255)    ; 顶部长白条@left
   CreateOverlay(overlay2_2, 166, 0, 1579, 21, 255)    ; 顶部长白条@right
   CreateOverlay(overlay3, 233, 764, 394, 23, 255)    ; "上翻 下翻 顶部 底部"
   CreateOverlay(overlay4, 234, 689, 392, 25, 255)    ; "查看完整报价"
   CreateOverlay(overlay5, 571, 789, 56, 178, 255)    ; "千档盘口红绿点"
   CreateOverlay(overlay6, 611, 667, 15, 20, 150)    ; "预警铃铛"
-  CreateOverlay(overlay7, 460, 90, 165, 351, 90)    ; "逐笔成交明细买单卖单"
+  CreateOverlay(overlay7, 460, 90, 165, 358, 90)    ; "逐笔成交明细买单卖单"
   CreateOverlay(overlay8, 233, 51, 14, 21, 255)    ;"逐笔成交明细左边的白框"
   ;CreateOverlay(overlay9, 460, 1053, 224, 44, 150)    ;"委买队列"
   CreateOverlay(overlay10, 1775, 443, 108, 20, 225)    ; "成交量下拉框背景"
