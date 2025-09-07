@@ -74,6 +74,8 @@ IfWinExist, ahk_exe chrome.exe
     WinActivate
     chromeTitle := " - Google Chrome"
     WinMove,%chromeTitle%,,789,-1,1887,1409
+    WinGet, hwnd, ID, % chromeTitle  ; 获取窗口句柄 
+    WinSet, TopMost, On, ahk_id %hwnd%  ; 置顶 
     
 }
 else
