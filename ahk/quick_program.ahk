@@ -153,6 +153,9 @@ SetTitleMatchMode RegEx
 if WinExist(".*9\.30\.72.*")
 {
 WinActivate
+thsWindowTitle := ".*9\.30\.72.*"
+WinMove, %thsWindowTitle%, , -7, -6, 1950, 1414
+CreateOverlays()
 
 }
 else
@@ -383,22 +386,25 @@ if WinExist("guba_jiucai.*")
 ; 两个全局变量要放在文件最前面，否则会出错
 
 ; 创建遮罩热键（可自定义组合键）
-#1::  ; win+1 创建遮罩
-  DestroyOverlays()
-  CreateOverlay(overlay1, 380, 970, 247, 31, 255)  ; 短线精灵标题栏
-  CreateOverlay(overlay2_1, 0, 0, 128, 21, 255)    ; 顶部长白条@left
-  CreateOverlay(overlay2_2, 166, 0, 1579, 21, 255)    ; 顶部长白条@right
-  CreateOverlay(overlay3, 233, 764, 394, 23, 255)    ; "上翻 下翻 顶部 底部"
-  CreateOverlay(overlay4, 234, 689, 392, 25, 255)    ; "查看完整报价"
-  CreateOverlay(overlay5, 571, 789, 56, 178, 255)    ; "千档盘口红绿点"
-  CreateOverlay(overlay6, 611, 667, 15, 20, 150)    ; "预警铃铛"
-  CreateOverlay(overlay7, 460, 90, 165, 358, 90)    ; "逐笔成交明细买单卖单"
-  CreateOverlay(overlay8, 233, 51, 14, 21, 255)    ;"逐笔成交明细左边的白框"
-  ;CreateOverlay(overlay9, 460, 1053, 224, 44, 150)    ;"委买队列"
-  CreateOverlay(overlay10, 1775, 443, 108, 20, 225)    ; "成交量下拉框背景"
-  CreateOverlay(overlay11, 120, 1211, 109,18, 225)    ; "涨速排名下拉框背景"
-  CreateOverlay(overlay12, 1, 490, 44, 20, 225)    ; "自选股表单设置背景"
-return
+#1::CreateOverlays() ; win+1 创建遮罩
+
+
+CreateOverlays() {
+    DestroyOverlays()
+    CreateOverlay(overlay1, 380, 970, 247, 31, 255)  ; 短线精灵标题栏
+    CreateOverlay(overlay2_1, 0, 0, 128, 21, 255)    ; 顶部长白条@left
+    CreateOverlay(overlay2_2, 166, 0, 1579, 21, 255)    ; 顶部长白条@right
+    CreateOverlay(overlay3, 233, 764, 394, 23, 255)    ; "上翻 下翻 顶部 底部"
+    CreateOverlay(overlay4, 234, 689, 392, 25, 255)    ; "查看完整报价"
+    CreateOverlay(overlay5, 571, 789, 56, 178, 255)    ; "千档盘口红绿点"
+    CreateOverlay(overlay6, 611, 667, 15, 20, 150)    ; "预警铃铛"
+    CreateOverlay(overlay7, 460, 90, 165, 358, 90)    ; "逐笔成交明细买单卖单"
+    CreateOverlay(overlay8, 233, 51, 14, 21, 255)    ;"逐笔成交明细左边的白框"
+    ;CreateOverlay(overlay9, 460, 1053, 224, 44, 150)    ;"委买队列"
+    CreateOverlay(overlay10, 1775, 443, 108, 20, 225)    ; "成交量下拉框背景"
+    CreateOverlay(overlay11, 120, 1211, 109,18, 225)    ; "涨速排名下拉框背景"
+    CreateOverlay(overlay12, 1, 490, 44, 20, 225)    ; "自选股表单设置背景"
+}
 
 #2::DestroyOverlays()  ; win+2 移除遮罩
 
