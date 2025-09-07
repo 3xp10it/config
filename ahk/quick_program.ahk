@@ -43,6 +43,8 @@ SetTitleMatchMode, 2
 IfWinExist, ahk_exe chrome.exe
 {
     WinActivate
+    chromeTitle := " - Google Chrome"
+    WinMove,%chromeTitle%,,2662,-1,786,1409
 }
 else
 {
@@ -50,6 +52,37 @@ else
 }
 
 }
+
+
+
+
+#^g::switchToUseChrome()
+switchToUseChrome()
+{
+SetTitleMatchMode RegEx
+if WinExist("guba_jiucai.*")
+{
+    ;顺便把guba_jiucai窗口最小化
+    WinMinimize
+}
+
+SetTitleMatchMode, 2
+IfWinExist, ahk_exe chrome.exe
+{
+    WinActivate
+    chromeTitle := " - Google Chrome"
+    WinMove,%chromeTitle%,,789,-1,1887,1409
+    
+}
+else
+{
+    Run, chrome.exe
+}
+
+}
+
+
+
 
 
 
