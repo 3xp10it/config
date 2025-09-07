@@ -45,6 +45,8 @@ IfWinExist, ahk_exe chrome.exe
     WinActivate
     chromeTitle := " - Google Chrome"
     WinMove,%chromeTitle%,,2662,-1,786,1409
+    WinGet, hwnd, ID, % chromeTitle  ; 获取窗口句柄 
+    WinSet, TopMost, On, ahk_id %hwnd%  ; 置顶 
 }
 else
 {
@@ -388,6 +390,15 @@ if (hwnd)
         WinMove, ahk_id %hwnd%, , 2666, 0, 783, 1140
         WinActivate
         WinSet, TopMost, On, ahk_id %hwnd%
+        ;将chrome取消置顶，否则点一下实时新闻就会和chrome的置顶状态冲突
+        chromeTitle := " - Google Chrome"  ; Chrome 窗口标题特征 
+        SetTitleMatchMode, 2  ; 设置标题匹配模式为"包含"
+        ; 检测窗口是否存在 
+        if WinExist(chromeTitle) {
+            WinGet, hwnd, ID, % chromeTitle  ; 获取窗口句柄 
+            WinSet, TopMost, Off, ahk_id %hwnd%  ; 取消置顶 
+        } 
+
     }
     
 }
