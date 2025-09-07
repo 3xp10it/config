@@ -45,8 +45,8 @@ IfWinExist, ahk_exe chrome.exe
     WinActivate
     chromeTitle := " - Google Chrome"
     WinMove,%chromeTitle%,,2662,-1,786,1409
-    WinGet, hwnd, ID, % chromeTitle  ; 获取窗口句柄 
-    WinSet, TopMost, On, ahk_id %hwnd%  ; 置顶 
+    WinGet, chrome_hwnd, ID, %chromeTitle%  ; 获取窗口句柄
+    WinSet, AlwaysOnTop, On, ahk_id %chrome_hwnd%  ; 置顶 
 }
 else
 {
@@ -74,8 +74,8 @@ IfWinExist, ahk_exe chrome.exe
     WinActivate
     chromeTitle := " - Google Chrome"
     WinMove,%chromeTitle%,,789,-1,1887,1409
-    WinGet, hwnd, ID, % chromeTitle  ; 获取窗口句柄 
-    WinSet, TopMost, On, ahk_id %hwnd%  ; 置顶 
+    WinGet, chrome_hwnd, ID, % chromeTitle  ; 获取窗口句柄 
+    WinSet, AlwaysOnTop, On, ahk_id %chrome_hwnd%  ; 置顶 
     
 }
 else
@@ -335,13 +335,15 @@ cmds_should_show_realnews:="1"
 }
 else if (cmds_should_show_realnews=="1")
 {
-    ;下面这个WinActivate是打开实时新闻窗口
-    WinActivate
+    ;打开实时新闻窗口
+    WinRestore
 
     ;恢复大单窗口原来的位置
     SetTitleMatchMode RegEx
     if WinExist("大单.*")
     {
+        ;打开大单窗口        
+        WinRestore        
         targetWindowTitle := "大单.*"
         WinMove, %targetWindowTitle%, , 628, 514, 167, 599
         if WinExist("排板")
@@ -389,17 +391,22 @@ if (hwnd)
     WinGet, Style, Style, ahk_id %hwnd%
     if (!(Style & 0x20000000))    ;没有最小化才移动窗口
     {
-        WinMove, ahk_id %hwnd%, , 2666, 0, 783, 1140
-        WinActivate
-        WinSet, TopMost, On, ahk_id %hwnd%
         ;将chrome取消置顶，否则点一下实时新闻就会和chrome的置顶状态冲突
         chromeTitle := " - Google Chrome"  ; Chrome 窗口标题特征 
         SetTitleMatchMode, 2  ; 设置标题匹配模式为"包含"
-        ; 检测窗口是否存在 
+        ;检测窗口是否存在 
         if WinExist(chromeTitle) {
             WinGet, hwnd, ID, % chromeTitle  ; 获取窗口句柄 
-            WinSet, TopMost, Off, ahk_id %hwnd%  ; 取消置顶 
+            WinSet, AlwaysOnTop, Off, ahk_id %hwnd%  ; 取消置顶 
         } 
+
+ 
+        realnewsTitle := "实时新闻"
+        WinMove,%realnewsTitle%, , 2666, -1, 783, 1141
+        WinGet, realnews_hwnd, ID, %realnewsTitle%  ; 获取窗口句柄
+        WinSet, AlwaysOnTop, Off, ahk_id %realnews_hwnd%  ; 置顶 
+        WinActivate,实时新闻
+        WinSet, AlwaysOnTop, On, ahk_id %realnews_hwnd%  ; 置顶 
 
     }
     
