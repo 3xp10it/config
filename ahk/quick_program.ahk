@@ -44,7 +44,7 @@ IfWinExist, ahk_exe chrome.exe
 {
     WinActivate
     chromeTitle := " - Google Chrome"
-    WinMove,%chromeTitle%,,2662,-1,786,1409
+    WinMove,%chromeTitle%,,2662,6,786,1442
     WinGet, chrome_hwnd, ID, %chromeTitle%  ; 获取窗口句柄
     WinSet, AlwaysOnTop, On, ahk_id %chrome_hwnd%  ; 置顶 
 }
@@ -73,7 +73,7 @@ IfWinExist, ahk_exe chrome.exe
 {
     WinActivate
     chromeTitle := " - Google Chrome"
-    WinMove,%chromeTitle%,,789,-1,1887,1409
+    WinMove,%chromeTitle%,,776,6,1901,1442
     WinGet, chrome_hwnd, ID, % chromeTitle  ; 获取窗口句柄 
     WinSet, AlwaysOnTop, On, ahk_id %chrome_hwnd%  ; 置顶 
     
@@ -112,6 +112,7 @@ if not WinActive(ahk_class Qt51514QWindowIcon)      ;被挡住或最小化了
 {
     WinShow
     WinActivate
+    WinSet, TopMost, On, ahk_class Qt51514QWindowIcon
 }
 else
 {
@@ -191,7 +192,7 @@ if WinExist(".*9\.30\.72.*")
 {
 WinActivate
 thsWindowTitle := ".*9\.30\.72.*"
-WinMove, %thsWindowTitle%, , -7, -6, 1950, 1414
+WinMove, %thsWindowTitle%, , -7, 0, 1968, 1446
 CreateOverlays()
 
 }
@@ -225,7 +226,7 @@ if (hwnd)
     WinGet, Style, Style, ahk_id %hwnd%
     if (!(Style & 0x20000000))    ;没有最小化才移动窗口
     {
-        WinMove, ahk_id %hwnd%, , 795, 514, 1141, 599
+        WinMove, ahk_id %hwnd%, , 784, 465, 1033, 499
     }
     
 }
@@ -319,7 +320,7 @@ SetTitleMatchMode RegEx
 if WinExist("大单.*")
 {
     targetWindowTitle := "大单.*"
-    WinMove, %targetWindowTitle%, , 232, 787, 168, 595
+    WinMove, %targetWindowTitle%, , 231, 800, 154, 639
     WinGet, targetWindowID, ID, 大单.*
     WinSet, AlwaysOnTop, On, ahk_id %targetWindowID%
     if WinExist("排板")
@@ -345,7 +346,7 @@ else if (cmds_should_show_realnews=="1")
         ;打开大单窗口        
         WinRestore        
         targetWindowTitle := "大单.*"
-        WinMove, %targetWindowTitle%, , 628, 514, 167, 599
+        WinMove, %targetWindowTitle%, , 626, 465, 158, 499
         if WinExist("排板")
         {
             ;注意，ths的主窗口title包含“排板”,orderlist的title是“排板”，这里要改为精确匹配否则有时候会将ths置顶
@@ -433,7 +434,26 @@ if WinExist("guba_jiucai.*")
 }
 
 
-
+;win+x打开同花顺网上股票交易系统
+#x::switchToXIADAN()
+switchToXIADAN()
+{
+SetTitleMatchMode, 2
+WinGet,xiadan_hwnd,ID,网上股票交易系统5.0
+if (xiadan_hwnd)
+{
+    WinGet, Style, Style, ahk_id %xiadan_hwnd%
+    if (!(Style & 0x20000000))    ;没有最小化则最小化
+    {
+        WinMinimize,ahk_id %xiadan_hwnd%
+    }
+    else
+    {
+        WinActivate,ahk_id %xiadan_hwnd%
+        WinSet, TopMost, On, ahk_id %xiadan_hwnd%
+    }
+}
+}
 
 ; ############## 同花顺遮罩模块 ##############
 ; 两个全局变量要放在文件最前面，否则会出错
@@ -444,19 +464,19 @@ if WinExist("guba_jiucai.*")
 
 CreateOverlays() {
     DestroyOverlays()
-    CreateOverlay(overlay1, 380, 970, 247, 31, 255)  ; 短线精灵标题栏
-    CreateOverlay(overlay2_1, 0, 0, 128, 21, 255)    ; 顶部长白条@left
-    CreateOverlay(overlay2_2, 166, 0, 1579, 21, 255)    ; 顶部长白条@right
-    CreateOverlay(overlay3, 233, 764, 394, 23, 255)    ; "上翻 下翻 顶部 底部"
-    CreateOverlay(overlay4, 234, 689, 392, 25, 255)    ; "查看完整报价"
-    CreateOverlay(overlay5, 571, 789, 56, 178, 255)    ; "千档盘口红绿点"
-    CreateOverlay(overlay6, 611, 667, 15, 20, 150)    ; "预警铃铛"
-    CreateOverlay(overlay7, 460, 90, 165, 358, 90)    ; "逐笔成交明细买单卖单"
-    CreateOverlay(overlay8, 233, 51, 14, 21, 255)    ;"逐笔成交明细左边的白框"
+    CreateOverlay(overlay1, 383, 995, 242, 31, 255)  ; 短线精灵标题栏
+    CreateOverlay(overlay2_1, 0, 7, 128, 21, 255)    ; 顶部长白条@left
+    CreateOverlay(overlay2_2, 166, 7, 1598, 21, 255)    ; 顶部长白条@right
+    CreateOverlay(overlay3, 233, 777, 392, 23, 255)    ; "上翻 下翻 顶部 底部"
+    CreateOverlay(overlay4, 234, 702, 390, 25, 255)    ; "查看完整报价"
+    CreateOverlay(overlay5, 567, 802, 58, 190, 255)    ; "千档盘口红绿点"
+    CreateOverlay(overlay6, 611, 680, 13, 20, 150)    ; "预警铃铛"
+    CreateOverlay(overlay7, 459, 101, 165, 368, 90)    ; "逐笔成交明细买单卖单"
+    CreateOverlay(overlay8, 233, 57, 14, 21, 255)    ;"逐笔成交明细左边的白框"
     ;CreateOverlay(overlay9, 460, 1053, 224, 44, 150)    ;"委买队列"
-    CreateOverlay(overlay10, 1775, 443, 108, 20, 225)    ; "成交量下拉框背景"
+    CreateOverlay(overlay10, 1793, 403, 108, 20, 225)    ; "成交量下拉框背景"
     CreateOverlay(overlay11, 120, 1211, 109,18, 225)    ; "涨速排名下拉框背景"
-    CreateOverlay(overlay12, 1, 490, 44, 20, 225)    ; "自选股表单设置背景"
+    CreateOverlay(overlay12, 1, 507, 44, 20, 225)    ; "自选股表单设置背景"
 }
 
 #2::DestroyOverlays()  ; win+2 移除遮罩
