@@ -315,6 +315,10 @@ cmds_should_show_realnews:="1"
 if (cmds_should_show_realnews=="0")
 {
 WinMinimize
+;将涨停股和股票池最小化
+WinMinimize,涨停股
+WinMinimize,股票池
+
 ;将大单窗口移动到短线精灵左边
 SetTitleMatchMode RegEx
 if WinExist("大单.*")
@@ -338,6 +342,10 @@ else if (cmds_should_show_realnews=="1")
 {
     ;打开实时新闻窗口
     WinRestore
+
+    ;打开涨停股和股票池
+    WinRestore,涨停股
+    WinRestore,股票池
 
     ;恢复大单窗口原来的位置
     SetTitleMatchMode RegEx
@@ -475,7 +483,7 @@ CreateOverlays() {
     CreateOverlay(overlay8, 233, 57, 14, 21, 255)    ;"逐笔成交明细左边的白框"
     ;CreateOverlay(overlay9, 460, 1053, 224, 44, 150)    ;"委买队列"
     CreateOverlay(overlay10, 1793, 403, 108, 20, 225)    ; "成交量下拉框背景"
-    CreateOverlay(overlay11, 120, 1211, 109,18, 225)    ; "涨速排名下拉框背景"
+    CreateOverlay(overlay11, 120, 1245, 108,18, 225)    ; "涨速排名下拉框背景"
     CreateOverlay(overlay12, 1, 507, 44, 20, 225)    ; "自选股表单设置背景"
 }
 
