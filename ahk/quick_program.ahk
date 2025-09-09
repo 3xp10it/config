@@ -463,6 +463,14 @@ if (xiadan_hwnd)
 }
 }
 
+;win+z将当前激活的窗口最小化
+#z::minimize_current_window()
+minimize_current_window()
+{
+    WinMinimize,A
+}
+
+
 ; ############## 同花顺遮罩模块 ##############
 ; 两个全局变量要放在文件最前面，否则会出错
 
