@@ -411,7 +411,7 @@ if (hwnd)
 
  
         realnewsTitle := "实时新闻"
-        WinMove,%realnewsTitle%, , 2666, -1, 783, 1141
+        WinMove,%realnewsTitle%, , 2669, 5, 780, 1135
         WinGet, realnews_hwnd, ID, %realnewsTitle%  ; 获取窗口句柄
         WinSet, AlwaysOnTop, Off, ahk_id %realnews_hwnd%  ; 置顶 
         WinActivate,实时新闻
