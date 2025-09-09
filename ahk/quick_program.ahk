@@ -1,6 +1,10 @@
 ;注意，本文件要以ansi编码保存，否则与中文相关的操作会失败
 ;注意，全局变量只能放在文件最前面，否则会出错
 
+#SingleInstance Force  ; 关键防护（防多实例冲突）
+#InstallKeybdHook      ; 保障Win+热键可靠性 
+
+
 cmds_should_show_realnews:="0"
 
 global overlay1 := 0  ; 短线精灵标题栏
@@ -17,6 +21,86 @@ global overlay10 := 0  ; "成交量下拉框背景"
 global overlay11 := 0  ; "涨速排名下拉框背景"
 global overlay12 := 0  ; "自选股表单设置背景"
 
+
+log_Enabled := true                     ; 日志开关 
+log_FilePath := "d:\WinHistory.log"  ; 日志路径 
+log_MaxSize := 10 * 1024 * 1024         ; 最大10MB 
+
+
+
+;以下3个全局变量用于win+b的函数
+global g_windowHistory := []        ; 窗口句柄历史栈（最大10条）
+global g_maxHistory := 10           ; 历史记录最大长度 
+Gui, +LastFound 
+hWnd := WinExist()
+regResult := DllCall("RegisterShellHookWindow", "UInt", hWnd)
+msgNum := DllCall("RegisterWindowMessage", "Str", "SHELLHOOK")
+OnMessage(msgNum, "ShellMessage")
+; ============================================= 
+; 核心函数：处理窗口激活消息 (HSHELL_WINDOWACTIVATED)
+; ============================================= 
+ShellMessage(wParam, lParam) {
+    ; 显示所有事件并写入日志
+    ;WinGetTitle, title, ahk_id %lParam%
+    ;WinGet, processName, ProcessName, ahk_id %lParam%
+    ; 写入日志
+    ;logMessage := 
+    ;(Join 
+    ;    "事件: wParam=" wParam 
+    ;    " | 窗口标题=" (title ? title : "N/A")
+    ;    " | 进程名=" (processName ? processName : "N/A")
+    ;    " | 句柄=" lParam 
+    ;)
+    ;WriteToLog(logMessage)
+
+
+    if (wParam != 32772 || lParam==0) ;HSHELL_RUDEAPPACTIVATED (值=0x8004，也即32772)
+        return 
+    ; 排除无效窗口（桌面/任务栏/自身窗口）
+    WinGetTitle, title, ahk_id %lParam%
+    if (title = "" || title = "Program Manager" || InStr(title, "AutoHotkey"))
+        return 
+    ; 更新历史记录（排除重复激活）
+    if (g_windowHistory[1] != lParam) {
+        g_windowHistory.InsertAt(1, lParam) ; 插入到栈顶     
+WriteToLog(lParam)
+        ; 保持历史记录不超过上限 
+        if (g_windowHistory.Length() > g_maxHistory)
+            ;pop是删除栈底元素
+            g_windowHistory.Pop()
+    }
+}
+
+
+
+ 
+; ============================================= 
+; 日志写入函数 
+; ============================================= 
+WriteToLog(message) {
+    global log_Enabled, log_FilePath, log_MaxSize 
+    
+    if !log_Enabled 
+        return 
+    
+    ; 自动创建日志文件 
+    if !FileExist(log_FilePath)
+        FileAppend,, %log_FilePath%, UTF-8 
+    
+    ; 检查文件大小 
+    FileGetSize, fileSize, %log_FilePath%
+    if (fileSize > log_MaxSize) {
+        FileDelete, %log_FilePath%.old 
+        FileMove, %log_FilePath%, %log_FilePath%.old 
+    }
+    
+    ; 构建日志内容 
+    FormatTime, timestamp,, yyyy-MM-dd HH:mm:ss.fff  
+    fullMessage := "[" timestamp "] " message "`n"
+    
+    ; 写入文件 
+    FileAppend, %fullMessage%, %log_FilePath%, UTF-8 
+}
 
 
 
@@ -42,7 +126,7 @@ if WinExist("guba_jiucai.*")
 SetTitleMatchMode, 2
 IfWinExist, ahk_exe chrome.exe
 {
-    WinActivate
+    WinRestore
     chromeTitle := " - Google Chrome"
     WinMove,%chromeTitle%,,2662,6,786,1442
     WinGet, chrome_hwnd, ID, %chromeTitle%  ; 获取窗口句柄
@@ -71,7 +155,7 @@ if WinExist("guba_jiucai.*")
 SetTitleMatchMode, 2
 IfWinExist, ahk_exe chrome.exe
 {
-    WinActivate
+    WinRestore
     chromeTitle := " - Google Chrome"
     WinMove,%chromeTitle%,,776,6,1901,1442
     WinGet, chrome_hwnd, ID, % chromeTitle  ; 获取窗口句柄 
@@ -122,8 +206,45 @@ else
 }
 }
 
-;win+b 打开ryij.txt
-#b::switchToryij()
+
+;win+b打开上一个激活的窗口
+#b::switch_to_last_active_window()
+switch_to_last_active_window()
+{
+    
+    ; 检查历史记录有效性 
+    if (g_windowHistory.Length() < 2) {
+        ;MsgBox, 没有可用的历史窗口记录 
+        return 
+    }
+    
+    targetHwnd := g_windowHistory[2] ; 获取上一个窗口（栈顶是当前窗口）
+    
+    ; 检查窗口是否存在 
+    if !WinExist("ahk_id " targetHwnd) {
+        MsgBox, 目标窗口已关闭 
+        g_windowHistory.RemoveAt(2) ; 清理无效记录 
+        return 
+    }
+    
+    ; 恢复最小化窗口并激活 
+    WinGet, minMax, MinMax, ahk_id %targetHwnd%
+    if (minMax = -1) 
+        WinRestore, ahk_id %targetHwnd%
+    WinActivate, ahk_id %targetHwnd%
+    WinGetTitle, title, ahk_id %targetHwnd%
+    if (InStr(title,"同花顺(")==0)
+    {
+        ;同花顺的主窗口不置顶，要不然会挡住stockapp的置顶窗口
+        WinSet, TopMost, On,ahk_id %targetHwnd%
+    }
+
+}
+
+
+
+;win+ctrl+b 打开ryij.txt
+#^b::switchToryij()
 switchToryij()
 {
 global cmds_should_show_realnews
@@ -260,11 +381,9 @@ if ProcessExist("WavMain.exe")=0
 else
 {
     SetTitleMatchMode RegEx
-    if WinExist(".*0AMV.*")
-    {
-    WinActivate
-    WinSet, TopMost, On, .*0AMV.*
-    }
+    WinGet, znz_hwnd, ID, 指南针全赢决策系统
+    WinActivate,ahk_id %znz_hwnd%
+    WinSet, TopMost, On, ahk_id %znz_hwnd%
 }
 }
 
@@ -405,7 +524,7 @@ if (hwnd)
         SetTitleMatchMode, 2  ; 设置标题匹配模式为"包含"
         ;检测窗口是否存在 
         if WinExist(chromeTitle) {
-            WinGet, hwnd, ID, % chromeTitle  ; 获取窗口句柄 
+            WinGet, hwnd, ID, %chromeTitle%
             WinSet, AlwaysOnTop, Off, ahk_id %hwnd%  ; 取消置顶 
         } 
 
@@ -470,6 +589,18 @@ minimize_current_window()
     WinMinimize,A
 }
 
+;win+q将当前激活的窗口置顶
+#q::set_current_window_to_top()
+set_current_window_to_top()
+{
+    WinGetTitle,title,A
+    if (InStr(title,"同花顺(")==0)
+    {
+        ;同花顺的主窗口不置顶，要不然会挡住stockapp的置顶窗口
+        WinSet, TopMost, On, A
+    }
+
+}
 
 ; ############## 同花顺遮罩模块 ##############
 ; 两个全局变量要放在文件最前面，否则会出错
