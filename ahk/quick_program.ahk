@@ -6,6 +6,7 @@
 
 
 cmds_should_show_realnews:="0"
+win_ctrl_w_should_close_ths_fenxi_window:="0"
 
 global overlay1 := 0  ; 短线精灵标题栏
 global overlay2_1 := 0  ; 顶部白条遮罩句柄@left
@@ -671,6 +672,31 @@ set_current_window_to_top()
     }
 
 }
+
+;win+^+w打开同花顺的分析功能
+#^w::ths_fenxi()
+ths_fenxi()
+{
+global win_ctrl_w_should_close_ths_fenxi_window
+if (win_ctrl_w_should_close_ths_fenxi_window=="0")
+{
+    WinActivate,同花顺(
+    CoordMode, Mouse, Window     ; 使用窗口坐标
+    Click, 151, 14, 1             ; 也即单击分析
+    Click, 197, 303, 1             ; 在窗口内(129,28)处双击，也即单击历史回忆
+    CoordMode, Mouse, Screen      ; 使用屏幕坐标
+    Click, 1023,692,1;点击弹出的新窗口的按钮@播放到最后
+    win_ctrl_w_should_close_ths_fenxi_window:="1"
+}
+else
+{
+    ;应该关闭分析窗口
+    CoordMode, Mouse, Screen      ; 使用屏幕坐标
+    Click, 1120,668,1;点击分析窗口的关闭按钮
+    win_ctrl_w_should_close_ths_fenxi_window:="0"
+}
+}
+
 
 ; ############## 同花顺遮罩模块 ##############
 ; 两个全局变量要放在文件最前面，否则会出错
