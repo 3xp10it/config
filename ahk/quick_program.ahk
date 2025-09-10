@@ -21,6 +21,12 @@ global overlay10 := 0  ; "成交量下拉框背景"
 global overlay11 := 0  ; "涨速排名下拉框背景"
 global overlay12 := 0  ; "自选股表单设置背景"
 
+;中间便看的位置
+global ok_x:=776
+global ok_y:=6
+global ok_w:=1901
+global ok_h:=1442
+
 
 log_Enabled := true                     ; 日志开关 
 log_FilePath := "d:\WinHistory.log"  ; 日志路径 
@@ -39,19 +45,79 @@ OnMessage(msgNum, "ShellMessage")
 ; ============================================= 
 ; 核心函数：处理窗口激活消息 (HSHELL_WINDOWACTIVATED)
 ; ============================================= 
+
+
+
+
+;=== 新增事件触发源检测函数 === 
+GetEventTriggerSource(wParam, lParam) {
+    static lastInputTime := 0
+    
+    ; 1. 用户输入检测系统 
+    if (A_TimeIdle < 500) {  ; 500ms内有用户操作
+        if (A_PriorKey != "") 
+            return "键盘: " A_PriorKey 
+        if (A_TimeSincePriorMouse < 500)
+            return "鼠标: " A_ThisHotkey
+    }
+    
+    ; 2. 系统事件分析 
+    switch wParam 
+    {
+        case 1:  ; HSHELL_WINDOWCREATED 
+            return "系统创建"
+        case 2:  ; HSHELL_WINDOWDESTROYED
+            return "系统销毁"
+        case 4:  ; HSHELL_RUDEAPPACTIVATED
+            return WinActive("ahk_class ApplicationFrameWindow") ? "UWP应用" : "系统激活"
+        case 32772: ; HSHELL_WINDOWACTIVATED
+            return IsAutomatedActivation() ? "程序自动激活" : "用户切换"  ; 自定义函数 
+    }
+    
+    ; 3. 进程间通信检测
+    if (DllCall("GetWindowThreadProcessId", "UInt", lParam, "UInt*", pid)) {
+        if (pid != DllCall("GetCurrentProcessId")) {
+            WinGet, sourceProcess, ProcessName, ahk_pid %pid%
+            return "外部进程: " (sourceProcess ? sourceProcess : "PID:" pid)
+        }
+    }
+    
+    return "未知来源"
+}
+ 
+;=== 辅助函数 ===
+GetEventName(wParam) {
+    eventNames := {1: "窗口创建", 2: "窗口销毁", 4: "App激活", 32772: "窗口激活"}
+    return eventNames.HasKey(wParam) ? eventNames[wParam] : "未知事件"
+}
+ 
+IsAutomatedActivation() {
+    ; 基于API检测是否自动化激活
+    return DllCall("GetForegroundWindow") == DllCall("GetActiveWindow") ? false : true 
+}
+
+
+
+
+
 ShellMessage(wParam, lParam) {
     ; 显示所有事件并写入日志
-    ;WinGetTitle, title, ahk_id %lParam%
+    WinGetTitle, title, ahk_id %lParam%
     ;WinGet, processName, ProcessName, ahk_id %lParam%
-    ; 写入日志
-    ;logMessage := 
-    ;(Join 
-    ;    "事件: wParam=" wParam 
-    ;    " | 窗口标题=" (title ? title : "N/A")
-    ;    " | 进程名=" (processName ? processName : "N/A")
-    ;    " | 句柄=" lParam 
-    ;)
+    ;logMessage :=(Join "事件: wParam=" wParam " | 窗口标题=" (title ? title : "N/A") " | 进程名=" (processName ? processName : "N/A") " | 句柄=" lParam)
+
+
+    ;triggerSource := GetEventTriggerSource(wParam, lParam)  ; 新增函数 
+    ; 增强版日志格式 
+    ;FormatTime, timestamp,, yyyy-MM-dd HH:mm:ss.fff  
+    ;logMessage := Format("{} | 事件: {}({:X}) | 触发者: {} | 窗口: {} | 进程: {} | 句柄: 0x{:X}"
+    ;    , timestamp, GetEventName(wParam), wParam, triggerSource 
+    ;    , (title ? StrReplace(title, "|", "∣") : "N/A")  ; 防止分隔符冲突 
+    ;    , (processName ? processName : "N/A")
+    ;    , lParam)
     ;WriteToLog(logMessage)
+    ;WinGetTitle, current_title, A
+    ;WriteToLog(current_title)
 
 
     if (wParam != 32772 || lParam==0) ;HSHELL_RUDEAPPACTIVATED (值=0x8004，也即32772)
@@ -63,7 +129,7 @@ ShellMessage(wParam, lParam) {
     ; 更新历史记录（排除重复激活）
     if (g_windowHistory[1] != lParam) {
         g_windowHistory.InsertAt(1, lParam) ; 插入到栈顶     
-WriteToLog(lParam)
+        ;WriteToLog(lParam)
         ; 保持历史记录不超过上限 
         if (g_windowHistory.Length() > g_maxHistory)
             ;pop是删除栈底元素
@@ -130,6 +196,7 @@ IfWinExist, ahk_exe chrome.exe
     chromeTitle := " - Google Chrome"
     WinMove,%chromeTitle%,,2662,6,786,1442
     WinGet, chrome_hwnd, ID, %chromeTitle%  ; 获取窗口句柄
+    WinActivate,ahk_id %chrome_hwnd%
     WinSet, AlwaysOnTop, On, ahk_id %chrome_hwnd%  ; 置顶 
 }
 else
@@ -157,8 +224,9 @@ IfWinExist, ahk_exe chrome.exe
 {
     WinRestore
     chromeTitle := " - Google Chrome"
-    WinMove,%chromeTitle%,,776,6,1901,1442
+    WinMove,%chromeTitle%,,ok_x,ok_y,ok_w,ok_h
     WinGet, chrome_hwnd, ID, % chromeTitle  ; 获取窗口句柄 
+    WinActivate,ahk_id %chrome_hwnd%
     WinSet, AlwaysOnTop, On, ahk_id %chrome_hwnd%  ; 置顶 
     
 }
@@ -192,10 +260,11 @@ else
 {
 if WinExist("ahk_class Qt51514QWindowIcon")
 {
-if not WinActive(ahk_class Qt51514QWindowIcon)      ;被挡住或最小化了
+WinGet, Style, Style, ahk_class Qt51514QWindowIcon
+if ((Style & 0x20000000) or (not WinActive(ahk_class Qt51514QWindowIcon)))    ;最小化了或被挡住了
 {
-    WinShow
     WinActivate
+    WinMove,ahk_class Qt51514QWindowIcon,,ok_x,ok_y,ok_w,ok_h
     WinSet, TopMost, On, ahk_class Qt51514QWindowIcon
 }
 else
@@ -596,6 +665,7 @@ set_current_window_to_top()
     WinGetTitle,title,A
     if (InStr(title,"同花顺(")==0)
     {
+        WinMove,A,,ok_x,ok_y,ok_w,ok_h
         ;同花顺的主窗口不置顶，要不然会挡住stockapp的置顶窗口
         WinSet, TopMost, On, A
     }
