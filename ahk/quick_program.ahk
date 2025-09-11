@@ -649,6 +649,7 @@ if (xiadan_hwnd)
     else
     {
         WinActivate,ahk_id %xiadan_hwnd%
+        WinMove,ahk_id %xiadan_hwnd%,,ok_x,ok_y,ok_w,ok_h
         WinSet, TopMost, On, ahk_id %xiadan_hwnd%
     }
 }
