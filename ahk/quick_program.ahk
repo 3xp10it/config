@@ -24,9 +24,10 @@ global overlay12 := 0  ; "自选股表单设置背景"
 
 ;中间便看的位置
 global ok_x:=776
-global ok_y:=6
+global ok_y:=8
 global ok_w:=1901
-global ok_h:=1442
+global ok_h:=1440
+
 
 
 log_Enabled := true                     ; 日志开关 
@@ -195,7 +196,7 @@ IfWinExist, ahk_exe chrome.exe
 {
     WinRestore
     chromeTitle := " - Google Chrome"
-    WinMove,%chromeTitle%,,2662,6,786,1442
+    WinMove,%chromeTitle%,,2662,ok_y-1,786,ok_h+1
     WinGet, chrome_hwnd, ID, %chromeTitle%  ; 获取窗口句柄
     WinActivate,ahk_id %chrome_hwnd%
     WinSet, AlwaysOnTop, On, ahk_id %chrome_hwnd%  ; 置顶 
@@ -383,7 +384,8 @@ if WinExist(".*9\.30\.72.*")
 {
 WinActivate
 thsWindowTitle := ".*9\.30\.72.*"
-WinMove, %thsWindowTitle%, , -7, 0, 1968, 1446
+;注意，同花顺最大的高度只有1446，设置再大也不会有效，y从1到1446则可保证底部铺满(顶部铺不满)，如果y从0到1446则顶部和底部都铺不满
+WinMove, %thsWindowTitle%, , -7, 1, 1968, 1446
 CreateOverlays()
 
 }
@@ -417,7 +419,7 @@ if (hwnd)
     WinGet, Style, Style, ahk_id %hwnd%
     if (!(Style & 0x20000000))    ;没有最小化才移动窗口
     {
-        WinMove, ahk_id %hwnd%, , 784, 465, 1033, 499
+        WinMove, ahk_id %hwnd%, , 784, 466, 1033, 499
     }
     
 }
@@ -513,7 +515,7 @@ SetTitleMatchMode RegEx
 if WinExist("大单.*")
 {
     targetWindowTitle := "大单.*"
-    WinMove, %targetWindowTitle%, , 231, 800, 154, 639
+    WinMove, %targetWindowTitle%, , 231, 801, 154, 638
     WinGet, targetWindowID, ID, 大单.*
     WinSet, AlwaysOnTop, On, ahk_id %targetWindowID%
     if WinExist("排板")
@@ -543,7 +545,7 @@ else if (cmds_should_show_realnews=="1")
         ;打开大单窗口        
         WinRestore        
         targetWindowTitle := "大单.*"
-        WinMove, %targetWindowTitle%, , 626, 465, 158, 499
+        WinMove, %targetWindowTitle%, , 626, 466, 158, 499
         if WinExist("排板")
         {
             ;注意，ths的主窗口title包含“排板”,orderlist的title是“排板”，这里要改为精确匹配否则有时候会将ths置顶
@@ -708,18 +710,18 @@ else
 CreateOverlays() {
     DestroyOverlays()
     CreateOverlay(overlay1, 383, 995, 242, 31, 255)  ; 短线精灵标题栏
-    CreateOverlay(overlay2_1, 0, 7, 128, 21, 255)    ; 顶部长白条@left
-    CreateOverlay(overlay2_2, 166, 7, 1598, 21, 255)    ; 顶部长白条@right
-    CreateOverlay(overlay3, 233, 777, 392, 23, 255)    ; "上翻 下翻 顶部 底部"
-    CreateOverlay(overlay4, 234, 702, 390, 25, 255)    ; "查看完整报价"
-    CreateOverlay(overlay5, 567, 802, 58, 190, 255)    ; "千档盘口红绿点"
-    CreateOverlay(overlay6, 611, 680, 13, 20, 150)    ; "预警铃铛"
-    CreateOverlay(overlay7, 459, 101, 165, 368, 90)    ; "逐笔成交明细买单卖单"
-    CreateOverlay(overlay8, 233, 57, 14, 21, 255)    ;"逐笔成交明细左边的白框"
+    CreateOverlay(overlay2_1, 0, 8, 128, 21, 255)    ; 顶部长白条@left
+    CreateOverlay(overlay2_2, 166, 8, 1598, 21, 255)    ; 顶部长白条@right
+    CreateOverlay(overlay3, 233, 778, 392, 23, 255)    ; "上翻 下翻 顶部 底部"
+    CreateOverlay(overlay4, 234, 703, 390, 25, 255)    ; "查看完整报价"
+    CreateOverlay(overlay5, 567, 803, 58, 190, 255)    ; "千档盘口红绿点"
+    CreateOverlay(overlay6, 611, 681, 13, 20, 150)    ; "预警铃铛"
+    CreateOverlay(overlay7, 459, 102, 165, 368, 90)    ; "逐笔成交明细买单卖单"
+    CreateOverlay(overlay8, 233, 58, 14, 21, 255)    ;"逐笔成交明细左边的白框"
     ;CreateOverlay(overlay9, 460, 1053, 224, 44, 150)    ;"委买队列"
-    CreateOverlay(overlay10, 1793, 403, 108, 20, 225)    ; "成交量下拉框背景"
-    CreateOverlay(overlay11, 120, 1245, 108,18, 225)    ; "涨速排名下拉框背景"
-    CreateOverlay(overlay12, 1, 507, 44, 20, 225)    ; "自选股表单设置背景"
+    CreateOverlay(overlay10, 1793, 404, 108, 20, 225)    ; "成交量下拉框背景"
+    CreateOverlay(overlay11, 120, 1246, 108,18, 225)    ; "涨速排名下拉框背景"
+    CreateOverlay(overlay12, 1, 508, 44, 20, 225)    ; "自选股表单设置背景"
 }
 
 #2::DestroyOverlays()  ; win+2 移除遮罩
