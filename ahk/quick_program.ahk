@@ -405,9 +405,9 @@ if WinExist(".*天狼50.*")
     WinMinimize
 }
 
-if WinExist(".*0AMV.*")
+if WinExist("指南针全赢决策系统")
 {
-    ;顺便把0amv窗口最小化
+    ;顺便把znz窗口最小化
     WinMinimize
 }
 
