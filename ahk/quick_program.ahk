@@ -266,7 +266,7 @@ WinGet, Style, Style, ahk_class Qt51514QWindowIcon
 if ((Style & 0x20000000) or (not WinActive(ahk_class Qt51514QWindowIcon)))    ;最小化了或被挡住了
 {
     WinActivate
-    WinMove,ahk_class Qt51514QWindowIcon,,ok_x,ok_y,ok_w,ok_h
+    WinMove,ahk_class Qt51514QWindowIcon,,ok_x+8,ok_y,ok_w-16,ok_h
     WinSet, TopMost, On, ahk_class Qt51514QWindowIcon
 }
 else
