@@ -24,9 +24,9 @@ global overlay12 := 0  ; "自选股表单设置背景"
 
 ;中间便看的位置
 global ok_x:=776
-global ok_y:=8
+global ok_y:=7
 global ok_w:=1901
-global ok_h:=1440
+global ok_h:=1441
 
 
 
