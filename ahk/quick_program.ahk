@@ -701,6 +701,53 @@ else
 }
 
 
+
+
+
+
+
+
+SmartClose() {
+    ; 获取当前窗口信息 
+    WinGet, hwnd, ID, A 
+    WinGet, processName, ProcessName, A
+    WinGetClass, winClass, A
+    
+    ; 浏览器标签页关闭逻辑
+    browserProcesses := ["chrome.exe",  "msedge.exe",  "firefox.exe",  "opera.exe",  "vivaldi.exe"] 
+    for index, browser in browserProcesses {
+        if (processName = browser) {
+            Send, ^w  ; 发送 Ctrl+W 关闭标签页 
+            return
+        }
+    }
+    
+    ; 特殊窗口处理
+    if (winClass = "CabinetWClass") {  ; 资源管理器 
+        Send, !{F4}  ; Alt+F4 关闭窗口但不终止进程
+    } 
+    else if (winClass = "ApplicationFrameWindow") {  ; UWP应用 
+        PostMessage, 0x112, 0xF060,,, A  ; 发送关闭消息
+    } 
+    else {
+        ; 标准关闭流程
+        WinClose, ahk_id %hwnd%
+        Sleep, 300 
+        if WinExist("ahk_id " hwnd) {
+            WinKill, ahk_id %hwnd%  ; 强制关闭残留窗口
+        }
+    }
+}
+ 
+; ===== 热键绑定 ===== 
+$^w::SmartClose()  ; 使用 $ 前缀防止热键自触发
+
+
+
+
+
+
+
 ; ############## 同花顺遮罩模块 ##############
 ; 两个全局变量要放在文件最前面，否则会出错
 
