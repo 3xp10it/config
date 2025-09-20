@@ -22,6 +22,10 @@ global overlay10 := 0  ; "成交量下拉框背景"
 global overlay11 := 0  ; "涨速排名下拉框背景"
 global overlay12 := 0  ; "自选股表单设置背景"
 
+
+; 全局变量存储窗口原始位置
+global WindowPositionDict := Object()
+
 ;中间便看的位置
 global ok_x:=776
 global ok_y:=8
@@ -666,11 +670,31 @@ minimize_current_window()
 #q::set_current_window_to_top()
 set_current_window_to_top()
 {
-    WinGetTitle,title,A
-    if (InStr(title,"同花顺(")==0)
-    {
-        WinMove,A,,ok_x,ok_y,ok_w,ok_h
+    global WindowPositionDict
+    ; 获取当前窗口信息 
+    WinGet, hwnd, ID, A
+    WinGetTitle, title, ahk_id %hwnd%
+    if (InStr(title, "同花顺(") == 1) {
         ;同花顺的主窗口不置顶，要不然会挡住stockapp的置顶窗口
+        return
+    }
+    ; 检查是否已在固定位置 
+    WinGetPos, curX, curY, curW, curH, ahk_id %hwnd%
+    isAtFixedPos := (curX == ok_x && curY == ok_y && curW == ok_w && curH == ok_h)
+    if (isAtFixedPos) {
+        ; 还原到原始位置
+        if (WindowPositionDict.HasKey(hwnd)) {
+            orig := WindowPositionDict[hwnd]
+            WinMove, ahk_id %hwnd%,, orig.x, orig.y, orig.w, orig.h
+            WindowPositionDict.Delete(hwnd)
+        }
+    }
+    else
+    {
+        ; 保存当前位置并固定 
+        WinGetPos, origX, origY, origW, origH, ahk_id %hwnd%
+        WindowPositionDict[hwnd] := {x: origX, y: origY, w: origW, h: origH}
+        WinMove,A,,ok_x,ok_y,ok_w,ok_h
         WinSet, TopMost, On, A
     }
 
