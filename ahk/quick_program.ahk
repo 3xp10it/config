@@ -725,8 +725,42 @@ else
 }
 
 
+; 获取鼠标下方控件的位置数据 
+GetControlUnderMousePos(ByRef CtrlX:="", ByRef CtrlY:="", ByRef CtrlW:="", ByRef CtrlH:="") {
+    ; 获取鼠标位置下的控件信息
+    MouseGetPos, , , WinID, ControlClassNN
+    
+    ; 验证是否获取到有效控件 
+    if (ControlClassNN = "" || WinID = "") {
+        return false, ErrorLevel := "No control found"
+    }
+    
+    ; 获取控件位置和尺寸
+    ControlGetPos, cX, cY, cW, cH, %ControlClassNN%, ahk_id %WinID%
+    if (ErrorLevel) {
+        return false, ErrorLevel := "Control position unavailable"
+    }
+    
+    ; 返回结果（通过引用参数和返回对象双模式）
+    CtrlX := cX, CtrlY := cY, CtrlW := cW, CtrlH := cH
+    
+    return { x: cX, y: cY, width: cW, height: cH 
+           , control: ControlClassNN, winID: WinID }
+}
 
-
+;win+^+s同花顺设置预警后确认
+#^s::ths_xiadie_yujin_confirm()
+ths_xiadie_yujin_confirm()
+{
+    if GetControlUnderMousePos(xPos, yPos, width, height) {
+        ;MsgBox, 控件位置：`nX%xPos%`tY%yPos%`n宽：%width%`t高：%height%
+        WinActivate,添加预警
+        CoordMode, Mouse, Window     ; 使用窗口坐标
+        newX:=xPos-100
+        Click, %newX%,%yPos%,1     ; 点击打勾
+        Click, 173,446,1;点击确定
+    }
+}
 
 
 
