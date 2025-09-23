@@ -52,7 +52,9 @@ OnMessage(msgNum, "ShellMessage")
 ; 核心函数：处理窗口激活消息 (HSHELL_WINDOWACTIVATED)
 ; ============================================= 
 
-
+RemoveToolTip:
+    ToolTip ; 清除Tooltip
+Return
 
 
 ;=== 新增事件触发源检测函数 === 
@@ -681,8 +683,9 @@ set_current_window_to_top()
     ; 检查是否已在固定位置 
     WinGetPos, curX, curY, curW, curH, ahk_id %hwnd%
     isAtFixedPos := (curX == ok_x && curY == ok_y && curW == ok_w && curH == ok_h)
-    if (isAtFixedPos) {
-        ; 还原到原始位置
+    WinGet, ExStyle, ExStyle, A 
+    if (isAtFixedPos && (ExStyle & 0x8)) {
+        ; 如果已经在目标位置且已经置顶，则还原到原始位置
         if (WindowPositionDict.HasKey(hwnd)) {
             orig := WindowPositionDict[hwnd]
             WinMove, ahk_id %hwnd%,, orig.x, orig.y, orig.w, orig.h
@@ -692,8 +695,11 @@ set_current_window_to_top()
     else
     {
         ; 保存当前位置并固定 
+        
         WinGetPos, origX, origY, origW, origH, ahk_id %hwnd%
         WindowPositionDict[hwnd] := {x: origX, y: origY, w: origW, h: origH}
+        ToolTip,保存当前位置并固定
+        WinRestore,ahk_id %hwnd%
         WinMove,A,,ok_x,ok_y,ok_w,ok_h
         WinSet, TopMost, On, A
     }
@@ -729,37 +735,58 @@ else
 GetControlUnderMousePos(ByRef CtrlX:="", ByRef CtrlY:="", ByRef CtrlW:="", ByRef CtrlH:="") {
     ; 获取鼠标位置下的控件信息
     MouseGetPos, , , WinID, ControlClassNN
-    
     ; 验证是否获取到有效控件 
-    if (ControlClassNN = "" || WinID = "") {
-        return false, ErrorLevel := "No control found"
-    }
-    
+    ;MsgBox,%ControlClassNN%
+    if (ControlClassNN="EditWnd1" || ControlClassNN="EditWnd")
+    {
     ; 获取控件位置和尺寸
     ControlGetPos, cX, cY, cW, cH, %ControlClassNN%, ahk_id %WinID%
-    if (ErrorLevel) {
-        return false, ErrorLevel := "Control position unavailable"
-    }
-    
     ; 返回结果（通过引用参数和返回对象双模式）
     CtrlX := cX, CtrlY := cY, CtrlW := cW, CtrlH := cH
-    
     return { x: cX, y: cY, width: cW, height: cH 
            , control: ControlClassNN, winID: WinID }
+    }
+    return false
 }
 
 ;win+^+s同花顺设置预警后确认
 #^s::ths_xiadie_yujin_confirm()
 ths_xiadie_yujin_confirm()
 {
-    if GetControlUnderMousePos(xPos, yPos, width, height) {
-        ;MsgBox, 控件位置：`nX%xPos%`tY%yPos%`n宽：%width%`t高：%height%
-        WinActivate,添加预警
-        CoordMode, Mouse, Window     ; 使用窗口坐标
-        newX:=xPos-100
-        Click, %newX%,%yPos%,1     ; 点击打勾
-        Click, 173,446,1;点击确定
+
+    ;先将鼠标向左边移动15px，防止有时候鼠标太靠右了而不在控件上
+    MouseMove, -15, 0, 0, R  ; R表示相对移动
+    ;Click
+    ctrlInfo := GetControlUnderMousePos(x, y, w, h)
+
+    if (!ctrlInfo)
+    {
+        ;ToolTip,鼠标下面没有控件，现在向上移动7px
+        MouseMove, 0, -7, 0, R  ; R表示相对移动，向上移动7px
+        ;Click
+        ctrlInfo := GetControlUnderMousePos(x, y, w, h)
+        if (!ctrlInfo)
+        {
+             ;ToolTip,向上移动7px没有找到控件，现在向下移动7px
+             MouseMove, 0, 14, 0, R  ; R表示相对移动，向下移动14px
+             ;Click
+             ctrlInfo := GetControlUnderMousePos(x, y, w, h)
+        }
+        if (!ctrlInfo) 
+        {
+            ;ToolTip,向下移动5px后鼠标最终还是没有移动到控件位置
+            return false
+        }
+
     }
+    ;ToolTip,找到鼠标下面的编辑框控件
+    ;SetTimer, RemoveToolTip, -2500 ; 
+    WinActivate,添加预警
+    newX:=ctrlInfo.x-100
+    targetY:=ctrlInfo.y
+    CoordMode, Mouse, Window     ; 使用窗口坐标
+    Click, %newX%,%targetY%,1     ; 点击打勾
+    Click, 173,446,1;点击确定
 }
 
 
