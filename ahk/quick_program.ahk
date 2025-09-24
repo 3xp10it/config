@@ -698,7 +698,7 @@ set_current_window_to_top()
         
         WinGetPos, origX, origY, origW, origH, ahk_id %hwnd%
         WindowPositionDict[hwnd] := {x: origX, y: origY, w: origW, h: origH}
-        ToolTip,保存当前位置并固定
+        ;ToolTip,保存当前位置并固定
         WinRestore,ahk_id %hwnd%
         WinMove,A,,ok_x,ok_y,ok_w,ok_h
         WinSet, TopMost, On, A
