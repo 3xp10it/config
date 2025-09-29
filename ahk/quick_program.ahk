@@ -143,6 +143,17 @@ ShellMessage(wParam, lParam) {
             ;pop是删除栈底元素
             g_windowHistory.Pop()
     }
+
+
+
+    if (InStr(title,"同花顺(")==0)
+    {
+        ;同花顺的主窗口不置顶，要不然会挡住stockapp的置顶窗口，其他窗口打开的时候都置顶
+        WinSet, TopMost, On,ahk_id %lParam%
+    }
+
+
+
 }
 
 
