@@ -608,7 +608,7 @@ if (hwnd)
 
  
         realnewsTitle := "实时新闻"
-        WinMove,%realnewsTitle%, , 2669, 5, 780, 1135
+        WinMove,%realnewsTitle%, , 2669, 5, 780, ok_h-2
         WinGet, realnews_hwnd, ID, %realnewsTitle%  ; 获取窗口句柄
         WinSet, AlwaysOnTop, Off, ahk_id %realnews_hwnd%  ; 置顶 
         WinActivate,实时新闻
@@ -648,15 +648,19 @@ WinGet,xiadan_hwnd,ID,网上股票交易系统5.0
 if (xiadan_hwnd)
 {
     WinGet, Style, Style, ahk_id %xiadan_hwnd%
-    if (!(Style & 0x20000000))    ;没有最小化则最小化
+    if ((Style & 0x20000000) or (not WinActive("ahk_id " xiadan_hwnd)))    ;最小化了或被挡住了
     {
-        WinMinimize,ahk_id %xiadan_hwnd%
-    }
-    else
-    {
+        Tooltip,最小化或没有激活
+        SetTimer, RemoveToolTip, -2500 ; 
         WinActivate,ahk_id %xiadan_hwnd%
         WinMove,ahk_id %xiadan_hwnd%,,ok_x,ok_y,ok_w,ok_h
         WinSet, TopMost, On, ahk_id %xiadan_hwnd%
+    }
+    else
+    {
+       Tooltip,已置顶且激活
+        SetTimer, RemoveToolTip, -2500 ; 
+        WinMinimize,ahk_id %xiadan_hwnd%
     }
 }
 }
