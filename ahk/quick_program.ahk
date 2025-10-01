@@ -397,10 +397,10 @@ switchToTHS()
 THS_path:="D:\THS\hexin.exe"
 ;注意：SetTitleMatchMode一定要放在WinExist前面一行，放远了可能不会生效；这里也可以通过使用WinExist("ahk_exe D:\THS\hexin.exe")来获取同花顺的窗口，但这样可能会获取到短线精灵，除了同花顺主界面属于hexin.exe外，弹窗式的短线精灵也属于hexin.exe，所以实际不能使用ahk_exe来获取，只能用窗口特征来获取，还需要注意的是，ahk代码中不支持中文，所以用中文字符串来匹配是无法成功的
 SetTitleMatchMode RegEx
+thsWindowTitle := ".*9\.30\.72.*"
 if WinExist(".*9\.30\.72.*")
 {
 WinActivate
-thsWindowTitle := ".*9\.30\.72.*"
 ;注意，同花顺最大的高度只有1446，设置再大也不会有效，y从1到1446则可保证底部铺满(顶部铺不满)，如果y从0到1446则顶部和底部都铺不满
 WinMove, %thsWindowTitle%, , -7, 1, 1968, 1446
 CreateOverlays()
@@ -410,23 +410,27 @@ else
 {
 Run, %THS_path%
 }
-if WinExist("guba_jiucai.*")
-{
-    ;顺便把guba_jiucai窗口最小化
-    WinMinimize
+
+
+; 将遮住同花顺同花顺的窗口最小化
+WinGet, ths_hwnd, ID, %thsWindowTitle%
+blockers := GetBlockingWindows(ths_hwnd)
+if (blockers.Length() > 0) {
+    result := "遮挡窗口列表（按Z序从高到低）:`n`n"
+    for i, hwnd in blockers {
+        WinGetTitle, title, ahk_id %hwnd%
+        if (not InStr(title, "短线精灵") && not InStr(title, "股票池") && not InStr(title, "涨停股") && not InStr(title, "实时新闻") && not InStr(title, "大单") && not InStr(title, "排板") && not InStr(inputStr, "个股新闻") && not InStr(title, "概念") && not InStr(title, "下单") && not InStr(title, "风向标") && not InStr(title, "个股新闻") && title!="quick_program.ahk")
+        {
+                ;result .= "[" i "] 句柄: " Format("0x{:X}", hwnd)
+                ;.  "`n标题: " (title ? title : "(无标题)")
+                ;.  "`n----------------------`n"
+                WinMinimize,ahk_id %hwnd%
+        }
+    }
+    ; 输出结果
+    ;MsgBox, % result 
 }
 
-if WinExist(".*天狼50.*")
-{
-    ;顺便把天狼50窗口最小化
-    WinMinimize
-}
-
-if WinExist("指南针全赢决策系统")
-{
-    ;顺便把znz窗口最小化
-    WinMinimize
-}
 
 ;把实时新闻移到原来的位置
 SetTitleMatchMode, 2
@@ -843,6 +847,70 @@ SmartClose() {
 $^w::SmartClose()  ; 使用 $ 前缀防止热键自触发
 
 
+; 获取遮挡指定窗口的所有窗口句柄 
+GetBlockingWindows(targetHwnd) {
+    ; 检查目标窗口有效性 
+    if !WinExist("ahk_id " targetHwnd)
+        return ["目标窗口不存在"]
+    
+    ; 获取目标窗口位置和状态 
+    WinGetPos, tX, tY, tW, tH, ahk_id %targetHwnd%
+    WinGet, tState, MinMax, ahk_id %targetHwnd%
+    if (tState = -1) || (tW = 0) || (tH = 0)
+        return ["目标窗口已最小化或不可见"]
+    
+    ; 初始化结果数组 
+    blockingWindows := []
+    
+    ; 获取所有窗口列表（按Z序从顶到底）
+    WinGet, winList, List
+    Loop, %winList% {
+        currentHwnd := winList%A_Index%
+        
+        ; 跳过目标窗口自身及后续窗口 
+        if (currentHwnd = targetHwnd)
+            break 
+        
+        ; 跳过无效窗口
+        if !WinExist("ahk_id " currentHwnd)
+            continue 
+        
+        ; 检查窗口状态
+        WinGet, style, Style, ahk_id %currentHwnd%
+        WinGet, exStyle, ExStyle, ahk_id %currentHwnd%
+        WinGet, minMax, MinMax, ahk_id %currentHwnd%
+        
+        ; 过滤无效窗口条件 
+        ;if (minMax = -1) || !(style & 0x10000000)  ; WS_VISIBLE 
+         ;   || (exStyle & 0x80) || (exStyle & 0x00000008)  ; WS_EX_TOOLWINDOW/WS_EX_TOPMOST 
+          ;  continue
+        if (minMax = -1) || !(style & 0x10000000)  ; WS_VISIBLE 
+             || (exStyle & 0x80)  ; WS_EX_TOOLWINDOW
+            continue
+
+        
+        ; 获取当前窗口位置
+        WinGetPos, cX, cY, cW, cH, ahk_id %currentHwnd%
+        if (cW = 0) || (cH = 0)
+            continue 
+        
+        ; 计算窗口重叠区域 
+        left   := Max(tX, cX)
+        right  := Min(tX + tW, cX + cW)
+        top    := Max(tY, cY)
+        bottom := Min(tY + tH, cY + cH)
+        
+        ; 检测有效遮挡（重叠面积 > 100像素）
+        if (left < right) && (top < bottom) {
+            overlapArea := (right - left) * (bottom - top)
+            if (overlapArea > 100)  ; 过滤微小重叠 
+                blockingWindows.Push(currentHwnd)
+        }
+    }
+    
+    return blockingWindows 
+}
+ 
 
 
 
