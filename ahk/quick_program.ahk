@@ -4,6 +4,7 @@
 #SingleInstance Force  ; 关键防护（防多实例冲突）
 #InstallKeybdHook      ; 保障Win+热键可靠性 
 
+global thsWindowTitle := ".*9\.30\.72.*"
 
 cmds_should_show_realnews:="0"
 win_ctrl_w_should_close_ths_fenxi_window:="0"
@@ -397,14 +398,12 @@ switchToTHS()
 THS_path:="D:\THS\hexin.exe"
 ;注意：SetTitleMatchMode一定要放在WinExist前面一行，放远了可能不会生效；这里也可以通过使用WinExist("ahk_exe D:\THS\hexin.exe")来获取同花顺的窗口，但这样可能会获取到短线精灵，除了同花顺主界面属于hexin.exe外，弹窗式的短线精灵也属于hexin.exe，所以实际不能使用ahk_exe来获取，只能用窗口特征来获取，还需要注意的是，ahk代码中不支持中文，所以用中文字符串来匹配是无法成功的
 SetTitleMatchMode RegEx
-thsWindowTitle := ".*9\.30\.72.*"
-if WinExist(".*9\.30\.72.*")
+if WinExist(thsWindowTitle)
 {
 WinActivate
 ;注意，同花顺最大的高度只有1446，设置再大也不会有效，y从1到1446则可保证底部铺满(顶部铺不满)，如果y从0到1446则顶部和底部都铺不满
 WinMove, %thsWindowTitle%, , -7, 1, 1968, 1446
 CreateOverlays()
-
 }
 else
 {
@@ -772,6 +771,25 @@ GetControlUnderMousePos(ByRef CtrlX:="", ByRef CtrlY:="", ByRef CtrlW:="", ByRef
 #^s::ths_xiadie_yujin_confirm()
 ths_xiadie_yujin_confirm()
 {
+    tianjia_yujin_title="添加预警"
+    If not WinExist(tianjia_yujin_title) 
+    {
+        switchToTHS()
+        CoordMode, Mouse, Screen      ; 使用屏幕坐标
+        Click,741,180,Right
+        Send, +t
+        ;MouseMove,121,175,10,Relative    ;用1的时间移动过去
+        ;Click
+        WinActivate,添加预警
+        if WinExist(tianjia_yujin_title)    ;说明激活窗口成功了，有时候会激活不成功
+        {
+            CoordMode, Mouse, Window     ; 使用窗口坐标
+            Click, 182,141,1   ;点击股票下跌到编辑框
+        }
+        return
+    }
+
+
 
     ;先将鼠标向左边移动15px，防止有时候鼠标太靠右了而不在控件上
     MouseMove, -15, 0, 0, R  ; R表示相对移动
