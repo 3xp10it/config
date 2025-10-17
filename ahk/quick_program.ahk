@@ -789,7 +789,7 @@ ths_xiadie_yujin_confirm()
         }
         else
         {
-            ToolTip,不存在添加预期窗口
+            ToolTip,不存在添加预警窗口
             SetTimer, RemoveToolTip, -1000 ; 
         }
     }
@@ -808,7 +808,7 @@ ths_xiadie_yujin_confirm()
             }
             else
             {
-                ToolTip,不存在添加预期窗口
+                ToolTip,不存在添加预警窗口
                 SetTimer, RemoveToolTip, -1000 ; 
             }
         }
