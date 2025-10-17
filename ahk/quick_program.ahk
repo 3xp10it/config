@@ -771,9 +771,9 @@ GetControlUnderMousePos(ByRef CtrlX:="", ByRef CtrlY:="", ByRef CtrlW:="", ByRef
 #^s::ths_xiadie_yujin_confirm()
 ths_xiadie_yujin_confirm()
 {
-    tianjia_yujin_title="添加预警"
-    If not WinExist(tianjia_yujin_title) 
+    If not WinExist("添加预警") 
     {
+        ;没有添加预警窗口
         switchToTHS()
         CoordMode, Mouse, Screen      ; 使用屏幕坐标
         Click,741,180,Right
@@ -781,14 +781,68 @@ ths_xiadie_yujin_confirm()
         ;MouseMove,121,175,10,Relative    ;用1的时间移动过去
         ;Click
         WinActivate,添加预警
-        if WinExist(tianjia_yujin_title)    ;说明激活窗口成功了，有时候会激活不成功
+        if WinExist("添加预警")    
         {
             CoordMode, Mouse, Window     ; 使用窗口坐标
             Click, 182,141,1   ;点击股票下跌到编辑框
+            return
         }
-        return
+        else
+        {
+            ToolTip,不存在添加预期窗口
+            SetTimer, RemoveToolTip, -1000 ; 
+        }
     }
+    else
+    {
+        if !WinActive("添加预警")
+        {
+            ;说明存在添加预警窗口但窗口却没有激活
+            switchToTHS()
+            WinActivate,添加预警
+            if WinExist("添加预警")    
+            {
+                CoordMode, Mouse, Window     ; 使用窗口坐标
+                Click, 182,141,1   ;点击股票下跌到编辑框
+                return
+            }
+            else
+            {
+                ToolTip,不存在添加预期窗口
+                SetTimer, RemoveToolTip, -1000 ; 
+            }
+        }
+        else
+        {
+            ;说明存在添加预警窗口且窗口已经激活，现在要判断鼠标是不是在该窗口范围内，如果不在则移动到默认位置
+            ;  获取窗口的位置和大小（左上角坐标、宽度、高度）
+            WinGetPos, WinX, WinY, WinWidth, WinHeight, 添加预警
+            ; 计算窗口右下角坐标（用于判断范围）
+            WinRight := WinX + WinWidth
+            WinBottom := WinY + WinHeight
+            ;  获取当前鼠标坐标
+            CoordMode, Mouse, Screen     ; 使用屏幕坐标
+            MouseGetPos, MouseX, MouseY
+           ;  判断鼠标是否在窗口范围内
+           ; 鼠标在窗口内的条件：X在[WinX, WinRight]且Y在[WinY, WinBottom]
+           IsMouseInWindow := (MouseX >= WinX && MouseX <= WinRight && MouseY >= WinY && MouseY <= WinBottom)
+           if !IsMouseInWindow
+           {
+               ;说明存在添加预警窗口且窗口已激活但鼠标不在该窗口范围内
+               ToolTip,存在添加预警窗口且窗口已激活但鼠标不在该窗口范围内
+               SetTimer, RemoveToolTip, -1000 ; 
+               WinActivate,添加预警
+               if WinExist("添加预警")    
+               {
+                   CoordMode, Mouse, Window     ; 使用窗口坐标
+                   Click, 182,141,1   ;点击股票下跌到编辑框
+                   return
+               }
 
+           }
+     
+        }
+    }
 
 
     ;先将鼠标向左边移动15px，防止有时候鼠标太靠右了而不在控件上
