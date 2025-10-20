@@ -776,7 +776,7 @@ ths_xiadie_yujin_confirm()
         ;没有添加预警窗口
         switchToTHS()
         CoordMode, Mouse, Screen      ; 使用屏幕坐标
-        Click,741,180,Right
+        Click,1937,233,Right
         Send, +t
         ;MouseMove,121,175,10,Relative    ;用1的时间移动过去
         ;Click
