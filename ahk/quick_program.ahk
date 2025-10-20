@@ -780,7 +780,8 @@ ths_xiadie_yujin_confirm()
         Send, +t
         ;MouseMove,121,175,10,Relative    ;用1的时间移动过去
         ;Click
-        WinActivate,添加预警
+        WinActivate,添加预警   ;WinActivate是异步操作
+        WinWait, 添加预警, , 2  ; 等待最多2秒
         if WinExist("添加预警")    
         {
             CoordMode, Mouse, Window     ; 使用窗口坐标
@@ -789,7 +790,7 @@ ths_xiadie_yujin_confirm()
         }
         else
         {
-            ToolTip,不存在添加预警窗口
+            ToolTip,不存在添加预警窗口@111
             SetTimer, RemoveToolTip, -1000 ; 
         }
     }
@@ -800,6 +801,7 @@ ths_xiadie_yujin_confirm()
             ;说明存在添加预警窗口但窗口却没有激活
             switchToTHS()
             WinActivate,添加预警
+            WinWait, 添加预警, , 2  ; 等待最多2秒
             if WinExist("添加预警")    
             {
                 CoordMode, Mouse, Window     ; 使用窗口坐标
@@ -808,7 +810,7 @@ ths_xiadie_yujin_confirm()
             }
             else
             {
-                ToolTip,不存在添加预警窗口
+                ToolTip,不存在添加预警窗口@222
                 SetTimer, RemoveToolTip, -1000 ; 
             }
         }
@@ -832,6 +834,7 @@ ths_xiadie_yujin_confirm()
                ToolTip,存在添加预警窗口且窗口已激活但鼠标不在该窗口范围内
                SetTimer, RemoveToolTip, -1000 ; 
                WinActivate,添加预警
+               WinWait, 添加预警, , 2  ; 等待最多2秒
                if WinExist("添加预警")    
                {
                    CoordMode, Mouse, Window     ; 使用窗口坐标
@@ -873,6 +876,7 @@ ths_xiadie_yujin_confirm()
     ;ToolTip,找到鼠标下面的编辑框控件
     ;SetTimer, RemoveToolTip, -2500 ; 
     WinActivate,添加预警
+    WinWait, 添加预警, , 2  ; 等待最多2秒
     newX:=ctrlInfo.x-100
     targetY:=ctrlInfo.y
     CoordMode, Mouse, Window     ; 使用窗口坐标
