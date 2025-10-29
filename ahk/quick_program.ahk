@@ -767,6 +767,27 @@ GetControlUnderMousePos(ByRef CtrlX:="", ByRef CtrlY:="", ByRef CtrlW:="", ByRef
     return false
 }
 
+;win+3打开夜神模拟器
+#3::open_moniqi()
+open_moniqi()
+{
+if WinExist("夜神模拟器")
+{
+WinActivate,夜神模拟器
+Sleep,500
+WinMove,夜神模拟器,,2662,ok_y-1,786,ok_h+1
+}
+else
+{
+Run, "D:\Program Files\Nox\bin\Nox.exe" -clone:nox -startPackage:com.aiyu.kaipanla
+WinWait, 夜神模拟器, , 30  ; 等待最多30秒
+Sleep,15000
+WinMove,夜神模拟器,,2662,ok_y-1,786,ok_h+1
+}
+
+}
+
+
 ;win+^+s同花顺设置预警后确认
 #^s::ths_xiadie_yujin_confirm()
 ths_xiadie_yujin_confirm()
