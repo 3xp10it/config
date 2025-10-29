@@ -775,14 +775,14 @@ if WinExist("夜神模拟器")
 {
 WinActivate,夜神模拟器
 Sleep,500
-WinMove,夜神模拟器,,2662,ok_y-1,786,ok_h+1
+WinMove,夜神模拟器,,2670,ok_y-1,770,ok_h+1
 }
 else
 {
 Run, "D:\Program Files\Nox\bin\Nox.exe" -clone:nox -startPackage:com.aiyu.kaipanla
 WinWait, 夜神模拟器, , 30  ; 等待最多30秒
 Sleep,15000
-WinMove,夜神模拟器,,2662,ok_y-1,786,ok_h+1
+WinMove,夜神模拟器,,2670,ok_y-1,770,ok_h+1
 }
 
 }
