@@ -30,7 +30,7 @@ global WindowPositionDict := Object()
 ;中间便看的位置
 global ok_x:=776
 global ok_y:=8
-global ok_w:=1901
+global ok_w:=1892
 global ok_h:=1440
 
 
@@ -214,7 +214,7 @@ IfWinExist, ahk_exe chrome.exe
 {
     WinRestore
     chromeTitle := " - Google Chrome"
-    WinMove,%chromeTitle%,,2662,ok_y-1,786,ok_h+1
+    WinMove,%chromeTitle%,,2653,ok_y-1,795,ok_h+1
     WinGet, chrome_hwnd, ID, %chromeTitle%  ; 获取窗口句柄
     WinActivate,ahk_id %chrome_hwnd%
     WinSet, AlwaysOnTop, On, ahk_id %chrome_hwnd%  ; 置顶 
@@ -622,7 +622,7 @@ if (hwnd)
 
  
         realnewsTitle := "实时新闻"
-        WinMove,%realnewsTitle%, , 2669, ok_y-1, 780, ok_h-2
+        WinMove,%realnewsTitle%, , 2660, ok_y-1, 789, ok_h-2
         WinGet, realnews_hwnd, ID, %realnewsTitle%  ; 获取窗口句柄
         WinSet, AlwaysOnTop, Off, ahk_id %realnews_hwnd%  ; 置顶 
         WinActivate,实时新闻
@@ -767,26 +767,34 @@ GetControlUnderMousePos(ByRef CtrlX:="", ByRef CtrlY:="", ByRef CtrlW:="", ByRef
     return false
 }
 
-;win+3打开夜神模拟器
+;win+3打开模拟器
 #3::open_moniqi()
 open_moniqi()
 {
-if WinExist("夜神模拟器")
-{
-WinActivate,夜神模拟器
-Sleep,500
-WinMove,夜神模拟器,,2670,ok_y-1,770,ok_h+1
+    ; 定义变量
+    windowTitle := "MuMu安卓设备"
+    noxPath := "D:\Program Files\Netease\MuMu\nx_main\MuMuManager.exe"
+    
+    if WinExist(windowTitle)
+    {
+        WinActivate, %windowTitle%
+        WinMove, %windowTitle%,, 2657,ok_y-1,786,ok_h+1
+    }
+    else
+    {
+        Run, "%noxPath%" control -v 0  launch -pkg com.aiyu.kaipanla
+        WinWait, %windowTitle%,, 30  ; 等待最多30秒
+        Sleep, 15000
+        WinActivate, %windowTitle%
+        WinMove, %windowTitle%,, 2657,ok_y-1,786,ok_h+1
+        Sleep, 5000
+        WinSet, TopMost, On, %windowTitle%
+        CoordMode, Mouse, Window      ; 使用窗口坐标
+        Click, 236,1390,1;点击行情
+        Sleep, 500
+        Click, 323,123,1;点击情绪
+    }
 }
-else
-{
-Run, "D:\Program Files\Nox\bin\Nox.exe" -clone:nox -startPackage:com.aiyu.kaipanla
-WinWait, 夜神模拟器, , 30  ; 等待最多30秒
-Sleep,15000
-WinMove,夜神模拟器,,2670,ok_y-1,770,ok_h+1
-}
-
-}
-
 
 ;win+^+s同花顺设置预警后确认
 #^s::ths_xiadie_yujin_confirm()
