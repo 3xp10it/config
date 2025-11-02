@@ -795,7 +795,7 @@ open_moniqi()
         WinSet, TopMost, On, %windowTitle%
         CoordMode, Mouse, Window      ; 使用窗口坐标
         Click, 236,1390,1;点击行情
-        Sleep, 1000
+        Sleep, 2000
         Click, 323,123,1;点击情绪
     }
 }
