@@ -510,11 +510,16 @@ else
 #s::switchTorealnews()
 switchTorealnews()
 {
+global cmds_should_show_realnews
+
+
+
+
 SetTitleMatchMode, 2
 if WinExist("实时新闻")
 {
-global cmds_should_show_realnews
-;MsgBox,%cmds_should_show_realnews%
+
+;MsgBox,%cmds_should_show_realnews
 
 WinGet,hwnd,ID,实时新闻
 WinGet, Style, Style, ahk_id %hwnd%
@@ -525,7 +530,7 @@ cmds_should_show_realnews:="1"
 
 if (cmds_should_show_realnews=="0")
 {
-WinMinimize
+WinMinimize,实时新闻
 ;将涨停股和股票池最小化
 WinMinimize,涨停股
 WinMinimize,股票池
@@ -552,8 +557,7 @@ cmds_should_show_realnews:="1"
 else if (cmds_should_show_realnews=="1")
 {
     ;打开实时新闻窗口
-    WinRestore
-
+    WinRestore,实时新闻
     ;打开涨停股和股票池
     WinRestore,涨停股
     WinRestore,股票池
@@ -563,7 +567,7 @@ else if (cmds_should_show_realnews=="1")
     if WinExist("大单.*")
     {
         ;打开大单窗口        
-        WinRestore        
+        WinRestore,大单.*        
         targetWindowTitle := "大单.*"
         WinMove, %targetWindowTitle%, , 626, 466, 158, 499
         if WinExist("排板")
@@ -787,11 +791,11 @@ open_moniqi()
         Sleep, 15000
         WinActivate, %windowTitle%
         WinMove, %windowTitle%,, 2657,ok_y-1,786,ok_h+1
-        Sleep, 5000
+        Sleep, 8000
         WinSet, TopMost, On, %windowTitle%
         CoordMode, Mouse, Window      ; 使用窗口坐标
         Click, 236,1390,1;点击行情
-        Sleep, 500
+        Sleep, 1000
         Click, 323,123,1;点击情绪
     }
 }
