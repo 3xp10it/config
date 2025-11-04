@@ -616,13 +616,13 @@ if (hwnd)
     if (!(Style & 0x20000000))    ;没有最小化才移动窗口
     {
         ;将chrome取消置顶，否则点一下实时新闻就会和chrome的置顶状态冲突
-        chromeTitle := " - Google Chrome"  ; Chrome 窗口标题特征 
-        SetTitleMatchMode, 2  ; 设置标题匹配模式为"包含"
+        ;chromeTitle := " - Google Chrome"  ; Chrome 窗口标题特征 
+        ;SetTitleMatchMode, 2  ; 设置标题匹配模式为"包含"
         ;检测窗口是否存在 
-        if WinExist(chromeTitle) {
-            WinGet, hwnd, ID, %chromeTitle%
-            WinSet, AlwaysOnTop, Off, ahk_id %hwnd%  ; 取消置顶 
-        } 
+        ;if WinExist(chromeTitle) {
+            ;WinGet, hwnd, ID, %chromeTitle%
+            ;WinSet, AlwaysOnTop, Off, ahk_id %hwnd%  ; 取消置顶 
+        ;} 
 
  
         realnewsTitle := "实时新闻"
@@ -794,9 +794,9 @@ open_moniqi()
         Sleep, 8000
         WinSet, TopMost, On, %windowTitle%
         CoordMode, Mouse, Window      ; 使用窗口坐标
-        Click, 236,1390,1;点击行情
+        Click, 234,1380,1;点击行情
         Sleep, 2000
-        Click, 323,123,1;点击情绪
+        Click, 388,136,1;点击情绪
     }
 }
 
