@@ -783,6 +783,7 @@ open_moniqi()
     {
         WinActivate, %windowTitle%
         WinMove, %windowTitle%,, 2657,ok_y-1,786,ok_h+1
+
     }
     else
     {
@@ -791,12 +792,10 @@ open_moniqi()
         Sleep, 15000
         WinActivate, %windowTitle%
         WinMove, %windowTitle%,, 2657,ok_y-1,786,ok_h+1
-        Sleep, 8000
+        Sleep, 10000
         WinSet, TopMost, On, %windowTitle%
         CoordMode, Mouse, Window      ; 使用窗口坐标
-        Click, 234,1380,1;点击行情
-        Sleep, 2000
-        Click, 388,136,1;点击情绪
+        Click, 247,232,1;点击情绪
     }
 }
 
