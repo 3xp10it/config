@@ -613,26 +613,31 @@ WinGet,hwnd,ID,实时新闻
 if (hwnd)
 {
     WinGet, Style, Style, ahk_id %hwnd%
-    if (!(Style & 0x20000000))    ;没有最小化才移动窗口
+    if (Style & 0x20000000)
     {
-        ;将chrome取消置顶，否则点一下实时新闻就会和chrome的置顶状态冲突
-        ;chromeTitle := " - Google Chrome"  ; Chrome 窗口标题特征 
-        ;SetTitleMatchMode, 2  ; 设置标题匹配模式为"包含"
-        ;检测窗口是否存在 
-        ;if WinExist(chromeTitle) {
-            ;WinGet, hwnd, ID, %chromeTitle%
-            ;WinSet, AlwaysOnTop, Off, ahk_id %hwnd%  ; 取消置顶 
-        ;} 
+        ;最小化了则恢复
+        WinRestore,实时新闻
+    }
+
+
+    ;将chrome取消置顶，否则点一下实时新闻就会和chrome的置顶状态冲突
+    ;chromeTitle := " - Google Chrome"  ; Chrome 窗口标题特征 
+    ;SetTitleMatchMode, 2  ; 设置标题匹配模式为"包含"
+    ;检测窗口是否存在 
+    ;if WinExist(chromeTitle) {
+        ;WinGet, hwnd, ID, %chromeTitle%
+        ;WinSet, AlwaysOnTop, Off, ahk_id %hwnd%  ; 取消置顶 
+    ;} 
 
  
-        realnewsTitle := "实时新闻"
-        WinMove,%realnewsTitle%, , 2660, ok_y-1, 789, ok_h-2
-        WinGet, realnews_hwnd, ID, %realnewsTitle%  ; 获取窗口句柄
-        WinSet, AlwaysOnTop, Off, ahk_id %realnews_hwnd%  ; 置顶 
-        WinActivate,实时新闻
-        WinSet, AlwaysOnTop, On, ahk_id %realnews_hwnd%  ; 置顶 
+    realnewsTitle := "实时新闻"
+    WinMove,%realnewsTitle%, , 2660, ok_y-1, 789, ok_h-2
+    WinGet, realnews_hwnd, ID, %realnewsTitle%  ; 获取窗口句柄
+    WinSet, AlwaysOnTop, Off, ahk_id %realnews_hwnd%  ; 置顶 
+    WinActivate,实时新闻
+    WinSet, AlwaysOnTop, On, ahk_id %realnews_hwnd%  ; 置顶 
 
-    }
+
     
 }
 }
