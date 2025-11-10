@@ -431,6 +431,19 @@ if (blockers.Length() > 0) {
 }
 
 
+;把实时新闻移到原来的位置
+SetTitleMatchMode, 2
+WinGet,hwnd,ID,实时新闻
+if (hwnd)
+{
+    WinGet, Style, Style, ahk_id %hwnd%
+    if (!(Style & 0x20000000))    ;没有最小化才移动窗口
+    {
+        WinMove, ahk_id %hwnd%, , 784, 466, 1033, 499
+    }
+    
+}
+
 }
 
 ;win+ctrl+f打开tide.py
