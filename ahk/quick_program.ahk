@@ -437,9 +437,18 @@ WinGet,hwnd,ID,实时新闻
 if (hwnd)
 {
     WinGet, Style, Style, ahk_id %hwnd%
-    if (!(Style & 0x20000000))    ;没有最小化才移动窗口
+    if (!(Style & 0x20000000))    ;实时新闻窗口没有最小化才进入下一步判断
     {
-        WinMove, ahk_id %hwnd%, , 784, 466, 1033, 499
+        WinGet, Style, Style,涨停股
+        if (!(Style & 0x20000000))    ;涨停股窗口没有最小化才移动窗口
+        {        
+            WinMove, ahk_id %hwnd%, , 784, 466, 1033, 499
+        }
+        else
+        {
+            WinMinimize,ahk_id %hwnd%    ;如果涨停股窗口最小化了且实时新闻窗口没有最小化则将实时新闻窗口最小化
+        }
+
     }
     
 }
