@@ -683,16 +683,16 @@ if (xiadan_hwnd)
     WinGet, Style, Style, ahk_id %xiadan_hwnd%
     if ((Style & 0x20000000) or (not WinActive("ahk_id " xiadan_hwnd)))    ;最小化了或被挡住了
     {
-        Tooltip,最小化或没有激活
-        SetTimer, RemoveToolTip, -2500 ; 
+        ;Tooltip,最小化或没有激活
+        ;SetTimer, RemoveToolTip, -2500 ; 
         WinActivate,ahk_id %xiadan_hwnd%
         WinMove,ahk_id %xiadan_hwnd%,,ok_x,ok_y,ok_w,ok_h
         WinSet, TopMost, On, ahk_id %xiadan_hwnd%
     }
     else
     {
-       Tooltip,已置顶且激活
-        SetTimer, RemoveToolTip, -2500 ; 
+        ;Tooltip,已置顶且激活
+        ;SetTimer, RemoveToolTip, -2500 ; 
         WinMinimize,ahk_id %xiadan_hwnd%
     }
 }
@@ -1132,3 +1132,8 @@ DestroyOverlays() {
   }
 }
 ; ############## 模块结束 ##############
+
+
+
+
+
