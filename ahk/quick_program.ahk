@@ -810,7 +810,9 @@ open_moniqi()
         Sleep, 10000
         WinSet, TopMost, On, %windowTitle%
         CoordMode, Mouse, Window      ; 使用窗口坐标
-        Click, 247,335,1;点击大盘直播
+        Click, 233,1376,1;点击行情
+        Sleep, 1000
+        Click, 280,130,1;点击打板
     }
 }
 
