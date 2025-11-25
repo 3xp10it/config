@@ -805,10 +805,11 @@ open_moniqi()
         Run, "%noxPath%" control -v 0  launch -pkg com.aiyu.kaipanla
         WinWait, %windowTitle%,, 30  ; 等待最多30秒
         Sleep, 15000
-        WinActivate, %windowTitle%
+        ;WinActivate, %windowTitle%
         WinMove, %windowTitle%,, 2657,ok_y-1,786,ok_h+1
         Sleep, 10000
         WinSet, TopMost, On, %windowTitle%
+        WinActivate, %windowTitle%
         CoordMode, Mouse, Window      ; 使用窗口坐标
         Click, 233,1376,1;点击行情
         Sleep, 1000
@@ -1132,8 +1133,3 @@ DestroyOverlays() {
   }
 }
 ; ############## 模块结束 ##############
-
-
-
-
-
