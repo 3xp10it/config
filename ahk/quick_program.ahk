@@ -750,10 +750,12 @@ ths_fenxi()
 global win_ctrl_w_should_close_ths_fenxi_window
 if (win_ctrl_w_should_close_ths_fenxi_window=="0")
 {
+
     WinActivate,同花顺(
     CoordMode, Mouse, Window     ; 使用窗口坐标
-    Click, 151, 14, 1             ; 也即单击分析
-    Click, 197, 303, 1             ; 在窗口内(129,28)处双击，也即单击历史回忆
+    ;同花顺的分析这里不能用ControlClick，要用Click
+    Click,151,14,1;
+    Click,197,303,1;
     CoordMode, Mouse, Screen      ; 使用屏幕坐标
     Click, 1023,692,1;点击弹出的新窗口的按钮@播放到最后
     win_ctrl_w_should_close_ths_fenxi_window:="1"
@@ -805,15 +807,14 @@ open_moniqi()
         Run, "%noxPath%" control -v 0  launch -pkg com.aiyu.kaipanla
         WinWait, %windowTitle%,, 30  ; 等待最多30秒
         Sleep, 15000
-        ;WinActivate, %windowTitle%
         WinMove, %windowTitle%,, 2657,ok_y-1,786,ok_h+1
         Sleep, 10000
         WinSet, TopMost, On, %windowTitle%
-        WinActivate, %windowTitle%
+        ;WinActivate, %windowTitle%
         CoordMode, Mouse, Window      ; 使用窗口坐标
-        Click, 233,1376,1;点击行情
+        ControlClick, x233 y1376, %windowTitle%, , , , NA    ;点击行情
         Sleep, 1000
-        Click, 280,130,1;点击打板
+        ControlClick, x280 y130, %windowTitle%, , , , NA    ;点击打板
     }
 }
 
@@ -828,8 +829,6 @@ ths_xiadie_yujin_confirm()
         CoordMode, Mouse, Screen      ; 使用屏幕坐标
         Click,1937,233,Right
         Send, +t
-        ;MouseMove,121,175,10,Relative    ;用1的时间移动过去
-        ;Click
         WinActivate,添加预警   ;WinActivate是异步操作
         WinWait, 添加预警, , 2  ; 等待最多2秒
         if WinExist("添加预警")    
@@ -930,8 +929,8 @@ ths_xiadie_yujin_confirm()
     newX:=ctrlInfo.x-100
     targetY:=ctrlInfo.y
     CoordMode, Mouse, Window     ; 使用窗口坐标
-    Click, %newX%,%targetY%,1     ; 点击打勾
-    Click, 173,446,1;点击确定
+    ControlClick, x%newX% y%targetY%, 添加预警, , , , NA; 点击打勾
+    ControlClick, x173 y446, 添加预警, , , , NA    ;点击确定
 }
 
 
@@ -942,6 +941,7 @@ SmartClose() {
     WinGet, hwnd, ID, A 
     WinGet, processName, ProcessName, A
     WinGetClass, winClass, A
+    WinGetTitle, currentTitle, A
     
     ; 浏览器标签页关闭逻辑
     browserProcesses := ["chrome.exe",  "msedge.exe",  "firefox.exe",  "opera.exe",  "vivaldi.exe"] 
@@ -959,6 +959,10 @@ SmartClose() {
     else if (winClass = "ApplicationFrameWindow") {  ; UWP应用 
         PostMessage, 0x112, 0xF060,,, A  ; 发送关闭消息
     } 
+    else if (processName="hexin.exe" && currentTitle="添加预警") {
+        ;同花顺的添加预警窗口比较特殊，需要点击关闭按钮，否则会导致再也无法打开添加预警窗口了，因为同花顺关闭这个窗口不是真的关闭，只是隐藏了
+        ControlClick, x450 y16, ahk_id %hwnd%, , , , NA    ;点击关闭按钮
+    }
     else {
         ; 标准关闭流程
         WinClose, ahk_id %hwnd%
