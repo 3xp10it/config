@@ -963,6 +963,10 @@ SmartClose() {
         ;同花顺的添加预警窗口比较特殊，需要点击关闭按钮，否则会导致再也无法打开添加预警窗口了，因为同花顺关闭这个窗口不是真的关闭，只是隐藏了
         ControlClick, x450 y16, ahk_id %hwnd%, , , , NA    ;点击关闭按钮
     }
+    else if (processName="hexin.exe" && currentTitle="预警结果") {
+        ;同花顺的股票预警窗口比较特殊，需要点击关闭按钮，否则会导致再也无法打开预警结果窗口了，因为同花顺关闭这个窗口不是真的关闭，只是隐藏了
+        ControlClick, x659 y16, ahk_id %hwnd%, , , , NA    ;点击关闭按钮
+    }
     else {
         ; 标准关闭流程
         WinClose, ahk_id %hwnd%
