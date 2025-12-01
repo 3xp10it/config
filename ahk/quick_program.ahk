@@ -403,7 +403,7 @@ if WinExist(thsWindowTitle)
 WinActivate
 ;注意，同花顺最大的高度只有1446，设置再大也不会有效，y从1到1446则可保证底部铺满(顶部铺不满)，如果y从0到1446则顶部和底部都铺不满
 WinMove, %thsWindowTitle%, , -7, 1, 1968, 1446
-CreateOverlays()
+;CreateOverlays()
 }
 else
 {
