@@ -53,6 +53,12 @@ OnMessage(msgNum, "ShellMessage")
 ; 核心函数：处理窗口激活消息 (HSHELL_WINDOWACTIVATED)
 ; ============================================= 
 
+
+; 脚本启动时自动执行函数
+CreateOverlays()
+
+
+
 RemoveToolTip:
     ToolTip ; 清除Tooltip
 Return
@@ -788,6 +794,20 @@ GetControlUnderMousePos(ByRef CtrlX:="", ByRef CtrlY:="", ByRef CtrlW:="", ByRef
     return false
 }
 
+
+;win+空格打开同花顺股票预警结果窗口
+#Space::show_ths_yujin()
+show_ths_yujin()
+{
+if WinExist("预警结果") 
+{
+WinActivate, 预警结果
+WinSet, TopMost, On, 预警结果
+}
+}
+
+
+
 ;win+3打开模拟器
 #3::open_moniqi()
 open_moniqi()
@@ -817,6 +837,48 @@ open_moniqi()
         ControlClick, x280 y130, %windowTitle%, , , , NA    ;点击打板
     }
 }
+
+
+;win+1 将同花顺切换到排板页面
+#1::switch_ths_to_paiban()
+switch_ths_to_paiban()
+{
+whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+whr.SetTimeouts(30000,60000,30000,30000)
+whr.Open("GET", "http://192.168.1.7:7777/set_stock_code_to_ths?stock_code=.10", true)
+whr.Send()
+try
+{
+whr.WaitForResponse()
+;MsgBox % whr.ResponseText
+}
+catch e
+{
+;MsgBox,"http request error"
+}
+CreateOverlays()
+}
+
+;win+2 将同花顺切换到复盘页面
+#2::switch_ths_to_fupan()
+switch_ths_to_fupan()
+{
+whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+whr.SetTimeouts(30000,60000,30000,30000)
+whr.Open("GET", "http://192.168.1.7:7777/set_stock_code_to_ths?stock_code=.11", true)
+whr.Send()
+try
+{
+whr.WaitForResponse()
+;MsgBox % whr.ResponseText
+}
+catch e
+{
+;MsgBox,"http request error"
+}
+DestroyOverlays()
+}
+
 
 ;win+^+s同花顺设置预警后确认
 #^s::ths_xiadie_yujin_confirm()
@@ -1054,7 +1116,7 @@ GetBlockingWindows(targetHwnd) {
 ; 两个全局变量要放在文件最前面，否则会出错
 
 ; 创建遮罩热键（可自定义组合键）
-#1::CreateOverlays() ; win+1 创建遮罩
+^1::CreateOverlays() ; ctrl+1 创建遮罩
 
 
 CreateOverlays() {
@@ -1074,7 +1136,7 @@ CreateOverlays() {
     CreateOverlay(overlay12, 1, 508, 44, 20, 225)    ; "自选股表单设置背景"
 }
 
-#2::DestroyOverlays()  ; win+2 移除遮罩
+^2::DestroyOverlays()  ; ctrl+2 移除遮罩
 
 CreateOverlay(ByRef hwnd, x, y, w, h, transparency) {
   Gui, New, +HwndguiHwnd
@@ -1141,3 +1203,4 @@ DestroyOverlays() {
   }
 }
 ; ############## 模块结束 ##############
+
