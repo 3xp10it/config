@@ -826,11 +826,11 @@ open_moniqi()
     {
         Run, "%noxPath%" control -v 0  launch -pkg com.aiyu.kaipanla
         WinWait, %windowTitle%,, 30  ; 等待最多30秒
-        Sleep, 15000
+        WinActivate, %windowTitle%
         WinMove, %windowTitle%,, 2657,ok_y-1,786,ok_h+1
-        Sleep, 10000
+        Sleep, 15000
+        ;Sleep, 10000
         WinSet, TopMost, On, %windowTitle%
-        ;WinActivate, %windowTitle%
         CoordMode, Mouse, Window      ; 使用窗口坐标
         ControlClick, x233 y1376, %windowTitle%, , , , NA    ;点击行情
         Sleep, 1000
@@ -877,6 +877,12 @@ catch e
 ;MsgBox,"http request error"
 }
 DestroyOverlays()
+WinGet, Style, Style, 股票池
+if (!(Style & 0x20000000))
+{
+    ;如果股票池没有最小化，将realnews等窗口最小化
+    switchTorealnews()
+}
 }
 
 
