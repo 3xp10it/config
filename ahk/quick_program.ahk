@@ -828,8 +828,7 @@ open_moniqi()
         WinWait, %windowTitle%,, 30  ; 等待最多30秒
         WinActivate, %windowTitle%
         WinMove, %windowTitle%,, 2657,ok_y-1,786,ok_h+1
-        Sleep, 15000
-        ;Sleep, 10000
+        Sleep, 25000
         WinSet, TopMost, On, %windowTitle%
         CoordMode, Mouse, Window      ; 使用窗口坐标
         ControlClick, x233 y1376, %windowTitle%, , , , NA    ;点击行情
@@ -1137,7 +1136,7 @@ CreateOverlays() {
     CreateOverlay(overlay7, 459, 102, 165, 368, 90)    ; "逐笔成交明细买单卖单"
     CreateOverlay(overlay8, 233, 58, 14, 21, 255)    ;"逐笔成交明细左边的白框"
     ;CreateOverlay(overlay9, 460, 1053, 224, 44, 150)    ;"委买队列"
-    CreateOverlay(overlay10, 1793, 404, 108, 20, 225)    ; "成交量下拉框背景"
+    CreateOverlay(overlay10, 1793, 403, 108, 21, 225)    ; "成交量下拉框背景"
     CreateOverlay(overlay11, 120, 1246, 108,18, 225)    ; "涨速排名下拉框背景"
     CreateOverlay(overlay12, 1, 508, 44, 20, 225)    ; "自选股表单设置背景"
 }
