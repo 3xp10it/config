@@ -1152,6 +1152,9 @@ CreateOverlay(ByRef hwnd, x, y, w, h, transparency) {
   WinSet, Transparent, %transparency%, ahk_id %guiHwnd%
 }
 
+
+
+
 DestroyOverlays() {
   global overlay1, overlay2, overlay3
   if (overlay1 != 0) {
@@ -1206,6 +1209,40 @@ DestroyOverlays() {
     Gui, %overlay12%:Destroy
     overlay12 := 0
   }
+}
+
+
+
+^3::minimize_some_windows()
+minimize_some_windows() {
+IfWinExist, 下单
+{
+    WinMinimize ; 最小化找到的窗口
+}
+IfWinExist, 排板
+{
+    WinMinimize ; 最小化找到的窗口
+}
+IfWinExist, 短线精灵
+{
+    WinMinimize ; 最小化找到的窗口
+}
+IfWinExist, 大单
+{
+    WinMinimize ; 最小化找到的窗口
+}
+IfWinExist, 实时新闻
+{
+    WinMinimize ; 最小化找到的窗口
+}
+IfWinExist, 涨停股
+{
+    WinMinimize ; 最小化找到的窗口
+}
+IfWinExist, 股票池
+{
+    WinMinimize ; 最小化找到的窗口
+}
 }
 ; ############## 模块结束 ##############
 
