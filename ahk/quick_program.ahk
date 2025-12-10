@@ -1215,6 +1215,7 @@ DestroyOverlays() {
 
 ^3::minimize_some_windows()
 minimize_some_windows() {
+DestroyOverlays()
 IfWinExist, 下单
 {
     WinMinimize ; 最小化找到的窗口
