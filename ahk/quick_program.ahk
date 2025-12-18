@@ -266,7 +266,12 @@ else
 
 
 
-
+;win+ctrl+e 打开tbjl.bat
+#^e::open_tbjl_bat()
+open_tbjl_bat()
+{
+Run,"z:\tbjl.bat"
+}
 
 
 
