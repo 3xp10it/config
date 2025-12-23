@@ -145,10 +145,10 @@ ShellMessage(wParam, lParam) {
     }
 
 
-    if (InStr(title,"同花顺(")==0 || current_title="所属板块")
+    if (InStr(current_title,"同花顺(")==0)
     {
         ;WinSet, TopMost, On,ahk_id %lParam%
-        ;同花顺的所属板块窗口在打开时要置顶，非同花顺的窗口打开时置顶
+        ;非同花顺主界面窗口打开时置顶
         WinSet, TopMost, On,A
     }
 
