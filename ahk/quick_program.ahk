@@ -118,22 +118,15 @@ IsAutomatedActivation() {
 ShellMessage(wParam, lParam) {
     ; 显示所有事件并写入日志
     WinGetTitle, title, ahk_id %lParam%
+    WinGetTitle, current_title, A
+
     ;WinGet, processName, ProcessName, ahk_id %lParam%
     ;logMessage :=(Join "事件: wParam=" wParam " | 窗口标题=" (title ? title : "N/A") " | 进程名=" (processName ? processName : "N/A") " | 句柄=" lParam)
-
-
     ;triggerSource := GetEventTriggerSource(wParam, lParam)  ; 新增函数 
-    ; 增强版日志格式 
     ;FormatTime, timestamp,, yyyy-MM-dd HH:mm:ss.fff  
-    ;logMessage := Format("{} | 事件: {}({:X}) | 触发者: {} | 窗口: {} | 进程: {} | 句柄: 0x{:X}"
-    ;    , timestamp, GetEventName(wParam), wParam, triggerSource 
-    ;    , (title ? StrReplace(title, "|", "∣") : "N/A")  ; 防止分隔符冲突 
-    ;    , (processName ? processName : "N/A")
-    ;    , lParam)
+    ;logMessage := Format("{} | 事件: {}({:X}) | 触发者: {} | 窗口: {} | 进程: {} | 句柄: 0x{:X}" , timestamp, GetEventName(wParam), wParam, triggerSource  , (title ? StrReplace(title, "|", "∣") : "N/A")  , (processName ? processName : "N/A") , lParam)
     ;WriteToLog(logMessage)
-    ;WinGetTitle, current_title, A
     ;WriteToLog(current_title)
-
 
     if (wParam != 32772 || lParam==0) ;HSHELL_RUDEAPPACTIVATED (值=0x8004，也即32772)
         return 
@@ -152,11 +145,11 @@ ShellMessage(wParam, lParam) {
     }
 
 
-
-    if (InStr(title,"同花顺(")==0)
+    if (InStr(title,"同花顺(")==0 || current_title="所属板块")
     {
-        ;同花顺的主窗口不置顶，要不然会挡住stockapp的置顶窗口，其他窗口打开的时候都置顶
-        WinSet, TopMost, On,ahk_id %lParam%
+        ;WinSet, TopMost, On,ahk_id %lParam%
+        ;同花顺的所属板块窗口在打开时要置顶，非同花顺的窗口打开时置顶
+        WinSet, TopMost, On,A
     }
 
 
