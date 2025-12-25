@@ -120,13 +120,16 @@ ShellMessage(wParam, lParam) {
     WinGetTitle, title, ahk_id %lParam%
     WinGetTitle, current_title, A
 
-    ;WinGet, processName, ProcessName, ahk_id %lParam%
-    ;logMessage :=(Join "事件: wParam=" wParam " | 窗口标题=" (title ? title : "N/A") " | 进程名=" (processName ? processName : "N/A") " | 句柄=" lParam)
-    ;triggerSource := GetEventTriggerSource(wParam, lParam)  ; 新增函数 
-    ;FormatTime, timestamp,, yyyy-MM-dd HH:mm:ss.fff  
-    ;logMessage := Format("{} | 事件: {}({:X}) | 触发者: {} | 窗口: {} | 进程: {} | 句柄: 0x{:X}" , timestamp, GetEventName(wParam), wParam, triggerSource  , (title ? StrReplace(title, "|", "∣") : "N/A")  , (processName ? processName : "N/A") , lParam)
-    ;WriteToLog(logMessage)
-    ;WriteToLog(current_title)
+    WinGet, processName, ProcessName, ahk_id %lParam%
+
+    /*  
+    logMessage :=(Join "事件: wParam=" wParam " | 窗口标题=" (title ? title : "N/A") " | 进程名=" (processName ? processName : "N/A") " | 句柄=" lParam)
+    triggerSource := GetEventTriggerSource(wParam, lParam)  ; 新增函数 
+    FormatTime, timestamp,, yyyy-MM-dd HH:mm:ss.fff  
+    logMessage := Format("{} | 事件: {}({:X}) | 触发者: {} | 窗口: {} | 进程: {} | 句柄: 0x{:X}" , timestamp, GetEventName(wParam), wParam, triggerSource  , (title ? StrReplace(title, "|", "∣") : "N/A")  , (processName ? processName : "N/A") , lParam)
+    WriteToLog(logMessage)
+    WriteToLog(current_title)
+    */
 
     if (wParam != 32772 || lParam==0) ;HSHELL_RUDEAPPACTIVATED (值=0x8004，也即32772)
         return 
@@ -144,12 +147,16 @@ ShellMessage(wParam, lParam) {
             g_windowHistory.Pop()
     }
 
+    ;WriteToLog("title:"+title)
+    ;WriteToLog("current_title:"+current_title)
 
-    if (InStr(current_title,"同花顺(")==0)
+    if (InStr(current_title,"同花顺(")==0 && current_title!="短线精灵")
     {
         ;WinSet, TopMost, On,ahk_id %lParam%
         ;非同花顺主界面窗口打开时置顶
-        WinSet, TopMost, On,A
+        WinSet, TopMost, On,%current_title%
+        ;WriteToLog(current_title)
+        ;WriteToLog(title)
     }
 
 
