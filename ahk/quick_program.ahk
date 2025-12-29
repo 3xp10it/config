@@ -838,7 +838,7 @@ open_moniqi()
         CoordMode, Mouse, Window      ; 使用窗口坐标
         ControlClick, x233 y1376, %windowTitle%, , , , NA    ;点击行情
         Sleep, 1000
-        ControlClick, x214 y124, %windowTitle%, , , , NA    ;点击打板
+        ControlClick, x275 y134, %windowTitle%, , , , NA    ;点击打板
         WinMove, %windowTitle%,, 2657,ok_y-1,786,ok_h+1
     }
 }
