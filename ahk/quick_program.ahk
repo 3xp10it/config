@@ -152,9 +152,10 @@ ShellMessage(wParam, lParam) {
 
     if (InStr(current_title,"同花顺(")==0 && current_title!="短线精灵")
     {
-        ;WinSet, TopMost, On,ahk_id %lParam%
+
         ;非同花顺主界面窗口打开时置顶
-        WinSet, TopMost, On,%current_title%
+        WinSet, TopMost, On,ahk_id %lParam%
+        ;WinSet, TopMost, On,%current_title%
         ;WriteToLog(current_title)
         ;WriteToLog(title)
     }
