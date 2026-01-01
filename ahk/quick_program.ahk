@@ -135,7 +135,7 @@ ShellMessage(wParam, lParam) {
         return 
     ; 排除无效窗口（桌面/任务栏/自身窗口）
     WinGetTitle, title, ahk_id %lParam%
-    if (title = "" || title = "Program Manager" || InStr(title, "AutoHotkey"))
+    if (title = "Program Manager" || InStr(title, "AutoHotkey"))    ;注意，这里不能排除title为空的窗口，有些窗口在创建后激活的时候title没那么快更新，存在title为空的时刻
         return 
     ; 更新历史记录（排除重复激活）
     if (g_windowHistory[1] != lParam) {
@@ -152,10 +152,9 @@ ShellMessage(wParam, lParam) {
 
     if (InStr(current_title,"同花顺(")==0 && current_title!="短线精灵")
     {
-
+        Sleep,100   ;注意，有些窗口没那么快准备好，这里需要先睡100ms再将窗口置顶，否则会导致有些窗口无法被置顶
         ;非同花顺主界面窗口打开时置顶
         WinSet, TopMost, On,ahk_id %lParam%
-        ;WinSet, TopMost, On,%current_title%
         ;WriteToLog(current_title)
         ;WriteToLog(title)
     }
@@ -1253,4 +1252,5 @@ IfWinExist, 股票池
 }
 }
 ; ############## 模块结束 ##############
+
 
