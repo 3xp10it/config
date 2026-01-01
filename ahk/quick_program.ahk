@@ -152,7 +152,10 @@ ShellMessage(wParam, lParam) {
 
     if (InStr(current_title,"同花顺(")==0 && current_title!="短线精灵")
     {
-        Sleep,50   ;注意，有些窗口没那么快准备好，这里需要先睡50ms再将窗口置顶，否则会导致有些窗口无法被置顶
+        if (title="")
+        {
+            Sleep,50   ;注意，有些窗口没那么快准备好，这里需要先睡50ms再将窗口置顶，否则会导致有些窗口无法被置顶
+        }
         ;非同花顺主界面窗口打开时置顶
         WinSet, TopMost, On,ahk_id %lParam%
         ;WriteToLog(current_title)
