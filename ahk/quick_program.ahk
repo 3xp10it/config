@@ -124,24 +124,29 @@ ShellMessage(wParam, lParam) {
     triggerSource := GetEventTriggerSource(wParam, lParam)  ; 新增函数 
 
 
-/*
+
     logMessage :=(Join "事件: wParam=" wParam " | 窗口标题=" (title ? title : "N/A") " | 进程名=" (processName ? processName : "N/A") " | 句柄=" lParam)
     FormatTime, timestamp,, yyyy-MM-dd HH:mm:ss.fff  
     logMessage := Format("{} | 事件: {}({:X}) | 触发者: {} | 进程: {} | 句柄: 0x{:X} `n窗口title: {} `n current_title: {}" , timestamp, GetEventName(wParam), wParam, triggerSource  ,  (processName ? processName : "N/A") , lParam, (title ? StrReplace(title, "|", "∣") : "N/A")  , current_title)
     ;WriteToLog(logMessage)
 
+/*
     if (wParam!=2 && wParam!=0x10)
     {
     ;不看2窗口销毁
     Tooltip,%logMessage%
-    SetTimer, RemoveToolTip, -10000 ; 
+    SetTimer, RemoveToolTip, -3000 ; 
     }
 */
 
 
+    if ((wParam != 32772 && wParam != 32774)  || lParam==0) ;HSHELL_RUDEAPPACTIVATED (值=0x8004，也即32772，迅雷在网点中点击磁力链接后对应的弹窗事件是0x8006也即32774)
+    {
+        return
+    }
 
-    if ((wParam != 32772 && wParam=!32774)  || lParam==0) ;HSHELL_RUDEAPPACTIVATED (值=0x8004，也即32772，迅雷在网点中点击磁力链接后对应的弹窗事件是0x8006也即32774)
-        return 
+
+
     ; 排除无效窗口（桌面/任务栏/自身窗口）
     WinGetTitle, title, ahk_id %lParam%
     if (title = "Program Manager" || InStr(title, "AutoHotkey"))    ;注意，这里不能排除title为空的窗口，有些窗口在创建后激活的时候title没那么快更新，存在title为空的时刻
@@ -189,6 +194,8 @@ ShellMessage(wParam, lParam) {
             Sleep,50   ;注意，有些窗口没那么快准备好(启动激活的时候title可能还是空)，这里需要先睡50ms再将窗口置顶，否则会导致有些窗口无法被置顶
             ;ahk_id %lParam%对应的窗口标题是title
             WinSet, TopMost, On,ahk_id %lParam%
+
+
         }
     }
 
