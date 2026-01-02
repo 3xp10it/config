@@ -64,6 +64,7 @@ RemoveToolTip:
 Return
 
 
+
 ;=== 新增事件触发源检测函数 === 
 GetEventTriggerSource(wParam, lParam) {
     static lastInputTime := 0
@@ -119,19 +120,27 @@ ShellMessage(wParam, lParam) {
     ; 显示所有事件并写入日志
     WinGetTitle, title, ahk_id %lParam%
     WinGetTitle, current_title, A
-
     WinGet, processName, ProcessName, ahk_id %lParam%
-
-    /*  
-    logMessage :=(Join "事件: wParam=" wParam " | 窗口标题=" (title ? title : "N/A") " | 进程名=" (processName ? processName : "N/A") " | 句柄=" lParam)
     triggerSource := GetEventTriggerSource(wParam, lParam)  ; 新增函数 
-    FormatTime, timestamp,, yyyy-MM-dd HH:mm:ss.fff  
-    logMessage := Format("{} | 事件: {}({:X}) | 触发者: {} | 窗口: {} | 进程: {} | 句柄: 0x{:X}" , timestamp, GetEventName(wParam), wParam, triggerSource  , (title ? StrReplace(title, "|", "∣") : "N/A")  , (processName ? processName : "N/A") , lParam)
-    WriteToLog(logMessage)
-    WriteToLog(current_title)
-    */
 
-    if (wParam != 32772 || lParam==0) ;HSHELL_RUDEAPPACTIVATED (值=0x8004，也即32772)
+
+/*
+    logMessage :=(Join "事件: wParam=" wParam " | 窗口标题=" (title ? title : "N/A") " | 进程名=" (processName ? processName : "N/A") " | 句柄=" lParam)
+    FormatTime, timestamp,, yyyy-MM-dd HH:mm:ss.fff  
+    logMessage := Format("{} | 事件: {}({:X}) | 触发者: {} | 进程: {} | 句柄: 0x{:X} `n窗口title: {} `n current_title: {}" , timestamp, GetEventName(wParam), wParam, triggerSource  ,  (processName ? processName : "N/A") , lParam, (title ? StrReplace(title, "|", "∣") : "N/A")  , current_title)
+    ;WriteToLog(logMessage)
+
+    if (wParam!=2 && wParam!=0x10)
+    {
+    ;不看2窗口销毁
+    Tooltip,%logMessage%
+    SetTimer, RemoveToolTip, -10000 ; 
+    }
+*/
+
+
+
+    if ((wParam != 32772 && wParam=!32774)  || lParam==0) ;HSHELL_RUDEAPPACTIVATED (值=0x8004，也即32772，迅雷在网点中点击磁力链接后对应的弹窗事件是0x8006也即32774)
         return 
     ; 排除无效窗口（桌面/任务栏/自身窗口）
     WinGetTitle, title, ahk_id %lParam%
@@ -147,22 +156,41 @@ ShellMessage(wParam, lParam) {
             g_windowHistory.Pop()
     }
 
-    ;WriteToLog("title:"+title)
-    ;WriteToLog("current_title:"+current_title)
 
-    if (InStr(current_title,"同花顺(")==0 && current_title!="短线精灵")
+
+
+    if (processName="hexin.exe")    ;同花顺的小窗口也不能置顶，例如预警结果窗口、所属板块窗口，如果设置了置顶的话后面在遇到其他同花顺小窗口置顶时也会将之前的窗口再次置顶显示
     {
-        if (title="")
+        if (current_title="所属板块")
         {
-            Sleep,50   ;注意，有些窗口没那么快准备好，这里需要先睡50ms再将窗口置顶，否则会导致有些窗口无法被置顶
+            WinSet, TopMost, On, 所属板块
         }
-        ;非同花顺主界面窗口打开时置顶
-        WinSet, TopMost, On,ahk_id %lParam%
-        ;WriteToLog(current_title)
-        ;WriteToLog(title)
+        else if (current_title="预警结果")
+        {
+            WinMove, 预警结果, , 1230,987,680,406
+        }
     }
-
-
+    else if (InStr(title,"同花顺(")==0)    ;就算不是hexin.exe进程也再次要求title不是同花顺主窗口
+    {
+        if (triggerSource="外部进程: Thunder.exe")
+        {
+            ; 迅雷窗口处理逻辑 - 增加延迟和重试; 迅雷窗口可能创建较慢，需要等待
+            SetTitleMatchMode, 3
+            Sleep,2000
+            WinSet, TopMost, On, 新建任务面板
+            Sleep,2000
+            WinSet, TopMost, On, 新建任务面板
+            Sleep,2000
+            WinSet, TopMost, On, 新建任务面板
+            return
+        }
+        else
+        {
+            Sleep,50   ;注意，有些窗口没那么快准备好(启动激活的时候title可能还是空)，这里需要先睡50ms再将窗口置顶，否则会导致有些窗口无法被置顶
+            ;ahk_id %lParam%对应的窗口标题是title
+            WinSet, TopMost, On,ahk_id %lParam%
+        }
+    }
 
 }
 
@@ -406,33 +434,31 @@ DetectHiddenText On
 ;win+f 打开同花顺
 #f::switchToTHS()
 
-
 switchToTHS()
 {
 THS_path:="D:\THS\hexin.exe"
 ;注意：SetTitleMatchMode一定要放在WinExist前面一行，放远了可能不会生效；这里也可以通过使用WinExist("ahk_exe D:\THS\hexin.exe")来获取同花顺的窗口，但这样可能会获取到短线精灵，除了同花顺主界面属于hexin.exe外，弹窗式的短线精灵也属于hexin.exe，所以实际不能使用ahk_exe来获取，只能用窗口特征来获取，还需要注意的是，ahk代码中不支持中文，所以用中文字符串来匹配是无法成功的
-SetTitleMatchMode RegEx
-if WinExist(thsWindowTitle)
+SetTitleMatchMode, RegEx
+if (ths_hwnd:=WinExist("同花顺\(.*\).* ahk_exe hexin.exe"))    ;注意，这里要同时加上exe限定，否则如果有些tooltip打印的窗口激活的消息中包含了同花顺的字符串则会导致这里获取的ths_hwnd可能是tooltip窗口的句柄，另外，在正则匹配时字符串后面如果有空格则空格后面的内容是不会被当成字符串而是当成条件的，所以这里可以放心加ahk_exe hexin.exe的条件
 {
-WinActivate
+WinActivate, ahk_id %ths_hwnd%
 ;注意，同花顺最大的高度只有1446，设置再大也不会有效，y从1到1446则可保证底部铺满(顶部铺不满)，如果y从0到1446则顶部和底部都铺不满
-WinMove, %thsWindowTitle%, , -7, 1, 1968, 1446
-;CreateOverlays()
+WinMove, ahk_id %ths_hwnd%, , -7, 1, 1968, 1446
+
 }
 else
 {
 Run, %THS_path%
 }
 
-
 ; 将遮住同花顺同花顺的窗口最小化
-WinGet, ths_hwnd, ID, %thsWindowTitle%
 blockers := GetBlockingWindows(ths_hwnd)
 if (blockers.Length() > 0) {
     result := "遮挡窗口列表（按Z序从高到低）:`n`n"
     for i, hwnd in blockers {
         WinGetTitle, title, ahk_id %hwnd%
-        if (not InStr(title, "短线精灵") && not InStr(title, "股票池") && not InStr(title, "涨停股") && not InStr(title, "实时新闻") && not InStr(title, "大单") && not InStr(title, "排板") && not InStr(inputStr, "个股新闻") && not InStr(title, "概念") && not InStr(title, "下单") && not InStr(title, "风向标") && not InStr(title, "个股新闻") && title!="quick_program.ahk")
+        ;WinGet, processName, ProcessName, ahk_id %hwnd%
+        if (not InStr(title, "预警结果")  && not InStr(title, "所属板块")  && not InStr(title, "短线精灵") && not InStr(title, "股票池") && not InStr(title, "涨停股") && not InStr(title, "实时新闻") && not InStr(title, "大单") && not InStr(title, "排板") && not InStr(inputStr, "个股新闻") && not InStr(title, "概念") && not InStr(title, "下单") && not InStr(title, "风向标") && not InStr(title, "个股新闻") && title!="quick_program.ahk")
         {
                 ;result .= "[" i "] 句柄: " Format("0x{:X}", hwnd)
                 ;.  "`n标题: " (title ? title : "(无标题)")
@@ -1255,5 +1281,6 @@ IfWinExist, 股票池
 }
 }
 ; ############## 模块结束 ##############
+
 
 
