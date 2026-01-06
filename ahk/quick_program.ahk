@@ -166,9 +166,9 @@ ShellMessage(wParam, lParam) {
 
     if (processName="hexin.exe")    ;同花顺的小窗口也不能置顶，例如预警结果窗口、所属板块窗口，如果设置了置顶的话后面在遇到其他同花顺小窗口置顶时也会将之前的窗口再次置顶显示
     {
-        if (current_title="所属板块")
+        if (current_title="所属板块" || current_title="添加预警")
         {
-            WinSet, TopMost, On, 所属板块
+            WinSet, TopMost, On, %current_title%
         }
         else if (current_title="预警结果")
         {
