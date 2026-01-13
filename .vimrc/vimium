@@ -1,4 +1,4 @@
-#注意，在news.html中要设置exclude vimium keys on this page并设置keys to exclude为gG,因为news.html中自带gg和G的处理代码，如果不在vimium中屏蔽news.html会导致gg/G被vimium捕获而无法被news.html中的代码捕获
+#注意，在news.html中要设置exclude vimium keys on this page并设置keys to exclude为gG,因为news.html中自带gg和G的处理代码，如果不在vimium中屏蔽news.html的gg/G会导致gg/G被vimium捕获而无法被news.html中的代码捕获
 
 # Insert your preferred key mappings here.
 map d removeTab
