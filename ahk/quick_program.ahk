@@ -130,6 +130,7 @@ ShellMessage(wParam, lParam) {
     logMessage := Format("{} | 事件: {}({:X}) | 触发者: {} | 进程: {} | 句柄: 0x{:X} `n窗口title: {} `n current_title: {}" , timestamp, GetEventName(wParam), wParam, triggerSource  ,  (processName ? processName : "N/A") , lParam, (title ? StrReplace(title, "|", "∣") : "N/A")  , current_title)
     ;WriteToLog(logMessage)
 
+
 /*
     if (wParam!=2 && wParam!=0x10)
     {
@@ -138,6 +139,7 @@ ShellMessage(wParam, lParam) {
     SetTimer, RemoveToolTip, -3000 ; 
     }
 */
+
 
 
     if ((wParam != 32772 && wParam != 32774)  || lParam==0) ;HSHELL_RUDEAPPACTIVATED (值=0x8004，也即32772，迅雷在网点中点击磁力链接后对应的弹窗事件是0x8006也即32774)
@@ -166,13 +168,20 @@ ShellMessage(wParam, lParam) {
 
     if (processName="hexin.exe")    ;同花顺的小窗口也不能置顶，例如预警结果窗口、所属板块窗口，如果设置了置顶的话后面在遇到其他同花顺小窗口置顶时也会将之前的窗口再次置顶显示
     {
-        if (current_title="所属板块" || current_title="添加预警")
+        if (current_title="所属板块" || current_title="添加预警" || current_title="大单棱镜")
         {
-            WinSet, TopMost, On, %current_title%
+            WinSet, TopMost, On, %current_title% ahk_exe hexin.exe
         }
         else if (current_title="预警结果")
         {
             WinMove, 预警结果, , 1230,987,680,406
+        }
+        else if (title=current_title && InStr(title,"同花顺(")==1)    ;我发现当打开了大单棱镜等子窗口后，如果再次点击同花顺主窗口，同花顺会将打开的大单棱镜等子窗口取消置顶，这里需要我再置顶一下
+        {
+            WinSet, TopMost, On, 所属板块 ahk_exe hexin.exe
+            WinSet, TopMost, On, 添加预警 ahk_exe hexin.exe
+            WinSet, TopMost, On, 大单棱镜 ahk_exe hexin.exe
+            WinSet, TopMost, On, 预警结果 ahk_exe hexin.exe
         }
     }
     else if (InStr(title,"同花顺(")==0)    ;就算不是hexin.exe进程也再次要求title不是同花顺主窗口
@@ -464,8 +473,8 @@ if (blockers.Length() > 0) {
     result := "遮挡窗口列表（按Z序从高到低）:`n`n"
     for i, hwnd in blockers {
         WinGetTitle, title, ahk_id %hwnd%
-        ;WinGet, processName, ProcessName, ahk_id %hwnd%
-        if (not InStr(title, "预警结果")  && not InStr(title, "所属板块")  && not InStr(title, "短线精灵") && not InStr(title, "股票池") && not InStr(title, "涨停股") && not InStr(title, "实时新闻") && not InStr(title, "大单") && not InStr(title, "排板") && not InStr(inputStr, "个股新闻") && not InStr(title, "概念") && not InStr(title, "下单") && not InStr(title, "风向标") && not InStr(title, "个股新闻") && title!="quick_program.ahk")
+        WinGet, processName, ProcessName, ahk_id %hwnd%
+        if (processName!="hexin.exe" && processName!="stockapp.exe" && title!="quick_program.ahk")
         {
                 ;result .= "[" i "] 句柄: " Format("0x{:X}", hwnd)
                 ;.  "`n标题: " (title ? title : "(无标题)")
