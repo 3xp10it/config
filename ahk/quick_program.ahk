@@ -1287,6 +1287,10 @@ IfWinExist, 实时新闻
 {
     WinMinimize ; 最小化找到的窗口
 }
+IfWinExist, 陈小群
+{
+    WinMinimize ; 最小化找到的窗口
+}
 IfWinExist, 涨停股
 {
     WinMinimize ; 最小化找到的窗口
