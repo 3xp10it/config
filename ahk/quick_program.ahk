@@ -1185,7 +1185,7 @@ CreateOverlays() {
     CreateOverlay(overlay5, 567, 803, 58, 190, 255)    ; "千档盘口红绿点"
     CreateOverlay(overlay6, 611, 681, 13, 20, 150)    ; "预警铃铛"
     CreateOverlay(overlay7, 459, 102, 165, 368, 90)    ; "逐笔成交明细买单卖单"
-    CreateOverlay(overlay8, 233, 58, 14, 21, 255)    ;"逐笔成交明细左边的白框"
+    ;CreateOverlay(overlay8, 233, 58, 14, 21, 255)    ;"逐笔成交明细左边的白框"
     ;CreateOverlay(overlay9, 460, 1053, 224, 44, 150)    ;"委买队列"
     CreateOverlay(overlay10, 1793, 403, 108, 21, 225)    ; "成交量下拉框背景"
     CreateOverlay(overlay11, 120, 1246, 108,18, 225)    ; "涨速排名下拉框背景"
@@ -1240,10 +1240,10 @@ DestroyOverlays() {
     Gui, %overlay7%:Destroy
     overlay7 := 0
   }
-  if (overlay8 != 0) {
-    Gui, %overlay8%:Destroy
-    overlay8 := 0
-  }
+  ;if (overlay8 != 0) {
+    ;Gui, %overlay8%:Destroy
+    ;overlay8 := 0
+  ;}
   ;if (overlay9 != 0) {
     ;Gui, %overlay9%:Destroy
     ;overlay9 := 0
