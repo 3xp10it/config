@@ -1300,6 +1300,35 @@ IfWinExist, 股票池
     WinMinimize ; 最小化找到的窗口
 }
 }
+
+
+^+h::move_current_window_to_left()
+move_current_window_to_left() {
+    WinRestore,A
+    WinMove,A,,0,ok_y-1,795,ok_h+1
+}
+
+^+l::move_current_window_to_right()
+move_current_window_to_right() {
+    WinRestore,A
+    WinMove,A,,2653,ok_y-1,795,ok_h+1
+}
+
+^+f::fullscreen_current_window()
+fullscreen_current_window() {
+    WinGet, WinState, MinMax, A
+    IsFullScreen := (WinState = 1)
+    if (IsFullScreen)
+    {
+        WinRestore, A
+    }
+    else
+    {
+        WinMaximize, A
+    }
+}
+
+
 ; ############## 模块结束 ##############
 
 
