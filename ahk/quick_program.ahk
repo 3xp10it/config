@@ -113,6 +113,10 @@ IsAutomatedActivation() {
 }
 
 
+my_tooltip(string) {
+    Tooltip,%string%
+    SetTimer, RemoveToolTip, -3000 ; 
+}
 
 
 
@@ -1301,26 +1305,53 @@ IfWinExist, 股票池
 }
 }
 
-
-^+h::move_current_window_to_left()
-move_current_window_to_left() {
-    WinRestore,A
-    WinMove,A,,0,ok_y-1,795,ok_h+1
-}
-
-^+l::move_current_window_to_right()
-move_current_window_to_right() {
-    WinRestore,A
-    WinMove,A,,2653,ok_y-1,795,ok_h+1
-}
-
-^+f::fullscreen_current_window()
-fullscreen_current_window() {
-    WinGet, WinState, MinMax, A
-    IsFullScreen := (WinState = 1)
-    if (IsFullScreen)
+restore_current_window()
+{
+    CurrentWindow := "A"
+    WinGetTitle, WindowTitle, %CurrentWindow%
+    if (InStr(WindowTitle, "VLC media player") > 0)
     {
-        WinRestore, A
+        ; WinGet, 输出变量, ProcessName, 目标窗口
+        WinGet, WindowProcess, ProcessName, %CurrentWindow%
+        if (WindowProcess = "vlc.exe")
+        {
+            SendInput, {Esc}    ;vlc全屏播放视频时的窗口不能通过restore消息来退出全屏，要发送esc来实现
+            Sleep,100
+        }
+    }
+    else
+    {
+        WinRestore,A
+    }
+}
+
+
+current_window_is_fullscreen() 
+{
+    SysGet, ScreenWidth, 0
+    SysGet, ScreenHeight, 1
+    WinGetPos, WinX, WinY, WinW, WinH, A
+    WinGet, WinState, MinMax, A
+    
+    ; 放宽判断条件，允许±18像素误差（适配黑边、显示器缩放场景）
+    Tolerance := 18  ; 误差容忍值，可根据需求调整
+    XMatch := (Abs(WinX) <= Tolerance)
+    YMatch := (Abs(WinY) <= Tolerance)
+    WidthMatch := (Abs(WinW - ScreenWidth) <= Tolerance)
+    HeightMatch := (Abs(WinH - ScreenHeight) <= Tolerance)
+    IsFullScreen := XMatch && YMatch && WidthMatch && HeightMatch && (WinState != -1)
+    return IsFullScreen
+}
+
+fullscreen_current_window_forcall() {
+    WinGet, WindowProcess, ProcessName, A
+    if (WindowProcess = "vlc.exe")
+    {
+        WinActivate, A
+        Sleep, 100  ; 等待窗口激活，避免操作失效
+        SendInput, !v  ; 按下Alt+V，打开「视图」菜单（英文版本为Alt+V，中文版本可能不同）
+        Sleep, 100
+        SendInput, f  ; 按下F，选择「全屏」选项
     }
     else
     {
@@ -1328,8 +1359,36 @@ fullscreen_current_window() {
     }
 }
 
+^+h::move_current_window_to_left()
+move_current_window_to_left() {
+    restore_current_window()
+    ;WinMove,A,,0,ok_y-1,795,ok_h+1
+    WinMove,A,,-7, 1, 1968, 1446
+}
+
+
+
+^+l::move_current_window_to_right()
+move_current_window_to_right() {
+    restore_current_window()
+    WinMove,A,,2653,ok_y-1,795,ok_h+1
+}
+
+^+f::fullscreen_current_window()
+fullscreen_current_window() {
+    if (current_window_is_fullscreen())
+    {
+        restore_current_window()
+    }
+    else
+    {
+        fullscreen_current_window_forcall()
+    }
+}
+
 
 ; ############## 模块结束 ##############
+
 
 
 
