@@ -146,7 +146,7 @@ ShellMessage(wParam, lParam) {
 
 
 
-    if ((wParam != 32772 && wParam != 32774)  || lParam==0) ;HSHELL_RUDEAPPACTIVATED (值=0x8004，也即32772，迅雷在网点中点击磁力链接后对应的弹窗事件是0x8006也即32774)
+    if ((wParam != 32772 && wParam != 32774 && wParam != 1)  || lParam==0) ;HSHELL_RUDEAPPACTIVATED (值=0x8004，也即32772，迅雷在网点中点击磁力链接后对应的弹窗事件是0x8006也即32774，1是窗口创建事件)
     {
         return
     }
@@ -172,7 +172,7 @@ ShellMessage(wParam, lParam) {
 
     if (processName="hexin.exe")    ;同花顺的小窗口也不能置顶，例如预警结果窗口、所属板块窗口，如果设置了置顶的话后面在遇到其他同花顺小窗口置顶时也会将之前的窗口再次置顶显示
     {
-        if (current_title="所属板块" || current_title="添加预警" || current_title="大单棱镜")
+        if (current_title="所属板块" || current_title="添加预警" || current_title="大单棱镜" || current_title="about:blank")
         {
             WinSet, TopMost, On, %current_title% ahk_exe hexin.exe
         }
@@ -204,7 +204,7 @@ ShellMessage(wParam, lParam) {
         }
         else
         {
-            Sleep,50   ;注意，有些窗口没那么快准备好(启动激活的时候title可能还是空)，这里需要先睡50ms再将窗口置顶，否则会导致有些窗口无法被置顶
+            Sleep,100   ;注意，有些窗口没那么快准备好(启动激活的时候title可能还是空)，这里需要先睡100ms再将窗口置顶，否则会导致有些窗口无法被置顶
             ;ahk_id %lParam%对应的窗口标题是title
             WinSet, TopMost, On,ahk_id %lParam%
 
