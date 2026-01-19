@@ -180,14 +180,24 @@ ShellMessage(wParam, lParam) {
         {
             WinMove, 预警结果, , 1230,987,680,406
         }
-        else if (title=current_title && InStr(title,"同花顺(")==1)    ;我发现当打开了大单棱镜等子窗口后，如果再次点击同花顺主窗口，同花顺会将打开的大单棱镜等子窗口取消置顶，这里需要我再置顶一下
+        else if (title=current_title)
         {
-            WinSet, AlwaysOnTop, On, 所属板块 ahk_exe hexin.exe
-            WinSet, AlwaysOnTop, On, 添加预警 ahk_exe hexin.exe
-            WinSet, AlwaysOnTop, On, 大单棱镜 ahk_exe hexin.exe
-            WinSet, AlwaysOnTop, On, 预警结果 ahk_exe hexin.exe
+            if (InStr(title,"同花顺(")==1)
+            {
+                ;我发现当打开了大单棱镜等子窗口后，如果再次点击同花顺主窗口，同花顺会将打开的大单棱镜等子窗口取消置顶，这里需要我再置顶一下
+                WinSet, AlwaysOnTop, On, 所属板块 ahk_exe hexin.exe
+                WinSet, AlwaysOnTop, On, 添加预警 ahk_exe hexin.exe
+                WinSet, AlwaysOnTop, On, 大单棱镜 ahk_exe hexin.exe
+                WinSet, AlwaysOnTop, On, 预警结果 ahk_exe hexin.exe
+            }
+            else 
+            {
+                ;例如打开我的表头项等同花顺的非主窗口时
+                WinSet, AlwaysOnTop, On, %current_title% ahk_exe hexin.exe
+            }
         }
     }
+
     else if (InStr(title,"同花顺(")==0)    ;就算不是hexin.exe进程也再次要求title不是同花顺主窗口
     {
         if (triggerSource="外部进程: Thunder.exe")
