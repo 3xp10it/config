@@ -174,7 +174,7 @@ ShellMessage(wParam, lParam) {
     {
         if (current_title="所属板块" || current_title="添加预警" || current_title="大单棱镜" || current_title="about:blank")
         {
-            WinSet, TopMost, On, %current_title% ahk_exe hexin.exe
+            WinSet, AlwaysOnTop, On, %current_title% ahk_exe hexin.exe
         }
         else if (current_title="预警结果")
         {
@@ -182,10 +182,10 @@ ShellMessage(wParam, lParam) {
         }
         else if (title=current_title && InStr(title,"同花顺(")==1)    ;我发现当打开了大单棱镜等子窗口后，如果再次点击同花顺主窗口，同花顺会将打开的大单棱镜等子窗口取消置顶，这里需要我再置顶一下
         {
-            WinSet, TopMost, On, 所属板块 ahk_exe hexin.exe
-            WinSet, TopMost, On, 添加预警 ahk_exe hexin.exe
-            WinSet, TopMost, On, 大单棱镜 ahk_exe hexin.exe
-            WinSet, TopMost, On, 预警结果 ahk_exe hexin.exe
+            WinSet, AlwaysOnTop, On, 所属板块 ahk_exe hexin.exe
+            WinSet, AlwaysOnTop, On, 添加预警 ahk_exe hexin.exe
+            WinSet, AlwaysOnTop, On, 大单棱镜 ahk_exe hexin.exe
+            WinSet, AlwaysOnTop, On, 预警结果 ahk_exe hexin.exe
         }
     }
     else if (InStr(title,"同花顺(")==0)    ;就算不是hexin.exe进程也再次要求title不是同花顺主窗口
@@ -195,18 +195,18 @@ ShellMessage(wParam, lParam) {
             ; 迅雷窗口处理逻辑 - 增加延迟和重试; 迅雷窗口可能创建较慢，需要等待
             SetTitleMatchMode, 3
             Sleep,2000
-            WinSet, TopMost, On, 新建任务面板
+            WinSet, AlwaysOnTop, On, 新建任务面板
             Sleep,2000
-            WinSet, TopMost, On, 新建任务面板
+            WinSet, AlwaysOnTop, On, 新建任务面板
             Sleep,2000
-            WinSet, TopMost, On, 新建任务面板
+            WinSet, AlwaysOnTop, On, 新建任务面板
             return
         }
         else
         {
             Sleep,100   ;注意，有些窗口没那么快准备好(启动激活的时候title可能还是空)，这里需要先睡100ms再将窗口置顶，否则会导致有些窗口无法被置顶
             ;ahk_id %lParam%对应的窗口标题是title
-            WinSet, TopMost, On,ahk_id %lParam%
+            WinSet, AlwaysOnTop, On,ahk_id %lParam%
 
 
         }
@@ -347,7 +347,7 @@ if ((Style & 0x20000000) or (not WinActive(ahk_class Qt51514QWindowIcon)))    ;�
 {
     WinActivate
     WinMove,ahk_class Qt51514QWindowIcon,,ok_x+8,ok_y,ok_w-16,ok_h
-    WinSet, TopMost, On, ahk_class Qt51514QWindowIcon
+    WinSet, AlwaysOnTop, On, ahk_class Qt51514QWindowIcon
 }
 else
 {
@@ -387,7 +387,7 @@ switch_to_last_active_window()
     if (InStr(title,"同花顺(")==0)
     {
         ;同花顺的主窗口不置顶，要不然会挡住stockapp的置顶窗口
-        WinSet, TopMost, On,ahk_id %targetHwnd%
+        WinSet, AlwaysOnTop, On,ahk_id %targetHwnd%
     }
 
 }
@@ -406,7 +406,7 @@ if WinExist("ryij.txt - 记事本")
     targetWindowTitle := "ryij.txt - 记事本"
     WinActivate
     WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
-    WinSet, TopMost, On, %targetWindowTitle%
+    WinSet, AlwaysOnTop, On, %targetWindowTitle%
 }
 else if WinExist("ryij - 记事本")
 {
@@ -414,21 +414,21 @@ else if WinExist("ryij - 记事本")
     targetWindowTitle := "ryij - 记事本"
     WinActivate
     WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
-    WinSet, TopMost, On, %targetWindowTitle%
+    WinSet, AlwaysOnTop, On, %targetWindowTitle%
 }
 else if WinExist("*ryij.txt - 记事本") {
     ;MsgBox,"exist *ryij.txt - 记事本"
     targetWindowTitle := "*ryij.txt - 记事本"
     WinActivate
     WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
-    WinSet, TopMost, On, %targetWindowTitle%
+    WinSet, AlwaysOnTop, On, %targetWindowTitle%
 }
 else if WinExist("*ryij - 记事本") {
     ;MsgBox,"exist *ryij - 记事本"
     targetWindowTitle := "*ryij - 记事本"
     WinActivate
     WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
-    WinSet, TopMost, On, %targetWindowTitle%
+    WinSet, AlwaysOnTop, On, %targetWindowTitle%
 }
 else {
     ;MsgBox,"no ryij.txt - 记事本 and no *ryij.txt - 记事本" and no ryij - 记事本 and no *ryij - 记事本"
@@ -443,7 +443,7 @@ else {
     }
 
     WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
-    WinSet, TopMost, On, %targetWindowTitle%
+    WinSet, AlwaysOnTop, On, %targetWindowTitle%
 }
 cmds_should_show_realnews:="1"
 
@@ -544,7 +544,7 @@ else
     SetTitleMatchMode RegEx
     WinGet, znz_hwnd, ID, 指南针全赢决策系统
     WinActivate,ahk_id %znz_hwnd%
-    WinSet, TopMost, On, ahk_id %znz_hwnd%
+    WinSet, AlwaysOnTop, On, ahk_id %znz_hwnd%
 }
 }
 
@@ -568,7 +568,7 @@ else
     if WinExist(".*天狼50.*")
     {
     WinActivate
-    WinSet, TopMost, On, .*天狼50.*
+    WinSet, AlwaysOnTop, On, .*天狼50.*
     }
 }
 
@@ -725,7 +725,7 @@ SetTitleMatchMode RegEx
 if WinExist("guba_jiucai.*")
 {
     WinActivate
-    WinSet, TopMost, On, guba_jiucai.*
+    WinSet, AlwaysOnTop, On, guba_jiucai.*
 }
 ;SetTitleMatchMode, 2
 
@@ -747,7 +747,7 @@ if (xiadan_hwnd)
         ;SetTimer, RemoveToolTip, -2500 ; 
         WinActivate,ahk_id %xiadan_hwnd%
         WinMove,ahk_id %xiadan_hwnd%,,ok_x,ok_y,ok_w,ok_h
-        WinSet, TopMost, On, ahk_id %xiadan_hwnd%
+        WinSet, AlwaysOnTop, On, ahk_id %xiadan_hwnd%
     }
     else
     {
@@ -798,7 +798,7 @@ set_current_window_to_top()
         ;ToolTip,保存当前位置并固定
         WinRestore,ahk_id %hwnd%
         WinMove,A,,ok_x,ok_y,ok_w,ok_h
-        WinSet, TopMost, On, A
+        WinSet, AlwaysOnTop, On, A
     }
 
 }
@@ -856,7 +856,7 @@ show_ths_yujin()
 if WinExist("预警结果") 
 {
 WinActivate, 预警结果
-WinSet, TopMost, On, 预警结果
+WinSet, AlwaysOnTop, On, 预警结果
 }
 }
 
@@ -883,7 +883,7 @@ open_moniqi()
         WinActivate, %windowTitle%
         ;WinMove, %windowTitle%,, 2657,ok_y-1,786,ok_h+1
         Sleep, 25000
-        WinSet, TopMost, On, %windowTitle%
+        WinSet, AlwaysOnTop, On, %windowTitle%
         CoordMode, Mouse, Window      ; 使用窗口坐标
         ControlClick, x233 y1376, %windowTitle%, , , , NA    ;点击行情
         Sleep, 1000
@@ -1138,7 +1138,7 @@ GetBlockingWindows(targetHwnd) {
         
         ; 过滤无效窗口条件 
         ;if (minMax = -1) || !(style & 0x10000000)  ; WS_VISIBLE 
-         ;   || (exStyle & 0x80) || (exStyle & 0x00000008)  ; WS_EX_TOOLWINDOW/WS_EX_TOPMOST 
+         ;   || (exStyle & 0x80) || (exStyle & 0x00000008)  ; WS_EX_TOOLWINDOW/WS_EX_AlwaysOnTop 
           ;  continue
         if (minMax = -1) || !(style & 0x10000000)  ; WS_VISIBLE 
              || (exStyle & 0x80)  ; WS_EX_TOOLWINDOW
@@ -1388,6 +1388,7 @@ fullscreen_current_window() {
 
 
 ; ############## 模块结束 ##############
+
 
 
 
