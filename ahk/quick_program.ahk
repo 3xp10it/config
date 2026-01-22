@@ -132,7 +132,7 @@ ShellMessage(wParam, lParam) {
     logMessage :=(Join "事件: wParam=" wParam " | 窗口标题=" (title ? title : "N/A") " | 进程名=" (processName ? processName : "N/A") " | 句柄=" lParam)
     FormatTime, timestamp,, yyyy-MM-dd HH:mm:ss.fff  
     logMessage := Format("{} | 事件: {}({:X}) | 触发者: {} | 进程: {} | 句柄: 0x{:X} `n窗口title: {} `n current_title: {}" , timestamp, GetEventName(wParam), wParam, triggerSource  ,  (processName ? processName : "N/A") , lParam, (title ? StrReplace(title, "|", "∣") : "N/A")  , current_title)
-    ;WriteToLog(logMessage)
+
 
 
 /*
@@ -141,6 +141,7 @@ ShellMessage(wParam, lParam) {
     ;不看2窗口销毁
     Tooltip,%logMessage%
     SetTimer, RemoveToolTip, -3000 ; 
+    WriteToLog(logMessage)
     }
 */
 
@@ -211,6 +212,11 @@ ShellMessage(wParam, lParam) {
             Sleep,2000
             WinSet, AlwaysOnTop, On, 新建任务面板
             return
+        }
+        else if (processName="explorer.exe" && current_title=title && InStr(title,"\\"))    ;鼠标右键打开网络资源文件时
+        {
+            ;my_tooltip("右键打开网络文件")
+            WinSet, AlwaysOnTop, On,ahk_class #32768 ahk_exe explorer.exe    ;这个窗口指的是:在资源管理器中鼠标右键点击文件后出现的窗口
         }
         else
         {
@@ -1384,7 +1390,7 @@ move_current_window_to_right() {
     WinMove,A,,2653,ok_y-1,795,ok_h+1
 }
 
-^+f::fullscreen_current_window()
+#+f::fullscreen_current_window()
 fullscreen_current_window() {
     if (current_window_is_fullscreen())
     {
