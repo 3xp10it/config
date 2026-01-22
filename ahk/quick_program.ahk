@@ -218,6 +218,12 @@ ShellMessage(wParam, lParam) {
             ;my_tooltip("右键打开网络文件")
             WinSet, AlwaysOnTop, On,ahk_class #32768 ahk_exe explorer.exe    ;这个窗口指的是:在资源管理器中鼠标右键点击文件后出现的窗口
         }
+        else if (processName="Weixin.exe" && title=current_title)
+        {
+            ; 下面这个是微信的表情选择框
+            WinSet, AlwaysOnTop, On, Weixin ahk_class Qt51514QWindowToolSaveBits ahk_exe Weixin.exe
+        }
+
         else
         {
             Sleep,100   ;注意，有些窗口没那么快准备好(启动激活的时候title可能还是空)，这里需要先睡100ms再将窗口置顶，否则会导致有些窗口无法被置顶
@@ -347,7 +353,6 @@ Run,"z:\tbjl.bat"
 #w::switchToWechat()
 switchToWechat()
 {
-
 ;WeChat:="ahk_class Qt51514QWindowIcon"
 ;WeChat:="ahk_exe Weixin.exe"
 WeChat:="微信"
@@ -363,7 +368,7 @@ if ((Style & 0x20000000) or (not WinActive(ahk_class Qt51514QWindowIcon)))    ;�
 {
     WinActivate
     WinMove,ahk_class Qt51514QWindowIcon,,ok_x+8,ok_y,ok_w-16,ok_h
-    WinSet, AlwaysOnTop, On, ahk_class Qt51514QWindowIcon
+    WinSet, AlwaysOnTop, On, ahk_class Qt51514QWindowIcon 
 }
 else
 {
