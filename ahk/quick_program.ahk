@@ -220,6 +220,7 @@ ShellMessage(wParam, lParam) {
         }
         else if (processName="Weixin.exe" && title=current_title)
         {
+            WinSet, AlwaysOnTop, On,ahk_id %lParam%
             ; 下面这个是微信的表情选择框
             WinSet, AlwaysOnTop, On, Weixin ahk_class Qt51514QWindowToolSaveBits ahk_exe Weixin.exe
         }
