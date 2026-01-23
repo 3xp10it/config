@@ -147,7 +147,7 @@ ShellMessage(wParam, lParam) {
 
 
 
-    if ((wParam != 32772 && wParam != 32774 && wParam != 1)  || lParam==0) ;HSHELL_RUDEAPPACTIVATED (值=0x8004，也即32772，迅雷在网点中点击磁力链接后对应的弹窗事件是0x8006也即32774，1是窗口创建事件)
+    if ((wParam != 32772 && wParam != 32774 && wParam != 1 && wParam!=6)  || lParam==0) ;HSHELL_RUDEAPPACTIVATED (值=0x8004，也即32772，迅雷在网点中点击磁力链接后对应的弹窗事件是0x8006也即32774，1是窗口创建事件，6是stockapp.exe打开超链接事件)
     {
         return
     }
