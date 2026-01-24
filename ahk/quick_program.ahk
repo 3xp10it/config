@@ -118,7 +118,13 @@ my_tooltip(string) {
     SetTimer, RemoveToolTip, -3000 ; 
 }
 
-
+Carefully_set_A_topmost() {
+    WinGetActiveTitle, ActiveWindowTitle
+    if (InStr(ActiveWindowTitle,"同花顺(")==0)
+    {
+        WinSet, AlwaysOnTop, On, A
+    }
+}
 
 ShellMessage(wParam, lParam) {
     ; 显示所有事件并写入日志
@@ -136,9 +142,9 @@ ShellMessage(wParam, lParam) {
 
 
 /*
-    if (wParam!=2 && wParam!=0x10)
+    if (wParam!=2 && wParam!=6)
     {
-    ;不看2窗口销毁
+    ;不看2窗口销毁,6比较多但没什么用
     Tooltip,%logMessage%
     SetTimer, RemoveToolTip, -3000 ; 
     WriteToLog(logMessage)
@@ -147,18 +153,11 @@ ShellMessage(wParam, lParam) {
 
 
 
-    if ((wParam != 32772 && wParam != 32774 && wParam != 1 && wParam!=6)  || lParam==0) ;HSHELL_RUDEAPPACTIVATED (值=0x8004，也即32772，迅雷在网点中点击磁力链接后对应的弹窗事件是0x8006也即32774，1是窗口创建事件，6是stockapp.exe打开超链接事件[还需满足title=current_title])
+    if ((wParam != 32772 && wParam != 32774 && wParam != 1)  || lParam==0) ;HSHELL_RUDEAPPACTIVATED (值=0x8004，也即32772，迅雷在网点中点击磁力链接后对应的弹窗事件是0x8006也即32774，1是窗口创建事件)
     {
         return
     }
 
-
-    if (wParam=6) {
-        ;6只处理title=current_title的情况，也即在stockapp.exe中点击超链接的情况
-        if (title!=current_title) {
-            return
-        }
-    }
 
     ; 排除无效窗口（桌面/任务栏/自身窗口）
     WinGetTitle, title, ahk_id %lParam%
@@ -179,13 +178,35 @@ ShellMessage(wParam, lParam) {
 
     if (processName="hexin.exe")    ;同花顺的小窗口也不能置顶，例如预警结果窗口、所属板块窗口，如果设置了置顶的话后面在遇到其他同花顺小窗口置顶时也会将之前的窗口再次置顶显示
     {
-        if (current_title="所属板块" || current_title="添加预警" || current_title="大单棱镜" || current_title="about:blank")
+
+
+        ;if (current_title="所属板块" || current_title="添加预警" || current_title="大单棱镜" || current_title="about:blank")
+        ;else if (current_title="预警结果")
+        ;{
+        ;    WinMove, 预警结果, , 1230,987,680,406
+        ;}
+
+        if (wParam=1)
         {
-            WinSet, AlwaysOnTop, On, %current_title% ahk_exe hexin.exe
+            ;窗口创建
+            Sleep 100
+            Carefully_set_A_topmost()
+            return
+ 
         }
-        else if (current_title="预警结果")
+        if (InStr(current_title,"同花顺(")==0)
         {
-            WinMove, 预警结果, , 1230,987,680,406
+            if (current_title="about:blank")
+            {
+                Sleep 100
+                Carefully_set_A_topmost()
+                return
+            }
+            else
+            {
+                WinSet, AlwaysOnTop, On, %current_title% ahk_exe hexin.exe
+            }
+
         }
         else if (title=current_title)
         {
@@ -230,14 +251,17 @@ ShellMessage(wParam, lParam) {
             ; 下面这个是微信的表情选择框
             WinSet, AlwaysOnTop, On, Weixin ahk_class Qt51514QWindowToolSaveBits ahk_exe Weixin.exe
         }
-
+        else if (processName="stockapp.exe" && InStr(title,"个股新闻")>0)
+        {
+            ;个股新闻页面激活时不设置置顶，否则如果鼠标点击个股新闻页面中的超链接时会导致新弹出的窗口会被个股新闻页面挡住
+            return
+        }
         else
         {
             Sleep,100   ;注意，有些窗口没那么快准备好(启动激活的时候title可能还是空)，这里需要先睡100ms再将窗口置顶，否则会导致有些窗口无法被置顶
             ;ahk_id %lParam%对应的窗口标题是title
-            WinSet, AlwaysOnTop, On,ahk_id %lParam%
-
-
+            ;WinSet, AlwaysOnTop, On,ahk_id %lParam%
+            Carefully_set_A_topmost()
         }
     }
 
