@@ -113,7 +113,7 @@ IsAutomatedActivation() {
 }
 
 
-my_tooltip(string) {
+print(string) {
     Tooltip,%string%
     SetTimer, RemoveToolTip, -3000 ; 
 }
@@ -145,15 +145,14 @@ ShellMessage(wParam, lParam) {
     if (wParam!=2 && wParam!=6)
     {
     ;不看2窗口销毁,6比较多但没什么用
-    Tooltip,%logMessage%
-    SetTimer, RemoveToolTip, -3000 ; 
+    print(logMessage)
     WriteToLog(logMessage)
     }
 */
 
 
 
-    if ((wParam != 32772 && wParam != 32774 && wParam != 1)  || lParam==0) ;HSHELL_RUDEAPPACTIVATED (值=0x8004，也即32772，迅雷在网点中点击磁力链接后对应的弹窗事件是0x8006也即32774，1是窗口创建事件)
+    if ((wParam != 32772 && wParam != 32774 && wParam != 1 && wParam != 16)  || lParam==0) ;HSHELL_RUDEAPPACTIVATED (值=0x8004，也即32772，迅雷在网点中点击磁力链接后对应的弹窗事件是0x8006也即32774，1是窗口创建事件)
     {
         return
     }
@@ -188,41 +187,33 @@ ShellMessage(wParam, lParam) {
 
         if (wParam=1)
         {
-            ;窗口创建
-            Sleep 100
+            ;1是窗口创建
+            Sleep 200
             Carefully_set_A_topmost()
             return
  
         }
+
+       if (title=current_title)
+        {
+            ;例如打开我的表头项等同花顺的非主窗口时
+            Sleep 200
+            Carefully_set_A_topmost()
+
+            ;我发现当打开了大单棱镜等子窗口后，如果再次点击同花顺主窗口，同花顺会将打开的大单棱镜等子窗口取消置顶，这里需要我再置顶一下
+            ;另外，双击预警结果中的某个预警时，同花顺会将打开的大单棱镜等子窗口取消置顶，这里需要我再置顶一下
+            WinSet, AlwaysOnTop, On, 所属板块 ahk_exe hexin.exe
+            WinSet, AlwaysOnTop, On, 添加预警 ahk_exe hexin.exe
+            WinSet, AlwaysOnTop, On, 大单棱镜 ahk_exe hexin.exe
+            WinSet, AlwaysOnTop, On, 预警结果 ahk_exe hexin.exe
+            return
+        }
+
         if (InStr(current_title,"同花顺(")==0)
         {
-            if (current_title="about:blank")
-            {
-                Sleep 100
-                Carefully_set_A_topmost()
-                return
-            }
-            else
-            {
-                WinSet, AlwaysOnTop, On, %current_title% ahk_exe hexin.exe
-            }
-
-        }
-        else if (title=current_title)
-        {
-            if (InStr(title,"同花顺(")==1)
-            {
-                ;我发现当打开了大单棱镜等子窗口后，如果再次点击同花顺主窗口，同花顺会将打开的大单棱镜等子窗口取消置顶，这里需要我再置顶一下
-                WinSet, AlwaysOnTop, On, 所属板块 ahk_exe hexin.exe
-                WinSet, AlwaysOnTop, On, 添加预警 ahk_exe hexin.exe
-                WinSet, AlwaysOnTop, On, 大单棱镜 ahk_exe hexin.exe
-                WinSet, AlwaysOnTop, On, 预警结果 ahk_exe hexin.exe
-            }
-            else 
-            {
-                ;例如打开我的表头项等同花顺的非主窗口时
-                WinSet, AlwaysOnTop, On, %current_title% ahk_exe hexin.exe
-            }
+            Sleep 200
+            Carefully_set_A_topmost()
+            return 
         }
     }
 
@@ -242,7 +233,7 @@ ShellMessage(wParam, lParam) {
         }
         else if (processName="explorer.exe" && current_title=title && InStr(title,"\\"))    ;鼠标右键打开网络资源文件时
         {
-            ;my_tooltip("右键打开网络文件")
+            ;print("右键打开网络文件")
             WinSet, AlwaysOnTop, On,ahk_class #32768 ahk_exe explorer.exe    ;这个窗口指的是:在资源管理器中鼠标右键点击文件后出现的窗口
         }
         else if (processName="Weixin.exe" && title=current_title)
@@ -258,7 +249,7 @@ ShellMessage(wParam, lParam) {
         }
         else
         {
-            Sleep,100   ;注意，有些窗口没那么快准备好(启动激活的时候title可能还是空)，这里需要先睡100ms再将窗口置顶，否则会导致有些窗口无法被置顶
+            Sleep,200   ;注意，有些窗口没那么快准备好(启动激活的时候title可能还是空)，这里需要先睡200ms再将窗口置顶，否则会导致有些窗口无法被置顶
             ;ahk_id %lParam%对应的窗口标题是title
             ;WinSet, AlwaysOnTop, On,ahk_id %lParam%
             Carefully_set_A_topmost()
