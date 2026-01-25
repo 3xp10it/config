@@ -120,7 +120,7 @@ print(string) {
 
 Carefully_set_A_topmost() {
     WinGetActiveTitle, ActiveWindowTitle
-    if (InStr(ActiveWindowTitle,"同花顺(")==0)
+    if (InStr(ActiveWindowTitle,"同花顺(")==0 && ActiveWindowTitle!="短线精灵")
     {
         WinSet, AlwaysOnTop, On, A
     }
