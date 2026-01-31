@@ -521,7 +521,7 @@ if (blockers.Length() > 0) {
     for i, hwnd in blockers {
         WinGetTitle, title, ahk_id %hwnd%
         WinGet, processName, ProcessName, ahk_id %hwnd%
-        if (processName!="hexin.exe" && not InStr(title, "股票池") && not InStr(title, "涨停股") && not InStr(title, "实时新闻") && not InStr(title, "大单") && not InStr(title, "排板") && not InStr(inputStr, "个股新闻") && not InStr(title, "概念") && not InStr(title, "下单") && not InStr(title, "风向标") && not InStr(title, "个股新闻") && not InStr(title, "陈小群") && title!="quick_program.ahk")
+        if (processName!="hexin.exe" && (processName!="stockapp.exe" || InStr(title, "guba_jiucai_xueqiu")) && title!="quick_program.ahk")
         {
                 ;result .= "[" i "] 句柄: " Format("0x{:X}", hwnd)
                 ;.  "`n标题: " (title ? title : "(无标题)")
