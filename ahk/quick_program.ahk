@@ -22,6 +22,7 @@ global overlay9 := 0  ; "委买队列"
 global overlay10 := 0  ; "成交量下拉框背景"
 global overlay11 := 0  ; "涨速排名下拉框背景"
 global overlay12 := 0  ; "自选股表单设置背景"
+global overlay13 := 0 ; 叠 窗 区 信息 的白字
 
 
 ; 全局变量存储窗口原始位置
@@ -44,6 +45,10 @@ log_MaxSize := 10 * 1024 * 1024         ; 最大10MB
 ;以下3个全局变量用于win+b的函数
 global g_windowHistory := []        ; 窗口句柄历史栈（最大10条）
 global g_maxHistory := 10           ; 历史记录最大长度 
+global g_lastBTime := 0             ; 新增：记录上次按#b的时间
+global g_bIndex := 2                ; 新增：当前查找索引，默认从上一个窗口开始
+global g_ignoreNextActivation := false  ; 新增：标记是否忽略下一次激活事件
+
 Gui, +LastFound 
 hWnd := WinExist()
 regResult := DllCall("RegisterShellHookWindow", "UInt", hWnd)
@@ -127,6 +132,14 @@ Carefully_set_A_topmost() {
 }
 
 ShellMessage(wParam, lParam) {
+    global g_ignoreNextActivation
+    
+    ; 如果标记为忽略下一次激活事件，并且是激活事件，则跳过
+    if (g_ignoreNextActivation && (wParam == 32772 || wParam == 32774)) {
+        g_ignoreNextActivation := false
+        return
+    }
+    
     ; 显示所有事件并写入日志
     WinGetTitle, title, ahk_id %lParam%
     WinGetTitle, current_title, A
@@ -141,14 +154,44 @@ ShellMessage(wParam, lParam) {
 
 
 
-/*
+
     if (wParam!=2 && wParam!=6)
     {
     ;不看2窗口销毁,6比较多但没什么用
-    print(logMessage)
-    WriteToLog(logMessage)
+    if (processName="hexin.exe")
+    {
+        WinGetClass, class, ahk_id %lParam%
+        if (class="#32770")
+        {
+   
+            print(logMessage)
+            WriteToLog(logMessage)
+
+            ; 获取窗口尺寸
+            WinGetPos, X, Y, Width, Height, ahk_id %lParam%     
+            ; 创建详细的广告窗口日志
+            FormatTime, timestamp,, yyyy-MM-dd HH:mm:ss.fff
+            adLog := Format("【疑似广告弹窗】时间: {} | 类: {} | 标题: '{}' | 尺寸: {}x{} | 位置: ({}, {}) | 句柄: 0x{:X}", timestamp, class, title, Width, Height, X, Y, lParam)
+            
+            ; 写入日志
+            WriteToLog(adLog)
+            print(adLog)
+
+                ; 如果是特定尺寸的广告窗口，立即关闭
+                if (Width = 480 && Height = 360)
+                {
+                    WriteToLog("=== 检测到480x360广告窗口 ===")
+                    print("=== 检测到480x360广告窗口 ===")
+                    ;PostMessage, 0x10, 0, 0, , ahk_id %lParam%  ; WM_CLOSE
+                    ;WriteToLog("已发送WM_CLOSE消息到窗口0x" Format("{:X}", lParam))
+                }
+
+
+        }
     }
-*/
+
+    }
+
 
 
 
@@ -165,11 +208,13 @@ ShellMessage(wParam, lParam) {
     ; 更新历史记录（排除重复激活）
     if (g_windowHistory[1] != lParam) {
         g_windowHistory.InsertAt(1, lParam) ; 插入到栈顶     
-        ;WriteToLog(lParam)
         ; 保持历史记录不超过上限 
-        if (g_windowHistory.Length() > g_maxHistory)
+        if (g_windowHistory.Length() > g_maxHistory)					
             ;pop是删除栈底元素
             g_windowHistory.Pop()
+        ; 重置#b的索引，因为历史记录已更新
+        g_bIndex := 2
+        g_lastBTime := 0  ; 同时重置时间，确保下次按#b从上一个窗口开始
     }
 
 
@@ -177,13 +222,10 @@ ShellMessage(wParam, lParam) {
 
     if (processName="hexin.exe")    ;同花顺的小窗口也不能置顶，例如预警结果窗口、所属板块窗口，如果设置了置顶的话后面在遇到其他同花顺小窗口置顶时也会将之前的窗口再次置顶显示
     {
-
-
-        ;if (current_title="所属板块" || current_title="添加预警" || current_title="大单棱镜" || current_title="about:blank")
-        ;else if (current_title="预警结果")
-        ;{
-        ;    WinMove, 预警结果, , 1230,987,680,406
-        ;}
+        if (current_title="预警结果")
+        {
+            WinMove, 预警结果, , 1230,987,680,406
+        }
 
         if (wParam=1)
         {
@@ -405,6 +447,7 @@ else
 #b::switch_to_last_active_window()
 switch_to_last_active_window()
 {
+    global g_windowHistory, g_maxHistory, g_lastBTime, g_bIndex, g_ignoreNextActivation
     
     ; 检查历史记录有效性 
     if (g_windowHistory.Length() < 2) {
@@ -412,12 +455,47 @@ switch_to_last_active_window()
         return 
     }
     
-    targetHwnd := g_windowHistory[2] ; 获取上一个窗口（栈顶是当前窗口）
+    ; 计算距离上次按#b的时间差
+    currentTime := A_TickCount
+    timeDiff := currentTime - g_lastBTime
     
-    ; 检查窗口是否存在 
-    if !WinExist("ahk_id " targetHwnd) {
-        MsgBox, 目标窗口已关闭 
-        g_windowHistory.RemoveAt(2) ; 清理无效记录 
+    ; 如果超过3秒（3000ms），重置索引为2（上一个窗口）
+    if (timeDiff > 3000) {
+        g_bIndex := 2
+    }
+    
+    ; 更新最后按#b的时间
+    g_lastBTime := currentTime
+    
+    ; 如果索引超出范围，重置为2
+    if (g_bIndex > g_windowHistory.Length()) {
+        g_bIndex := 2
+    }
+    
+    ; 循环查找有效的窗口
+    foundWindow := false
+    targetHwnd := 0
+    
+    ; 从当前索引开始，向后查找有效窗口
+    while (g_bIndex <= g_windowHistory.Length()) {
+        testHwnd := g_windowHistory[g_bIndex]
+        
+        ; 检查窗口是否存在 
+        if WinExist("ahk_id " testHwnd) {
+            targetHwnd := testHwnd
+            foundWindow := true
+            break
+        } else {
+            ; 窗口已关闭，移除这个无效记录
+            g_windowHistory.RemoveAt(g_bIndex)
+            ; 注意：移除后不需要增加索引，因为后面的元素会自动前移
+        }
+    }
+    
+    ; 如果没有找到窗口，重置索引并返回
+    if (!foundWindow) {
+        g_bIndex := 2
+        ;MsgBox, 没有可用的历史窗口记录
         return 
     }
     
@@ -425,14 +503,24 @@ switch_to_last_active_window()
     WinGet, minMax, MinMax, ahk_id %targetHwnd%
     if (minMax = -1) 
         WinRestore, ahk_id %targetHwnd%
+    
+    ; 设置标记，忽略下一次激活事件，防止历史记录被更新
+    g_ignoreNextActivation := true
+    
+    ; 激活窗口
     WinActivate, ahk_id %targetHwnd%
     WinGetTitle, title, ahk_id %targetHwnd%
-    if (InStr(title,"同花顺(")==0)
-    {
-        ;同花顺的主窗口不置顶，要不然会挡住stockapp的置顶窗口
-        WinSet, AlwaysOnTop, On,ahk_id %targetHwnd%
+    if (InStr(title, "同花顺(") == 0) {
+        ; 同花顺的主窗口不置顶，要不然会挡住stockapp的置顶窗口
+        WinSet, AlwaysOnTop, On, ahk_id %targetHwnd%
+    }
+    else {
+        switchToTHS()
     }
 
+    
+    ; 增加索引，以便下次按#b时查找更早的窗口
+    g_bIndex += 1
 }
 
 
@@ -657,7 +745,7 @@ if WinExist("大单.*")
     WinSet, AlwaysOnTop, On, ahk_id %targetWindowID%
     if WinExist("排板")
     {
-        ;注意，ths的主窗口title包含“排板”,orderlist的title是“排板”，这里要改为精确匹配否则有时候会将ths置顶
+        ;注意，ths的主窗口title包含"排板",orderlist的title是"排板"，这里要改为精确匹配否则有时候会将ths置顶
         SetTitleMatchMode, 1
         WinGet, orderlistWindowID, ID, 排板
         WinSet, AlwaysOnTop, Off, ahk_id %orderlistWindowID%
@@ -685,7 +773,7 @@ else if (cmds_should_show_realnews=="1")
         WinMove, %targetWindowTitle%, , 626, 466, 158, 499
         if WinExist("排板")
         {
-            ;注意，ths的主窗口title包含“排板”,orderlist的title是“排板”，这里要改为精确匹配否则有时候会将ths置顶
+            ;注意，ths的主窗口title包含"排板",orderlist的title是"排板"，这里要改为精确匹配否则有时候会将ths置顶
             SetTitleMatchMode, 1
             WinGet, orderlistWindowID, ID, 排板
             WinSet, AlwaysOnTop, On, ahk_id %orderlistWindowID%
@@ -1237,6 +1325,7 @@ CreateOverlays() {
     CreateOverlay(overlay10, 1793, 402, 108, 21, 225)    ; "成交量下拉框背景"
     CreateOverlay(overlay11, 120, 1246, 108,18, 225)    ; "涨速排名下拉框背景"
     CreateOverlay(overlay12, 1, 508, 44, 20, 225)    ; "自选股表单设置背景"
+    CreateOverlay(overlay13, 1814, 57, 87, 19, 250)    ; 叠 窗 区 信息 的白字
 }
 
 ^2::DestroyOverlays()  ; ctrl+2 移除遮罩
@@ -1244,7 +1333,7 @@ CreateOverlays() {
 CreateOverlay(ByRef hwnd, x, y, w, h, transparency) {
   Gui, New, +HwndguiHwnd
   hwnd := guiHwnd
-  Gui, Color, cce8cf
+  Gui, Color, e8e3ce
   Gui, +ToolWindow -Caption +AlwaysOnTop +E0x20  ; +E0x20允许鼠标穿透
   Gui, Show, x%x% y%y% w%w% h%h% NA
   WinSet, Transparent, %transparency%, ahk_id %guiHwnd%
@@ -1306,6 +1395,10 @@ DestroyOverlays() {
   if (overlay12 != 0) {
     Gui, %overlay12%:Destroy
     overlay12 := 0
+  }
+  if (overlay13 != 0) {
+    Gui, %overlay13%:Destroy
+    overlay13 := 0
   }
 }
 
@@ -1431,8 +1524,3 @@ fullscreen_current_window() {
 
 
 ; ############## 模块结束 ##############
-
-
-
-
-
