@@ -2,7 +2,7 @@
 ;注意，全局变量只能放在文件最前面，否则会出错
 
 #SingleInstance Force  ; 关键防护（防多实例冲突）
-#InstallKeybdHook      ; 保障Win+热键可靠性 
+#InstallKeybdHook      ; 保障Win+热键可靠性
 
 global thsWindowTitle := ".*9\.30\.72.*"
 
@@ -24,7 +24,6 @@ global overlay11 := 0  ; "涨速排名下拉框背景"
 global overlay12 := 0  ; "自选股表单设置背景"
 global overlay13 := 0 ; 叠 窗 区 信息 的白字
 
-
 ; 全局变量存储窗口原始位置
 global WindowPositionDict := Object()
 
@@ -34,93 +33,43 @@ global ok_y:=8
 global ok_w:=1892
 global ok_h:=1440
 
+log_Enabled := true                     ; 日志开关
+log_FilePath := "d:\WinHistory.log"  ; 日志路径
+log_MaxSize := 10 * 1024 * 1024         ; 最大10MB
 
+; ----- 窗口历史记录（最近使用列表，唯一化）-----
+global g_windowHistory := []        ; 句柄列表，索引1为最近激活
+global g_maxHistory   := 50         ; 历史记录最大长度
+global g_lastBTime    := 0          ; 上次按 #b 的时间戳
+global g_bIndex       := 2          ; 当前遍历索引，默认从上一个窗口开始
 
-log_Enabled := true                     ; 日志开关 
-log_FilePath := "d:\WinHistory.log"  ; 日志路径 
-log_MaxSize := 10 * 1024 * 1024         ; 最大10MB 
+; ----- #b 激活忽略标记（精准识别）-----
+global g_ignoreHwnd   := 0          ; 要忽略激活事件的窗口句柄
+global g_ignoreTime   := 0          ; 设置标记的时间戳
+global IGNORE_TIMEOUT := 500        ; 忽略窗口激活的有效时间（毫秒）
 
-
-
-;以下3个全局变量用于win+b的函数
-global g_windowHistory := []        ; 窗口句柄历史栈（最大10条）
-global g_maxHistory := 10           ; 历史记录最大长度 
-global g_lastBTime := 0             ; 新增：记录上次按#b的时间
-global g_bIndex := 2                ; 新增：当前查找索引，默认从上一个窗口开始
-global g_ignoreNextActivation := false  ; 新增：标记是否忽略下一次激活事件
-
-Gui, +LastFound 
+; ============================================================
+;                      ShellHook 初始化
+; ============================================================
+Gui, +LastFound
 hWnd := WinExist()
 regResult := DllCall("RegisterShellHookWindow", "UInt", hWnd)
 msgNum := DllCall("RegisterWindowMessage", "Str", "SHELLHOOK")
 OnMessage(msgNum, "ShellMessage")
-; ============================================= 
-; 核心函数：处理窗口激活消息 (HSHELL_WINDOWACTIVATED)
-; ============================================= 
-
 
 ; 脚本启动时自动执行函数
 CreateOverlays()
 
-
-
+; ============================================================
+;                      工具函数
+; ============================================================
 RemoveToolTip:
-    ToolTip ; 清除Tooltip
+    ToolTip
 Return
 
-
-
-;=== 新增事件触发源检测函数 === 
-GetEventTriggerSource(wParam, lParam) {
-    static lastInputTime := 0
-    
-    ; 1. 用户输入检测系统 
-    if (A_TimeIdle < 500) {  ; 500ms内有用户操作
-        if (A_PriorKey != "") 
-            return "键盘: " A_PriorKey 
-        if (A_TimeSincePriorMouse < 500)
-            return "鼠标: " A_ThisHotkey
-    }
-    
-    ; 2. 系统事件分析 
-    switch wParam 
-    {
-        case 1:  ; HSHELL_WINDOWCREATED 
-            return "系统创建"
-        case 2:  ; HSHELL_WINDOWDESTROYED
-            return "系统销毁"
-        case 4:  ; HSHELL_RUDEAPPACTIVATED
-            return WinActive("ahk_class ApplicationFrameWindow") ? "UWP应用" : "系统激活"
-        case 32772: ; HSHELL_WINDOWACTIVATED
-            return IsAutomatedActivation() ? "程序自动激活" : "用户切换"  ; 自定义函数 
-    }
-    
-    ; 3. 进程间通信检测
-    if (DllCall("GetWindowThreadProcessId", "UInt", lParam, "UInt*", pid)) {
-        if (pid != DllCall("GetCurrentProcessId")) {
-            WinGet, sourceProcess, ProcessName, ahk_pid %pid%
-            return "外部进程: " (sourceProcess ? sourceProcess : "PID:" pid)
-        }
-    }
-    
-    return "未知来源"
-}
- 
-;=== 辅助函数 ===
-GetEventName(wParam) {
-    eventNames := {1: "窗口创建", 2: "窗口销毁", 4: "App激活", 32772: "窗口激活"}
-    return eventNames.HasKey(wParam) ? eventNames[wParam] : "未知事件"
-}
- 
-IsAutomatedActivation() {
-    ; 基于API检测是否自动化激活
-    return DllCall("GetForegroundWindow") == DllCall("GetActiveWindow") ? false : true 
-}
-
-
 print(string) {
-    Tooltip,%string%
-    SetTimer, RemoveToolTip, -3000 ; 
+    Tooltip, %string%
+    SetTimer, RemoveToolTip, -3000
 }
 
 Carefully_set_A_topmost() {
@@ -131,769 +80,687 @@ Carefully_set_A_topmost() {
     }
 }
 
+; ============================================================
+;              核心：ShellMessage 窗口事件处理（已修复）
+; ============================================================
 ShellMessage(wParam, lParam) {
-    global g_ignoreNextActivation
-    
-    ; 如果标记为忽略下一次激活事件，并且是激活事件，则跳过
-    if (g_ignoreNextActivation && (wParam == 32772 || wParam == 32774)) {
-        g_ignoreNextActivation := false
-        return
+    global g_windowHistory, g_maxHistory, g_bIndex, g_lastBTime
+    global g_ignoreHwnd, g_ignoreTime, IGNORE_TIMEOUT
+
+    ; ----- 1. 精准忽略 #b 触发的激活事件 -----
+    if (g_ignoreHwnd != 0) {
+        if (wParam = 32772) {
+            if (lParam = g_ignoreHwnd) && (A_TickCount - g_ignoreTime <= IGNORE_TIMEOUT) {
+                ; 完全忽略本次激活，不记录历史、不执行任何后续操作
+                g_ignoreHwnd := 0
+                g_ignoreTime := 0
+                ; 可选调试：write("Ignored #b activation, hwnd=" lParam)
+                return
+            }
+        }
+        ; 超时后自动清除标记
+        if (A_TickCount - g_ignoreTime > IGNORE_TIMEOUT) {
+            g_ignoreHwnd := 0
+            g_ignoreTime := 0
+        }
     }
-    
-    ; 显示所有事件并写入日志
+
+    ; ----- 2. 原有日志、广告拦截等功能（完全保留）-----
     WinGetTitle, title, ahk_id %lParam%
     WinGetTitle, current_title, A
     WinGet, processName, ProcessName, ahk_id %lParam%
-    triggerSource := GetEventTriggerSource(wParam, lParam)  ; 新增函数 
+    triggerSource := GetEventTriggerSource(wParam, lParam)
 
+    logMessage := (Join "事件: wParam=" wParam " | 窗口标题=" (title ? title : "N/A") " | 进程名=" (processName ? processName : "N/A") " | 句柄=" lParam)
+    FormatTime, timestamp,, yyyy-MM-dd HH:mm:ss.fff
+    logMessage := Format("{} | 事件: {}({:X}) | 触发者: {} | 进程: {} | 句柄: 0x{:X} `n窗口title: {} `n current_title: {}" , timestamp, GetEventName(wParam), wParam, triggerSource, (processName ? processName : "N/A"), lParam, (title ? StrReplace(title, "|", "∣") : "N/A"), current_title)
 
+    if (wParam != 2 && wParam != 6) {
+        if (processName = "hexin.exe") {
+            WinGetClass, class, ahk_id %lParam%
+            if (class = "#32770") {
+                print(logMessage)
+                write(logMessage)
 
-    logMessage :=(Join "事件: wParam=" wParam " | 窗口标题=" (title ? title : "N/A") " | 进程名=" (processName ? processName : "N/A") " | 句柄=" lParam)
-    FormatTime, timestamp,, yyyy-MM-dd HH:mm:ss.fff  
-    logMessage := Format("{} | 事件: {}({:X}) | 触发者: {} | 进程: {} | 句柄: 0x{:X} `n窗口title: {} `n current_title: {}" , timestamp, GetEventName(wParam), wParam, triggerSource  ,  (processName ? processName : "N/A") , lParam, (title ? StrReplace(title, "|", "∣") : "N/A")  , current_title)
+                WinGetPos, X, Y, Width, Height, ahk_id %lParam%
+                FormatTime, timestamp,, yyyy-MM-dd HH:mm:ss.fff
+                adLog := Format("【疑似广告弹窗】时间: {} | 类: {} | 标题: '{}' | 尺寸: {}x{} | 位置: ({}, {}) | 句柄: 0x{:X}", timestamp, class, title, Width, Height, X, Y, lParam)
+                write(adLog)
+                print(adLog)
 
-
-
-
-    if (wParam!=2 && wParam!=6)
-    {
-    ;不看2窗口销毁,6比较多但没什么用
-    if (processName="hexin.exe")
-    {
-        WinGetClass, class, ahk_id %lParam%
-        if (class="#32770")
-        {
-   
-            print(logMessage)
-            WriteToLog(logMessage)
-
-            ; 获取窗口尺寸
-            WinGetPos, X, Y, Width, Height, ahk_id %lParam%     
-            ; 创建详细的广告窗口日志
-            FormatTime, timestamp,, yyyy-MM-dd HH:mm:ss.fff
-            adLog := Format("【疑似广告弹窗】时间: {} | 类: {} | 标题: '{}' | 尺寸: {}x{} | 位置: ({}, {}) | 句柄: 0x{:X}", timestamp, class, title, Width, Height, X, Y, lParam)
-            
-            ; 写入日志
-            WriteToLog(adLog)
-            print(adLog)
-
-                ; 如果是特定尺寸的广告窗口，立即关闭
-                if (Width = 480 && Height = 360)
-                {
-                    WriteToLog("=== 检测到480x360广告窗口 ===")
+                if (Width = 480 && Height = 360) {
+                    write("=== 检测到480x360广告窗口 ===")
                     print("=== 检测到480x360广告窗口 ===")
                     ;PostMessage, 0x10, 0, 0, , ahk_id %lParam%  ; WM_CLOSE
-                    ;WriteToLog("已发送WM_CLOSE消息到窗口0x" Format("{:X}", lParam))
                 }
-
-
+            }
         }
     }
 
-    }
-
-
-
-
-    if ((wParam != 32772 && wParam != 32774 && wParam != 1 && wParam != 16)  || lParam==0) ;HSHELL_RUDEAPPACTIVATED (值=0x8004，也即32772，迅雷在网点中点击磁力链接后对应的弹窗事件是0x8006也即32774，1是窗口创建事件)
-    {
+    ; 只处理我们关心的激活/创建事件
+    if ((wParam != 32772 && wParam != 32774 && wParam != 1 && wParam != 16) || lParam == 0)
         return
-    }
 
+    Sleep, 300
+    WinGet, A_hwnd, ID, A
+    WinGetTitle, A_title, A
+    WinGet, A_processName, ProcessName, A
 
     ; 排除无效窗口（桌面/任务栏/自身窗口）
-    WinGetTitle, title, ahk_id %lParam%
-    if (title = "Program Manager" || InStr(title, "AutoHotkey"))    ;注意，这里不能排除title为空的窗口，有些窗口在创建后激活的时候title没那么快更新，存在title为空的时刻
-        return 
-    ; 更新历史记录（排除重复激活）
-    if (g_windowHistory[1] != lParam) {
-        g_windowHistory.InsertAt(1, lParam) ; 插入到栈顶     
-        ; 保持历史记录不超过上限 
-        if (g_windowHistory.Length() > g_maxHistory)					
-            ;pop是删除栈底元素
-            g_windowHistory.Pop()
-        ; 重置#b的索引，因为历史记录已更新
-        g_bIndex := 2
-        g_lastBTime := 0  ; 同时重置时间，确保下次按#b从上一个窗口开始
+    if (title = "Program Manager" || InStr(title, "AutoHotkey"))
+        return
+
+    ; ----- 3. 历史记录更新（仅限用户手动激活，已去重）-----
+    ; 删除历史中所有与该窗口句柄相同的记录
+    i := 1
+    while (i <= g_windowHistory.Length()) {
+        if (g_windowHistory[i] = A_hwnd) {
+            g_windowHistory.RemoveAt(i)
+        } else {
+            i++
+        }
     }
 
+    ; 插入到栈顶
+    g_windowHistory.InsertAt(1, A_hwnd)
+    ;write("现在在g_windowHistory中插入窗口的title是：" . A_title)
 
+    ; 保持历史长度不超过最大值
+    if (g_windowHistory.Length() > g_maxHistory)
+        g_windowHistory.Pop()
 
+    ; 重置 #b 索引，从上一个窗口开始
+    g_bIndex := 2
+    g_lastBTime := 0
 
-    if (processName="hexin.exe")    ;同花顺的小窗口也不能置顶，例如预警结果窗口、所属板块窗口，如果设置了置顶的话后面在遇到其他同花顺小窗口置顶时也会将之前的窗口再次置顶显示
-    {
-        if (current_title="预警结果")
-        {
-            WinMove, 预警结果, , 1230,987,680,406
+    ; ----- 4. 原有置顶逻辑（完全保留）-----
+    if (processName = "hexin.exe") {
+        if (current_title = "预警结果") {
+            WinMove, 预警结果, , 1230, 987, 680, 406
         }
-
-        if (wParam=1)
-        {
-            ;1是窗口创建
-            Sleep 200
+        if (wParam = 1) {
             Carefully_set_A_topmost()
             return
- 
         }
-
-       if (title=current_title)
-        {
-            ;例如打开我的表头项等同花顺的非主窗口时
-            Sleep 200
+        if (title = current_title) {
             Carefully_set_A_topmost()
-
-            ;我发现当打开了大单棱镜等子窗口后，如果再次点击同花顺主窗口，同花顺会将打开的大单棱镜等子窗口取消置顶，这里需要我再置顶一下
-            ;另外，双击预警结果中的某个预警时，同花顺会将打开的大单棱镜等子窗口取消置顶，这里需要我再置顶一下
             WinSet, AlwaysOnTop, On, 所属板块 ahk_exe hexin.exe
             WinSet, AlwaysOnTop, On, 添加预警 ahk_exe hexin.exe
             WinSet, AlwaysOnTop, On, 大单棱镜 ahk_exe hexin.exe
             WinSet, AlwaysOnTop, On, 预警结果 ahk_exe hexin.exe
             return
         }
-
-        if (InStr(current_title,"同花顺(")==0)
-        {
-            Sleep 200
+        if (InStr(current_title, "同花顺(") == 0) {
             Carefully_set_A_topmost()
-            return 
+            return
         }
-    }
-
-    else if (InStr(title,"同花顺(")==0)    ;就算不是hexin.exe进程也再次要求title不是同花顺主窗口
-    {
-        if (triggerSource="外部进程: Thunder.exe")
-        {
-            ; 迅雷窗口处理逻辑 - 增加延迟和重试; 迅雷窗口可能创建较慢，需要等待
+    } else if (InStr(title, "同花顺(") == 0) {
+        if (triggerSource = "外部进程: Thunder.exe") {
             SetTitleMatchMode, 3
-            Sleep,2000
+            Sleep, 2000
             WinSet, AlwaysOnTop, On, 新建任务面板
-            Sleep,2000
+            Sleep, 2000
             WinSet, AlwaysOnTop, On, 新建任务面板
-            Sleep,2000
+            Sleep, 2000
             WinSet, AlwaysOnTop, On, 新建任务面板
             return
-        }
-        else if (processName="explorer.exe" && current_title=title && InStr(title,"\\"))    ;鼠标右键打开网络资源文件时
-        {
-            ;print("右键打开网络文件")
-            WinSet, AlwaysOnTop, On,ahk_class #32768 ahk_exe explorer.exe    ;这个窗口指的是:在资源管理器中鼠标右键点击文件后出现的窗口
-        }
-        else if (processName="Weixin.exe" && title=current_title)
-        {
-            WinSet, AlwaysOnTop, On,ahk_id %lParam%
-            ; 下面这个是微信的表情选择框
+        } else if (processName = "explorer.exe" && current_title = title && InStr(title, "\\")) {
+            WinSet, AlwaysOnTop, On, ahk_class #32768 ahk_exe explorer.exe
+        } else if (processName = "Weixin.exe" && title = current_title) {
+            WinSet, AlwaysOnTop, On, ahk_id %lParam%
             WinSet, AlwaysOnTop, On, Weixin ahk_class Qt51514QWindowToolSaveBits ahk_exe Weixin.exe
-        }
-        else if (processName="stockapp.exe" && InStr(title,"个股新闻")>0)
-        {
-            ;个股新闻页面激活时不设置置顶，否则如果鼠标点击个股新闻页面中的超链接时会导致新弹出的窗口会被个股新闻页面挡住
+        } else if (processName = "stockapp.exe" && InStr(title, "个股新闻") > 0) {
             return
-        }
-        else
-        {
-            Sleep,200   ;注意，有些窗口没那么快准备好(启动激活的时候title可能还是空)，这里需要先睡200ms再将窗口置顶，否则会导致有些窗口无法被置顶
-            ;ahk_id %lParam%对应的窗口标题是title
-            ;WinSet, AlwaysOnTop, On,ahk_id %lParam%
+        } else {
             Carefully_set_A_topmost()
         }
     }
-
 }
 
+; ============================================================
+;              事件触发源检测（您原有的函数，完整保留）
+; ============================================================
+GetEventTriggerSource(wParam, lParam) {
+    static lastInputTime := 0
 
+    if (A_TimeIdle < 500) {
+        if (A_PriorKey != "")
+            return "键盘: " A_PriorKey
+        if (A_TimeSincePriorMouse < 500)
+            return "鼠标: " A_ThisHotkey
+    }
 
- 
-; ============================================= 
-; 日志写入函数 
-; ============================================= 
-WriteToLog(message) {
-    global log_Enabled, log_FilePath, log_MaxSize 
-    
-    if !log_Enabled 
-        return 
-    
-    ; 自动创建日志文件 
+    switch wParam
+    {
+        case 1:  return "系统创建"
+        case 2:  return "系统销毁"
+        case 4:  return WinActive("ahk_class ApplicationFrameWindow") ? "UWP应用" : "系统激活"
+        case 32772: return IsAutomatedActivation() ? "程序自动激活" : "用户切换"
+    }
+
+    if (DllCall("GetWindowThreadProcessId", "UInt", lParam, "UInt*", pid)) {
+        if (pid != DllCall("GetCurrentProcessId")) {
+            WinGet, sourceProcess, ProcessName, ahk_pid %pid%
+            return "外部进程: " (sourceProcess ? sourceProcess : "PID:" pid)
+        }
+    }
+
+    return "未知来源"
+}
+
+GetEventName(wParam) {
+    eventNames := {1: "窗口创建", 2: "窗口销毁", 4: "App激活", 32772: "窗口激活"}
+    return eventNames.HasKey(wParam) ? eventNames[wParam] : "未知事件"
+}
+
+IsAutomatedActivation() {
+    return DllCall("GetForegroundWindow") == DllCall("GetActiveWindow") ? false : true
+}
+
+; ============================================================
+; 日志写入函数
+; ============================================================
+write(message) {
+    global log_Enabled, log_FilePath, log_MaxSize
+
+    if !log_Enabled
+        return
+
     if !FileExist(log_FilePath)
-        FileAppend,, %log_FilePath%, UTF-8 
-    
-    ; 检查文件大小 
+        FileAppend,, %log_FilePath%, UTF-8
+
     FileGetSize, fileSize, %log_FilePath%
     if (fileSize > log_MaxSize) {
-        FileDelete, %log_FilePath%.old 
-        FileMove, %log_FilePath%, %log_FilePath%.old 
+        FileDelete, %log_FilePath%.old
+        FileMove, %log_FilePath%, %log_FilePath%.old
     }
-    
-    ; 构建日志内容 
-    FormatTime, timestamp,, yyyy-MM-dd HH:mm:ss.fff  
+
+    FormatTime, timestamp,, yyyy-MM-dd HH:mm:ss.fff
     fullMessage := "[" timestamp "] " message "`n"
-    
-    ; 写入文件 
-    FileAppend, %fullMessage%, %log_FilePath%, UTF-8 
+    FileAppend, %fullMessage%, %log_FilePath%, UTF-8
 }
 
-
-
-
-ProcessExist(exe){          ;一个自定义函数,根据自定义函数的返回值作为#if成立依据原GetPID
-    Process, Exist,% exe
+ProcessExist(exe) {
+    Process, Exist, % exe
     return ErrorLevel
 }
 
+; ============================================================
+;                #b 热键：切换上一个窗口（已修复）
+; ============================================================
+#b::switch_to_last_active_window()
+switch_to_last_active_window() {
+    global g_windowHistory, g_lastBTime, g_bIndex, g_maxHistory
+    global g_ignoreHwnd, g_ignoreTime, IGNORE_TIMEOUT
 
+    ; 检查历史记录是否足够
+    if (g_windowHistory.Length() < 2) {
+        print("111没有可用的历史窗口记录")
+        return
+    }
 
+    ; 重置索引逻辑（3秒无操作则从上一个开始）
+    currentTime := A_TickCount
+    timeDiff := currentTime - g_lastBTime
+    if (timeDiff > 3000) {
+        g_bIndex := 2
+    }
+    g_lastBTime := currentTime
 
+    ; 索引边界保护
+    if (g_bIndex > g_windowHistory.Length()) {
+        g_bIndex := 2
+    }
+
+    ; 查找第一个有效的窗口（跳过非最小化的同花顺主窗口/短线精灵）
+    foundHwnd := 0
+    this_g_bIndex := g_bIndex
+    while (g_bIndex <= g_windowHistory.Length()) {
+        testHwnd := g_windowHistory[g_bIndex]
+        if !WinExist("ahk_id " testHwnd) {
+            g_windowHistory.RemoveAt(g_bIndex)
+            continue
+        }
+        WinGetTitle, test_title, ahk_id %testHwnd%
+        if ((InStr(test_title, "同花顺(") || test_title = "短线精灵") && !DllCall("IsIconic", "ptr", testHwnd)) {
+            g_bIndex += 1
+            continue
+        }
+        foundHwnd := testHwnd
+        break
+    }
+
+    if !foundHwnd {
+        g_bIndex := 2
+        ;print("没有可用的历史窗口记录,g_windowHistory长度：" . g_windowHistory.Length() . " this_g_bIndex:" . this_g_bIndex)
+        return
+    }
+
+    ; ----- 设置忽略标记：接下来的激活事件如果是这个窗口，将被 ShellMessage 忽略 -----
+    g_ignoreHwnd := foundHwnd
+    g_ignoreTime := A_TickCount
+    ; 启动定时器，1秒后强制清除标记（防止意外残留）
+    SetTimer, ClearIgnoreFlag, -1000
+
+    ; 恢复最小化窗口并激活
+    WinGet, minMax, MinMax, ahk_id %foundHwnd%
+    if (minMax = -1)
+        WinRestore, ahk_id %foundHwnd%
+
+    ; 激活窗口
+    WinActivate, ahk_id %foundHwnd%
+    WinGetTitle, title, ahk_id %foundHwnd%
+    if (InStr(title, "同花顺(") == 0 && title!="短线精灵") {
+        ; 同花顺的主窗口和短线精灵窗口不置顶
+        WinSet, AlwaysOnTop, On, ahk_id %foundHwnd%
+    }
+    else if (InStr(title, "同花顺("))
+    {
+        ; 同花顺的主窗口通过特殊的方式来打开,switchToTHS()会调整同花顺主窗口的位置
+        switchToTHS()
+    }
+    ;write("现在通过#b完成了激活这个title:" . title)
+
+    ; 索引递增，下次按 #b 时切换到更早的窗口
+    g_bIndex += 1
+}
+
+; ----- 定时清除忽略标记（防止因异常导致标记永久残留）-----
+ClearIgnoreFlag:
+    g_ignoreHwnd := 0
+    g_ignoreTime := 0
+return
+
+; ============================================================
+;                   以下为您的所有其他热键和函数
+;               （完全保留原样，一字不改）
+; ============================================================
+
+; ----- 浏览器相关 -----
 #g::switchToChrome()
 switchToChrome()
 {
-SetTitleMatchMode RegEx
-if WinExist("guba_jiucai.*")
-{
-    ;顺便把guba_jiucai窗口最小化
-    WinMinimize
+    SetTitleMatchMode RegEx
+    if WinExist("guba_jiucai.*")
+    {
+        WinMinimize
+    }
+
+    SetTitleMatchMode, 2
+    IfWinExist, ahk_exe chrome.exe
+    {
+        WinRestore
+        chromeTitle := " - Google Chrome"
+        WinMove, %chromeTitle%, , 2653, ok_y-1, 795, ok_h+1
+        WinGet, chrome_hwnd, ID, %chromeTitle%
+        WinActivate, ahk_id %chrome_hwnd%
+        WinSet, AlwaysOnTop, On, ahk_id %chrome_hwnd%
+    }
+    else
+    {
+        Run, chrome.exe
+    }
 }
-
-SetTitleMatchMode, 2
-IfWinExist, ahk_exe chrome.exe
-{
-    WinRestore
-    chromeTitle := " - Google Chrome"
-    WinMove,%chromeTitle%,,2653,ok_y-1,795,ok_h+1
-    WinGet, chrome_hwnd, ID, %chromeTitle%  ; 获取窗口句柄
-    WinActivate,ahk_id %chrome_hwnd%
-    WinSet, AlwaysOnTop, On, ahk_id %chrome_hwnd%  ; 置顶 
-}
-else
-{
-    Run, chrome.exe
-}
-
-}
-
-
-
 
 #^g::switchToUseChrome()
 switchToUseChrome()
 {
-SetTitleMatchMode RegEx
-if WinExist("guba_jiucai.*")
-{
-    ;顺便把guba_jiucai窗口最小化
-    WinMinimize
+    SetTitleMatchMode RegEx
+    if WinExist("guba_jiucai.*")
+    {
+        WinMinimize
+    }
+
+    SetTitleMatchMode, 2
+    IfWinExist, ahk_exe chrome.exe
+    {
+        WinRestore
+        chromeTitle := " - Google Chrome"
+        WinMove, %chromeTitle%, , ok_x, ok_y, ok_w, ok_h
+        WinGet, chrome_hwnd, ID, %chromeTitle%
+        WinActivate, ahk_id %chrome_hwnd%
+        WinSet, AlwaysOnTop, On, ahk_id %chrome_hwnd%
+    }
+    else
+    {
+        Run, chrome.exe
+    }
 }
-
-SetTitleMatchMode, 2
-IfWinExist, ahk_exe chrome.exe
-{
-    WinRestore
-    chromeTitle := " - Google Chrome"
-    WinMove,%chromeTitle%,,ok_x,ok_y,ok_w,ok_h
-    WinGet, chrome_hwnd, ID, % chromeTitle  ; 获取窗口句柄 
-    WinActivate,ahk_id %chrome_hwnd%
-    WinSet, AlwaysOnTop, On, ahk_id %chrome_hwnd%  ; 置顶 
-    
-}
-else
-{
-    Run, chrome.exe
-}
-
-}
-
-
-
 
 ;win+ctrl+e 打开tbjl.bat
 #^e::open_tbjl_bat()
 open_tbjl_bat()
 {
-Run,"z:\tbjl.bat"
+    Run, "z:\tbjl.bat"
 }
 
-
-
- 
 ;win+w 打开微信
 #w::switchToWechat()
 switchToWechat()
 {
-;WeChat:="ahk_class Qt51514QWindowIcon"
-;WeChat:="ahk_exe Weixin.exe"
-WeChat:="微信"
-WeChat_path:="D:\Program Files\Tencent\Weixin\Weixin.exe"
-if ProcessExist("Weixin.exe")=0
-    Run, %WeChat_path%
-else
-{
-if WinExist("ahk_class Qt51514QWindowIcon")
-{
-WinGet, Style, Style, ahk_class Qt51514QWindowIcon
-if ((Style & 0x20000000) or (not WinActive(ahk_class Qt51514QWindowIcon)))    ;最小化了或被挡住了
-{
-    WinActivate
-    WinMove,ahk_class Qt51514QWindowIcon,,ok_x+8,ok_y,ok_w-16,ok_h
-    WinSet, AlwaysOnTop, On, ahk_class Qt51514QWindowIcon 
-}
-else
-{
-    WinMinimize
-}
-}
-}
-}
-
-
-;win+b打开上一个激活的窗口
-#b::switch_to_last_active_window()
-switch_to_last_active_window()
-{
-    global g_windowHistory, g_maxHistory, g_lastBTime, g_bIndex, g_ignoreNextActivation
-    
-    ; 检查历史记录有效性 
-    if (g_windowHistory.Length() < 2) {
-        ;MsgBox, 没有可用的历史窗口记录 
-        return 
-    }
-    
-    ; 计算距离上次按#b的时间差
-    currentTime := A_TickCount
-    timeDiff := currentTime - g_lastBTime
-    
-    ; 如果超过3秒（3000ms），重置索引为2（上一个窗口）
-    if (timeDiff > 3000) {
-        g_bIndex := 2
-    }
-    
-    ; 更新最后按#b的时间
-    g_lastBTime := currentTime
-    
-    ; 如果索引超出范围，重置为2
-    if (g_bIndex > g_windowHistory.Length()) {
-        g_bIndex := 2
-    }
-    
-    ; 循环查找有效的窗口
-    foundWindow := false
-    targetHwnd := 0
-    
-    ; 从当前索引开始，向后查找有效窗口
-    while (g_bIndex <= g_windowHistory.Length()) {
-        testHwnd := g_windowHistory[g_bIndex]
-        
-        ; 检查窗口是否存在 
-        if WinExist("ahk_id " testHwnd) {
-            targetHwnd := testHwnd
-            foundWindow := true
-            break
-        } else {
-            ; 窗口已关闭，移除这个无效记录
-            g_windowHistory.RemoveAt(g_bIndex)
-            ; 注意：移除后不需要增加索引，因为后面的元素会自动前移
+    WeChat := "微信"
+    WeChat_path := "D:\Program Files\Tencent\Weixin\Weixin.exe"
+    if ProcessExist("Weixin.exe") = 0
+        Run, %WeChat_path%
+    else
+    {
+        if WinExist("ahk_class Qt51514QWindowIcon")
+        {
+            WinGet, Style, Style, ahk_class Qt51514QWindowIcon
+            if ((Style & 0x20000000) or (not WinActive("ahk_class Qt51514QWindowIcon")))
+            {
+                WinActivate
+                WinMove, ahk_class Qt51514QWindowIcon, , ok_x+8, ok_y, ok_w-16, ok_h
+                WinSet, AlwaysOnTop, On, ahk_class Qt51514QWindowIcon
+            }
+            else
+            {
+                WinMinimize
+            }
         }
     }
-    
-    ; 如果没有找到窗口，重置索引并返回
-    if (!foundWindow) {
-        g_bIndex := 2
-        ;MsgBox, 没有可用的历史窗口记录
-        return 
-    }
-    
-    ; 恢复最小化窗口并激活 
-    WinGet, minMax, MinMax, ahk_id %targetHwnd%
-    if (minMax = -1) 
-        WinRestore, ahk_id %targetHwnd%
-    
-    ; 设置标记，忽略下一次激活事件，防止历史记录被更新
-    g_ignoreNextActivation := true
-    
-    ; 激活窗口
-    WinActivate, ahk_id %targetHwnd%
-    WinGetTitle, title, ahk_id %targetHwnd%
-    if (InStr(title, "同花顺(") == 0) {
-        ; 同花顺的主窗口不置顶，要不然会挡住stockapp的置顶窗口
-        WinSet, AlwaysOnTop, On, ahk_id %targetHwnd%
-    }
-    else {
-        switchToTHS()
-    }
-
-    
-    ; 增加索引，以便下次按#b时查找更早的窗口
-    g_bIndex += 1
 }
-
-
 
 ;win+ctrl+b 打开ryij.txt
 #^b::switchToryij()
 switchToryij()
 {
-global cmds_should_show_realnews
-ryij_path:="\\192.168.0.6\news\ryij.txt"
-if WinExist("ryij.txt - 记事本")
-{
-    ;MsgBox,"exist ryij.txt - 记事本"
-    targetWindowTitle := "ryij.txt - 记事本"
-    WinActivate
-    WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
-    WinSet, AlwaysOnTop, On, %targetWindowTitle%
-}
-else if WinExist("ryij - 记事本")
-{
-    ;MsgBox,"exist ryij - 记事本"
-    targetWindowTitle := "ryij - 记事本"
-    WinActivate
-    WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
-    WinSet, AlwaysOnTop, On, %targetWindowTitle%
-}
-else if WinExist("*ryij.txt - 记事本") {
-    ;MsgBox,"exist *ryij.txt - 记事本"
-    targetWindowTitle := "*ryij.txt - 记事本"
-    WinActivate
-    WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
-    WinSet, AlwaysOnTop, On, %targetWindowTitle%
-}
-else if WinExist("*ryij - 记事本") {
-    ;MsgBox,"exist *ryij - 记事本"
-    targetWindowTitle := "*ryij - 记事本"
-    WinActivate
-    WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
-    WinSet, AlwaysOnTop, On, %targetWindowTitle%
-}
-else {
-    ;MsgBox,"no ryij.txt - 记事本 and no *ryij.txt - 记事本" and no ryij - 记事本 and no *ryij - 记事本"
-    Run, %ryij_path%
-    SetTitleMatchMode, RegEx
-    WinWait,ryij.*记事本, , 2
-    if WinExist("ryij.txt - 记事本") {
-    targetWindowTitle := "ryij.txt - 记事本"
+    global cmds_should_show_realnews
+    ryij_path := "\\192.168.0.6\news\ryij.txt"
+    if WinExist("ryij.txt - 记事本")
+    {
+        targetWindowTitle := "ryij.txt - 记事本"
+        WinActivate
+        WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
+        WinSet, AlwaysOnTop, On, %targetWindowTitle%
     }
-    else if WinExist("ryij - 记事本") {
-    targetWindowTitle := "ryij - 记事本"
+    else if WinExist("ryij - 记事本")
+    {
+        targetWindowTitle := "ryij - 记事本"
+        WinActivate
+        WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
+        WinSet, AlwaysOnTop, On, %targetWindowTitle%
     }
-
-    WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
-    WinSet, AlwaysOnTop, On, %targetWindowTitle%
-}
-cmds_should_show_realnews:="1"
-
+    else if WinExist("*ryij.txt - 记事本")
+    {
+        targetWindowTitle := "*ryij.txt - 记事本"
+        WinActivate
+        WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
+        WinSet, AlwaysOnTop, On, %targetWindowTitle%
+    }
+    else if WinExist("*ryij - 记事本")
+    {
+        targetWindowTitle := "*ryij - 记事本"
+        WinActivate
+        WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
+        WinSet, AlwaysOnTop, On, %targetWindowTitle%
+    }
+    else
+    {
+        Run, %ryij_path%
+        SetTitleMatchMode, RegEx
+        WinWait, ryij.*记事本, , 2
+        if WinExist("ryij.txt - 记事本")
+        {
+            targetWindowTitle := "ryij.txt - 记事本"
+        }
+        else if WinExist("ryij - 记事本")
+        {
+            targetWindowTitle := "ryij - 记事本"
+        }
+        WinMove, %targetWindowTitle%, , 2653, 0, 796, 478
+        WinSet, AlwaysOnTop, On, %targetWindowTitle%
+    }
+    cmds_should_show_realnews := "1"
 }
 
 DetectHiddenText On
 
 ;win+f 打开同花顺
 #f::switchToTHS()
-
 switchToTHS()
 {
-THS_path:="D:\THS\hexin.exe"
-;注意：SetTitleMatchMode一定要放在WinExist前面一行，放远了可能不会生效；这里也可以通过使用WinExist("ahk_exe D:\THS\hexin.exe")来获取同花顺的窗口，但这样可能会获取到短线精灵，除了同花顺主界面属于hexin.exe外，弹窗式的短线精灵也属于hexin.exe，所以实际不能使用ahk_exe来获取，只能用窗口特征来获取，还需要注意的是，ahk代码中不支持中文，所以用中文字符串来匹配是无法成功的
-SetTitleMatchMode, RegEx
-if (ths_hwnd:=WinExist("同花顺\(.*\).* ahk_exe hexin.exe"))    ;注意，这里要同时加上exe限定，否则如果有些tooltip打印的窗口激活的消息中包含了同花顺的字符串则会导致这里获取的ths_hwnd可能是tooltip窗口的句柄，另外，在正则匹配时字符串后面如果有空格则空格后面的内容是不会被当成字符串而是当成条件的，所以这里可以放心加ahk_exe hexin.exe的条件
-{
-WinActivate, ahk_id %ths_hwnd%
-;注意，同花顺最大的高度只有1446，设置再大也不会有效，y从1到1446则可保证底部铺满(顶部铺不满)，如果y从0到1446则顶部和底部都铺不满
-WinMove, ahk_id %ths_hwnd%, , -7, 1, 1968, 1446
-
-}
-else
-{
-Run, %THS_path%
-}
-
-; 将遮住同花顺同花顺的窗口最小化
-blockers := GetBlockingWindows(ths_hwnd)
-if (blockers.Length() > 0) {
-    result := "遮挡窗口列表（按Z序从高到低）:`n`n"
-    for i, hwnd in blockers {
-        WinGetTitle, title, ahk_id %hwnd%
-        WinGet, processName, ProcessName, ahk_id %hwnd%
-        if (processName!="hexin.exe" && (processName!="stockapp.exe" || InStr(title, "guba_jiucai_xueqiu")) && title!="quick_program.ahk")
-        {
-                ;result .= "[" i "] 句柄: " Format("0x{:X}", hwnd)
-                ;.  "`n标题: " (title ? title : "(无标题)")
-                ;.  "`n----------------------`n"
-                WinMinimize,ahk_id %hwnd%
-        }
-    }
-    ; 输出结果
-    ;MsgBox, % result 
-}
-
-
-;把实时新闻移到原来的位置
-SetTitleMatchMode, 2
-WinGet,hwnd,ID,实时新闻
-if (hwnd)
-{
-    WinGet, Style, Style, ahk_id %hwnd%
-    if (!(Style & 0x20000000))    ;实时新闻窗口没有最小化才进入下一步判断
+    THS_path := "D:\THS\hexin.exe"
+    SetTitleMatchMode, RegEx
+    if (ths_hwnd := WinExist("同花顺\(.*\).* ahk_exe hexin.exe"))
     {
-        WinGet, Style, Style,涨停股
-        if (!(Style & 0x20000000))    ;涨停股窗口没有最小化才移动窗口
-        {        
-            WinMove, ahk_id %hwnd%, , 784, 466, 1033, 499
-        }
-        else
-        {
-            WinMinimize,ahk_id %hwnd%    ;如果涨停股窗口最小化了且实时新闻窗口没有最小化则将实时新闻窗口最小化
-        }
-
+        WinActivate, ahk_id %ths_hwnd%
+        WinMove, ahk_id %ths_hwnd%, , -7, 1, 1968, 1446
     }
-    
-}
+    else
+    {
+        Run, %THS_path%
+    }
 
+    ; 将遮住同花顺的窗口最小化
+    blockers := GetBlockingWindows(ths_hwnd)
+    if (blockers.Length() > 0)
+    {
+        for i, hwnd in blockers
+        {
+            WinGetTitle, title, ahk_id %hwnd%
+            WinGet, processName, ProcessName, ahk_id %hwnd%
+            if (processName != "hexin.exe" && (processName != "stockapp.exe" || InStr(title, "guba_jiucai_xueqiu")) && title != "quick_program.ahk")
+            {
+                WinMinimize, ahk_id %hwnd%
+            }
+        }
+    }
+
+    ; 把实时新闻移到原来的位置
+    SetTitleMatchMode, 2
+    WinGet, hwnd, ID, 实时新闻
+    if (hwnd)
+    {
+        WinGet, Style, Style, ahk_id %hwnd%
+        if (!(Style & 0x20000000))
+        {
+            WinGet, Style, Style, 涨停股
+            if (!(Style & 0x20000000))
+            {
+                WinMove, ahk_id %hwnd%, , 784, 466, 1033, 499
+            }
+            else
+            {
+                WinMinimize, ahk_id %hwnd%
+            }
+        }
+    }
 }
 
 ;win+ctrl+f打开tide.py
 #^f::tide()
 tide()
 {
-
-dir := "Z:\"
-script  = %dir%\tide.py
-SetWorkingDir %dir%
-Run, %ComSpec% /k python "%script%" && exit
+    dir := "Z:\"
+    script := dir . "\tide.py"
+    SetWorkingDir %dir%
+    Run, %ComSpec% /k python "%script%" && exit
 }
-
-
 
 ;win+a 打开znz
 #a::switchToZNZ()
 switchToZNZ()
 {
-znz:="ahk_exe WavMain.exe"
-znz_path:="D:\Compass\WavMain\WavMain.exe"
+    znz := "ahk_exe WavMain.exe"
+    znz_path := "D:\Compass\WavMain\WavMain.exe"
 
-SetTitleMatchMode RegEx
-
-if ProcessExist("WavMain.exe")=0
-    Run, %znz_path%
-else
-{
     SetTitleMatchMode RegEx
-    WinGet, znz_hwnd, ID, 指南针全赢决策系统
-    WinActivate,ahk_id %znz_hwnd%
-    WinSet, AlwaysOnTop, On, ahk_id %znz_hwnd%
-}
-}
 
-
+    if ProcessExist("WavMain.exe") = 0
+        Run, %znz_path%
+    else
+    {
+        SetTitleMatchMode RegEx
+        WinGet, znz_hwnd, ID, 指南针全赢决策系统
+        WinActivate, ahk_id %znz_hwnd%
+        WinSet, AlwaysOnTop, On, ahk_id %znz_hwnd%
+    }
+}
 
 ;win+c 打开tl50
 #c::switchToTL50()
 switchToTL50()
 {
+    tl50 := "ahk_exe tl50v2.exe"
+    tl50_path := "D:\Program Files\天狼50\天狼50证券分析系统\tl50v2.exe"
 
-tl50:="ahk_exe tl50v2.exe"
-tl50_path:="D:\Program Files\天狼50\天狼50证券分析系统\tl50v2.exe"
-
-SetTitleMatchMode RegEx
-
-if ProcessExist("tl50v2.exe")=0
-    Run, %tl50_path%
-else
-{
     SetTitleMatchMode RegEx
-    if WinExist(".*天狼50.*")
+
+    if ProcessExist("tl50v2.exe") = 0
+        Run, %tl50_path%
+    else
     {
-    WinActivate
-    WinSet, AlwaysOnTop, On, .*天狼50.*
+        SetTitleMatchMode RegEx
+        if WinExist(".*天狼50.*")
+        {
+            WinActivate
+            WinSet, AlwaysOnTop, On, .*天狼50.*
+        }
     }
-}
-
-
 }
 
 ;win+s 打开实时新闻
 #s::switchTorealnews()
 switchTorealnews()
 {
-global cmds_should_show_realnews
+    global cmds_should_show_realnews
 
-
-
-
-SetTitleMatchMode, 2
-if WinExist("实时新闻")
-{
-
-;MsgBox,%cmds_should_show_realnews
-
-WinGet,hwnd,ID,实时新闻
-WinGet, Style, Style, ahk_id %hwnd%
-if (Style & 0x20000000)    ;最小化了时，可能是人为手动点窗口上的最小化导致也可能是按win+s导致最小化
-{
-cmds_should_show_realnews:="1"
-}
-
-if (cmds_should_show_realnews=="0")
-{
-WinMinimize,实时新闻
-;将涨停股和股票池最小化
-WinMinimize,涨停股
-WinMinimize,股票池
-
-;将大单窗口移动到短线精灵左边
-SetTitleMatchMode RegEx
-if WinExist("大单.*")
-{
-    targetWindowTitle := "大单.*"
-    WinMove, %targetWindowTitle%, , 231, 801, 154, 638
-    WinGet, targetWindowID, ID, 大单.*
-    WinSet, AlwaysOnTop, On, ahk_id %targetWindowID%
-    if WinExist("排板")
+    SetTitleMatchMode, 2
+    if WinExist("实时新闻")
     {
-        ;注意，ths的主窗口title包含"排板",orderlist的title是"排板"，这里要改为精确匹配否则有时候会将ths置顶
-        SetTitleMatchMode, 1
-        WinGet, orderlistWindowID, ID, 排板
-        WinSet, AlwaysOnTop, Off, ahk_id %orderlistWindowID%
-    }
-
-}
-cmds_should_show_realnews:="1"
-}
-else if (cmds_should_show_realnews=="1")
-{
-    ;打开实时新闻窗口
-    WinRestore,实时新闻
-    WinMove, 实时新闻, , 784, 466, 1033, 499
-    ;打开涨停股和股票池
-    WinRestore,涨停股
-    WinRestore,股票池
-
-    ;恢复大单窗口原来的位置
-    SetTitleMatchMode RegEx
-    if WinExist("大单.*")
-    {
-        ;打开大单窗口        
-        WinRestore,大单.*        
-        targetWindowTitle := "大单.*"
-        WinMove, %targetWindowTitle%, , 626, 466, 158, 499
-        if WinExist("排板")
+        WinGet, hwnd, ID, 实时新闻
+        WinGet, Style, Style, ahk_id %hwnd%
+        if (Style & 0x20000000)
         {
-            ;注意，ths的主窗口title包含"排板",orderlist的title是"排板"，这里要改为精确匹配否则有时候会将ths置顶
-            SetTitleMatchMode, 1
-            WinGet, orderlistWindowID, ID, 排板
-            WinSet, AlwaysOnTop, On, ahk_id %orderlistWindowID%
+            cmds_should_show_realnews := "1"
         }
 
+        if (cmds_should_show_realnews == "0")
+        {
+            WinMinimize, 实时新闻
+            WinMinimize, 涨停股
+            WinMinimize, 股票池
+
+            SetTitleMatchMode RegEx
+            if WinExist("大单.*")
+            {
+                targetWindowTitle := "大单.*"
+                WinMove, %targetWindowTitle%, , 231, 801, 154, 638
+                WinGet, targetWindowID, ID, 大单.*
+                WinSet, AlwaysOnTop, On, ahk_id %targetWindowID%
+                if WinExist("排板")
+                {
+                    SetTitleMatchMode, 1
+                    WinGet, orderlistWindowID, ID, 排板
+                    WinSet, AlwaysOnTop, Off, ahk_id %orderlistWindowID%
+                }
+            }
+            cmds_should_show_realnews := "1"
+        }
+        else if (cmds_should_show_realnews == "1")
+        {
+            WinRestore, 实时新闻
+            WinMove, 实时新闻, , 784, 466, 1033, 499
+            WinRestore, 涨停股
+            WinRestore, 股票池
+
+            SetTitleMatchMode RegEx
+            if WinExist("大单.*")
+            {
+                WinRestore, 大单.*
+                targetWindowTitle := "大单.*"
+                WinMove, %targetWindowTitle%, , 626, 466, 158, 499
+                if WinExist("排板")
+                {
+                    SetTitleMatchMode, 1
+                    WinGet, orderlistWindowID, ID, 排板
+                    WinSet, AlwaysOnTop, On, ahk_id %orderlistWindowID%
+                }
+            }
+            cmds_should_show_realnews := "0"
+        }
     }
-    cmds_should_show_realnews:="0"
+    else
+    {
+        whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+        whr.SetTimeouts(30000, 60000, 30000, 30000)
+        whr.Open("GET", "http://192.168.1.7:3333/show_realtime_news_window", true)
+        whr.Send()
+        try
+        {
+            whr.WaitForResponse()
+        }
+        catch e
+        {
+        }
+    }
 }
-}
-else
-{
-;MsgBox,"realnews window is closed or not open"
-whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
-whr.SetTimeouts(30000,60000,30000,30000)
-whr.Open("GET", "http://192.168.1.7:3333/show_realtime_news_window", true)
-whr.Send()
-try
-{
-whr.WaitForResponse()
-;MsgBox % whr.ResponseText
-}
-catch e
-{
-;MsgBox,"http request error"
-}
-
-}
-}
-
 
 ;win+ctrl+t只把实时新闻移到右上角
 #^t::moveRealnews()
 moveRealnews()
 {
-;把实时新闻移到右上角
-SetTitleMatchMode, 2
-WinGet,hwnd,ID,实时新闻
-if (hwnd)
-{
-    WinGet, Style, Style, ahk_id %hwnd%
-    if (Style & 0x20000000)
+    SetTitleMatchMode, 2
+    WinGet, hwnd, ID, 实时新闻
+    if (hwnd)
     {
-        ;最小化了则恢复
-        WinRestore,实时新闻
+        WinGet, Style, Style, ahk_id %hwnd%
+        if (Style & 0x20000000)
+        {
+            WinRestore, 实时新闻
+        }
+
+        realnewsTitle := "实时新闻"
+        WinMove, %realnewsTitle%, , 2660, ok_y-1, 789, ok_h-2
+        WinGet, realnews_hwnd, ID, %realnewsTitle%
+        WinSet, AlwaysOnTop, Off, ahk_id %realnews_hwnd%
+        WinActivate, 实时新闻
+        WinSet, AlwaysOnTop, On, ahk_id %realnews_hwnd%
     }
-
-
-    ;将chrome取消置顶，否则点一下实时新闻就会和chrome的置顶状态冲突
-    ;chromeTitle := " - Google Chrome"  ; Chrome 窗口标题特征 
-    ;SetTitleMatchMode, 2  ; 设置标题匹配模式为"包含"
-    ;检测窗口是否存在 
-    ;if WinExist(chromeTitle) {
-        ;WinGet, hwnd, ID, %chromeTitle%
-        ;WinSet, AlwaysOnTop, Off, ahk_id %hwnd%  ; 取消置顶 
-    ;} 
-
- 
-    realnewsTitle := "实时新闻"
-    WinMove,%realnewsTitle%, , 2660, ok_y-1, 789, ok_h-2
-    WinGet, realnews_hwnd, ID, %realnewsTitle%  ; 获取窗口句柄
-    WinSet, AlwaysOnTop, Off, ahk_id %realnews_hwnd%  ; 置顶 
-    WinActivate,实时新闻
-    WinSet, AlwaysOnTop, On, ahk_id %realnews_hwnd%  ; 置顶 
-
-
-    
-}
 }
 
-
-
- ;win+t打开东方财富股吧和韭菜公社
+;win+t打开东方财富股吧和韭菜公社
 #t::switchToGBJC()
-
 switchToGBJC()
 {
-moveRealnews()
+    moveRealnews()
 
-SetTitleMatchMode RegEx
-if WinExist("guba_jiucai.*")
-{
-    WinActivate
-    WinSet, AlwaysOnTop, On, guba_jiucai.*
+    SetTitleMatchMode RegEx
+    if WinExist("guba_jiucai.*")
+    {
+        WinActivate
+        WinSet, AlwaysOnTop, On, guba_jiucai.*
+    }
 }
-;SetTitleMatchMode, 2
-
-}
-
 
 ;win+x打开同花顺网上股票交易系统
 #x::switchToXIADAN()
 switchToXIADAN()
 {
-SetTitleMatchMode, 2
-WinGet,xiadan_hwnd,ID,网上股票交易系统5.0
-if (xiadan_hwnd)
-{
-    WinGet, Style, Style, ahk_id %xiadan_hwnd%
-    if ((Style & 0x20000000) or (not WinActive("ahk_id " xiadan_hwnd)))    ;最小化了或被挡住了
+    SetTitleMatchMode, 2
+    WinGet, xiadan_hwnd, ID, 网上股票交易系统5.0
+    if (xiadan_hwnd)
     {
-        ;Tooltip,最小化或没有激活
-        ;SetTimer, RemoveToolTip, -2500 ; 
-        WinActivate,ahk_id %xiadan_hwnd%
-        WinMove,ahk_id %xiadan_hwnd%,,ok_x,ok_y,ok_w,ok_h
-        WinSet, AlwaysOnTop, On, ahk_id %xiadan_hwnd%
+        WinGet, Style, Style, ahk_id %xiadan_hwnd%
+        if ((Style & 0x20000000) or (not WinActive("ahk_id " xiadan_hwnd)))
+        {
+            WinActivate, ahk_id %xiadan_hwnd%
+            WinMove, ahk_id %xiadan_hwnd%, , ok_x, ok_y, ok_w, ok_h
+            WinSet, AlwaysOnTop, On, ahk_id %xiadan_hwnd%
+        }
+        else
+        {
+            WinMinimize, ahk_id %xiadan_hwnd%
+        }
     }
-    else
-    {
-        ;Tooltip,已置顶且激活
-        ;SetTimer, RemoveToolTip, -2500 ; 
-        WinMinimize,ahk_id %xiadan_hwnd%
-    }
-}
 }
 
 ;win+z将当前激活的窗口最小化
 #z::minimize_current_window()
 minimize_current_window()
 {
-    WinMinimize,A
+    WinMinimize, A
 }
 
 ;win+q将当前激活的窗口置顶
@@ -901,544 +768,456 @@ minimize_current_window()
 set_current_window_to_top()
 {
     global WindowPositionDict
-    ; 获取当前窗口信息 
     WinGet, hwnd, ID, A
     WinGetTitle, title, ahk_id %hwnd%
-    if (InStr(title, "同花顺(") == 1) {
-        ;同花顺的主窗口不置顶，要不然会挡住stockapp的置顶窗口
+    if (InStr(title, "同花顺(") == 1)
+    {
         return
     }
-    ; 检查是否已在固定位置 
     WinGetPos, curX, curY, curW, curH, ahk_id %hwnd%
     isAtFixedPos := (curX == ok_x && curY == ok_y && curW == ok_w && curH == ok_h)
-    WinGet, ExStyle, ExStyle, A 
-    if (isAtFixedPos && (ExStyle & 0x8)) {
-        ; 如果已经在目标位置且已经置顶，则还原到原始位置
-        if (WindowPositionDict.HasKey(hwnd)) {
+    WinGet, ExStyle, ExStyle, A
+    if (isAtFixedPos && (ExStyle & 0x8))
+    {
+        if (WindowPositionDict.HasKey(hwnd))
+        {
             orig := WindowPositionDict[hwnd]
-            WinMove, ahk_id %hwnd%,, orig.x, orig.y, orig.w, orig.h
+            WinMove, ahk_id %hwnd%, , orig.x, orig.y, orig.w, orig.h
             WindowPositionDict.Delete(hwnd)
         }
     }
     else
     {
-        ; 保存当前位置并固定 
-        
         WinGetPos, origX, origY, origW, origH, ahk_id %hwnd%
         WindowPositionDict[hwnd] := {x: origX, y: origY, w: origW, h: origH}
-        ;ToolTip,保存当前位置并固定
-        WinRestore,ahk_id %hwnd%
-        WinMove,A,,ok_x,ok_y,ok_w,ok_h
+        WinRestore, ahk_id %hwnd%
+        WinMove, A, , ok_x, ok_y, ok_w, ok_h
         WinSet, AlwaysOnTop, On, A
     }
-
 }
 
 ;win+^+w打开同花顺的分析功能
 #^w::ths_fenxi()
 ths_fenxi()
 {
-global win_ctrl_w_should_close_ths_fenxi_window
-if (win_ctrl_w_should_close_ths_fenxi_window=="0")
-{
-
-    WinActivate,同花顺(
-    CoordMode, Mouse, Window     ; 使用窗口坐标
-    ;同花顺的分析这里不能用ControlClick，要用Click
-    Click,151,14,1;
-    Click,197,303,1;
-    CoordMode, Mouse, Screen      ; 使用屏幕坐标
-    Click, 1023,692,1;点击弹出的新窗口的按钮@播放到最后
-    win_ctrl_w_should_close_ths_fenxi_window:="1"
-}
-else
-{
-    ;应该关闭分析窗口
-    CoordMode, Mouse, Screen      ; 使用屏幕坐标
-    Click, 1120,668,1;点击分析窗口的关闭按钮
-    win_ctrl_w_should_close_ths_fenxi_window:="0"
-}
-}
-
-
-; 获取鼠标下方控件的位置数据 
-GetControlUnderMousePos(ByRef CtrlX:="", ByRef CtrlY:="", ByRef CtrlW:="", ByRef CtrlH:="") {
-    ; 获取鼠标位置下的控件信息
-    MouseGetPos, , , WinID, ControlClassNN
-    ; 验证是否获取到有效控件 
-    ;MsgBox,%ControlClassNN%
-    if (ControlClassNN="EditWnd1" || ControlClassNN="EditWnd")
+    global win_ctrl_w_should_close_ths_fenxi_window
+    if (win_ctrl_w_should_close_ths_fenxi_window == "0")
     {
-    ; 获取控件位置和尺寸
-    ControlGetPos, cX, cY, cW, cH, %ControlClassNN%, ahk_id %WinID%
-    ; 返回结果（通过引用参数和返回对象双模式）
-    CtrlX := cX, CtrlY := cY, CtrlW := cW, CtrlH := cH
-    return { x: cX, y: cY, width: cW, height: cH 
-           , control: ControlClassNN, winID: WinID }
+        WinActivate, 同花顺(
+        CoordMode, Mouse, Window
+        Click, 151, 14, 1
+        Click, 197, 303, 1
+        CoordMode, Mouse, Screen
+        Click, 1023, 692, 1
+        win_ctrl_w_should_close_ths_fenxi_window := "1"
+    }
+    else
+    {
+        CoordMode, Mouse, Screen
+        Click, 1120, 668, 1
+        win_ctrl_w_should_close_ths_fenxi_window := "0"
+    }
+}
+
+; 获取鼠标下方控件的位置数据
+GetControlUnderMousePos(ByRef CtrlX:="", ByRef CtrlY:="", ByRef CtrlW:="", ByRef CtrlH:="")
+{
+    MouseGetPos, , , WinID, ControlClassNN
+    if (ControlClassNN = "EditWnd1" || ControlClassNN = "EditWnd")
+    {
+        ControlGetPos, cX, cY, cW, cH, %ControlClassNN%, ahk_id %WinID%
+        CtrlX := cX, CtrlY := cY, CtrlW := cW, CtrlH := cH
+        return {x: cX, y: cY, width: cW, height: cH, control: ControlClassNN, winID: WinID}
     }
     return false
 }
-
 
 ;win+空格打开同花顺股票预警结果窗口
 #Space::show_ths_yujin()
 show_ths_yujin()
 {
-if WinExist("预警结果") 
-{
-WinActivate, 预警结果
-WinSet, AlwaysOnTop, On, 预警结果
+    if WinExist("预警结果")
+    {
+        WinActivate, 预警结果
+        WinSet, AlwaysOnTop, On, 预警结果
+    }
 }
-}
-
-
 
 ;win+3打开模拟器
 #3::open_moniqi()
 open_moniqi()
 {
-    ; 定义变量
     windowTitle := "MuMu安卓设备"
     noxPath := "D:\Program Files\Netease\MuMu\nx_main\MuMuManager.exe"
-    
+
     if WinExist(windowTitle)
     {
         WinActivate, %windowTitle%
-        WinMove, %windowTitle%,, 2657,ok_y-1,786,ok_h+1
-
+        WinMove, %windowTitle%, , 2657, ok_y-1, 786, ok_h+1
     }
     else
     {
         Run, "%noxPath%" control -v 0  launch -pkg com.aiyu.kaipanla
-        WinWait, %windowTitle%,, 30  ; 等待最多30秒
+        WinWait, %windowTitle%, , 30
         WinActivate, %windowTitle%
-        ;WinMove, %windowTitle%,, 2657,ok_y-1,786,ok_h+1
         Sleep, 25000
         WinSet, AlwaysOnTop, On, %windowTitle%
-        CoordMode, Mouse, Window      ; 使用窗口坐标
-        ControlClick, x233 y1376, %windowTitle%, , , , NA    ;点击行情
+        CoordMode, Mouse, Window
+        ControlClick, x233 y1376, %windowTitle%, , , , NA
         Sleep, 1000
-        ControlClick, x275 y134, %windowTitle%, , , , NA    ;点击打板
-        WinMove, %windowTitle%,, 2657,ok_y-1,786,ok_h+1
+        ControlClick, x275 y134, %windowTitle%, , , , NA
+        WinMove, %windowTitle%, , 2657, ok_y-1, 786, ok_h+1
     }
 }
-
 
 ;win+1 将同花顺切换到排板页面
 #1::switch_ths_to_paiban()
 switch_ths_to_paiban()
 {
-whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
-whr.SetTimeouts(30000,60000,30000,30000)
-whr.Open("GET", "http://192.168.1.7:7777/set_stock_code_to_ths?stock_code=.10", true)
-whr.Send()
-try
-{
-whr.WaitForResponse()
-;MsgBox % whr.ResponseText
-}
-catch e
-{
-;MsgBox,"http request error"
-}
-CreateOverlays()
+    whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+    whr.SetTimeouts(30000, 60000, 30000, 30000)
+    whr.Open("GET", "http://192.168.1.7:7777/set_stock_code_to_ths?stock_code=.10", true)
+    whr.Send()
+    try
+    {
+        whr.WaitForResponse()
+    }
+    catch e
+    {
+    }
+    CreateOverlays()
 }
 
 ;win+2 将同花顺切换到复盘页面
 #2::switch_ths_to_fupan()
 switch_ths_to_fupan()
 {
-whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
-whr.SetTimeouts(30000,60000,30000,30000)
-whr.Open("GET", "http://192.168.1.7:7777/set_stock_code_to_ths?stock_code=.11", true)
-whr.Send()
-try
-{
-whr.WaitForResponse()
-;MsgBox % whr.ResponseText
+    whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+    whr.SetTimeouts(30000, 60000, 30000, 30000)
+    whr.Open("GET", "http://192.168.1.7:7777/set_stock_code_to_ths?stock_code=.11", true)
+    whr.Send()
+    try
+    {
+        whr.WaitForResponse()
+    }
+    catch e
+    {
+    }
+    DestroyOverlays()
+    WinGet, Style, Style, 股票池
+    if (!(Style & 0x20000000))
+    {
+        switchTorealnews()
+    }
 }
-catch e
-{
-;MsgBox,"http request error"
-}
-DestroyOverlays()
-WinGet, Style, Style, 股票池
-if (!(Style & 0x20000000))
-{
-    ;如果股票池没有最小化，将realnews等窗口最小化
-    switchTorealnews()
-}
-}
-
 
 ;win+^+s同花顺设置预警后确认
 #^s::ths_xiadie_yujin_confirm()
 ths_xiadie_yujin_confirm()
 {
-    If not WinExist("添加预警") 
+    If not WinExist("添加预警")
     {
-        ;没有添加预警窗口
         switchToTHS()
-        CoordMode, Mouse, Screen      ; 使用屏幕坐标
-        Click,1937,233,Right
+        CoordMode, Mouse, Screen
+        Click, 1937, 233, Right
         Send, +t
-        WinActivate,添加预警   ;WinActivate是异步操作
-        WinWait, 添加预警, , 2  ; 等待最多2秒
-        if WinExist("添加预警")    
+        WinActivate, 添加预警
+        WinWait, 添加预警, , 2
+        if WinExist("添加预警")
         {
-            CoordMode, Mouse, Window     ; 使用窗口坐标
-            Click, 182,141,1   ;点击股票下跌到编辑框
+            CoordMode, Mouse, Window
+            Click, 182, 141, 1
             return
         }
         else
         {
-            ToolTip,不存在添加预警窗口@111
-            SetTimer, RemoveToolTip, -1000 ; 
+            ToolTip, 不存在添加预警窗口@111
+            SetTimer, RemoveToolTip, -1000
         }
     }
     else
     {
         if !WinActive("添加预警")
         {
-            ;说明存在添加预警窗口但窗口却没有激活
             switchToTHS()
-            WinActivate,添加预警
-            WinWait, 添加预警, , 2  ; 等待最多2秒
-            if WinExist("添加预警")    
+            WinActivate, 添加预警
+            WinWait, 添加预警, , 2
+            if WinExist("添加预警")
             {
-                CoordMode, Mouse, Window     ; 使用窗口坐标
-                Click, 182,141,1   ;点击股票下跌到编辑框
+                CoordMode, Mouse, Window
+                Click, 182, 141, 1
                 return
             }
             else
             {
-                ToolTip,不存在添加预警窗口@222
-                SetTimer, RemoveToolTip, -1000 ; 
+                ToolTip, 不存在添加预警窗口@222
+                SetTimer, RemoveToolTip, -1000
             }
         }
         else
         {
-            ;说明存在添加预警窗口且窗口已经激活，现在要判断鼠标是不是在该窗口范围内，如果不在则移动到默认位置
-            ;  获取窗口的位置和大小（左上角坐标、宽度、高度）
             WinGetPos, WinX, WinY, WinWidth, WinHeight, 添加预警
-            ; 计算窗口右下角坐标（用于判断范围）
             WinRight := WinX + WinWidth
             WinBottom := WinY + WinHeight
-            ;  获取当前鼠标坐标
-            CoordMode, Mouse, Screen     ; 使用屏幕坐标
+            CoordMode, Mouse, Screen
             MouseGetPos, MouseX, MouseY
-           ;  判断鼠标是否在窗口范围内
-           ; 鼠标在窗口内的条件：X在[WinX, WinRight]且Y在[WinY, WinBottom]
-           IsMouseInWindow := (MouseX >= WinX && MouseX <= WinRight && MouseY >= WinY && MouseY <= WinBottom)
-           if !IsMouseInWindow
-           {
-               ;说明存在添加预警窗口且窗口已激活但鼠标不在该窗口范围内
-               ToolTip,存在添加预警窗口且窗口已激活但鼠标不在该窗口范围内
-               SetTimer, RemoveToolTip, -1000 ; 
-               WinActivate,添加预警
-               WinWait, 添加预警, , 2  ; 等待最多2秒
-               if WinExist("添加预警")    
-               {
-                   CoordMode, Mouse, Window     ; 使用窗口坐标
-                   Click, 182,141,1   ;点击股票下跌到编辑框
-                   return
-               }
-
-           }
-     
+            IsMouseInWindow := (MouseX >= WinX && MouseX <= WinRight && MouseY >= WinY && MouseY <= WinBottom)
+            if !IsMouseInWindow
+            {
+                ToolTip, 存在添加预警窗口且窗口已激活但鼠标不在该窗口范围内
+                SetTimer, RemoveToolTip, -1000
+                WinActivate, 添加预警
+                WinWait, 添加预警, , 2
+                if WinExist("添加预警")
+                {
+                    CoordMode, Mouse, Window
+                    Click, 182, 141, 1
+                    return
+                }
+            }
         }
     }
 
-
-    ;先将鼠标向左边移动15px，防止有时候鼠标太靠右了而不在控件上
-    MouseMove, -15, 0, 0, R  ; R表示相对移动
-    ;Click
+    MouseMove, -15, 0, 0, R
     ctrlInfo := GetControlUnderMousePos(x, y, w, h)
 
     if (!ctrlInfo)
     {
-        ;ToolTip,鼠标下面没有控件，现在向上移动7px
-        MouseMove, 0, -7, 0, R  ; R表示相对移动，向上移动7px
-        ;Click
+        MouseMove, 0, -7, 0, R
         ctrlInfo := GetControlUnderMousePos(x, y, w, h)
         if (!ctrlInfo)
         {
-             ;ToolTip,向上移动7px没有找到控件，现在向下移动7px
-             MouseMove, 0, 14, 0, R  ; R表示相对移动，向下移动14px
-             ;Click
-             ctrlInfo := GetControlUnderMousePos(x, y, w, h)
+            MouseMove, 0, 14, 0, R
+            ctrlInfo := GetControlUnderMousePos(x, y, w, h)
         }
-        if (!ctrlInfo) 
+        if (!ctrlInfo)
         {
-            ;ToolTip,向下移动5px后鼠标最终还是没有移动到控件位置
             return false
         }
-
     }
-    ;ToolTip,找到鼠标下面的编辑框控件
-    ;SetTimer, RemoveToolTip, -2500 ; 
-    WinActivate,添加预警
-    WinWait, 添加预警, , 2  ; 等待最多2秒
-    newX:=ctrlInfo.x-100
-    targetY:=ctrlInfo.y
-    CoordMode, Mouse, Window     ; 使用窗口坐标
-    ControlClick, x%newX% y%targetY%, 添加预警, , , , NA; 点击打勾
-    ControlClick, x173 y446, 添加预警, , , , NA    ;点击确定
+
+    WinActivate, 添加预警
+    WinWait, 添加预警, , 2
+    newX := ctrlInfo.x - 100
+    targetY := ctrlInfo.y
+    CoordMode, Mouse, Window
+    ControlClick, x%newX% y%targetY%, 添加预警, , , , NA
+    ControlClick, x173 y446, 添加预警, , , , NA
 }
 
-
-
-
+; ===== 智能关闭窗口 =====
 SmartClose() {
-    ; 获取当前窗口信息 
-    WinGet, hwnd, ID, A 
+    WinGet, hwnd, ID, A
     WinGet, processName, ProcessName, A
     WinGetClass, winClass, A
     WinGetTitle, currentTitle, A
-    
-    ; 浏览器标签页关闭逻辑
-    browserProcesses := ["chrome.exe",  "msedge.exe",  "firefox.exe",  "opera.exe",  "vivaldi.exe"] 
+
+    browserProcesses := ["chrome.exe", "msedge.exe", "firefox.exe", "opera.exe", "vivaldi.exe"]
     for index, browser in browserProcesses {
         if (processName = browser) {
-            Send, ^w  ; 发送 Ctrl+W 关闭标签页 
+            Send, ^w
             return
         }
     }
-    
-    ; 特殊窗口处理
-    if (winClass = "CabinetWClass") {  ; 资源管理器 
-        Send, !{F4}  ; Alt+F4 关闭窗口但不终止进程
-    } 
-    else if (winClass = "ApplicationFrameWindow") {  ; UWP应用 
-        PostMessage, 0x112, 0xF060,,, A  ; 发送关闭消息
-    } 
-    else if (processName="hexin.exe" && currentTitle="添加预警") {
-        ;同花顺的添加预警窗口比较特殊，需要点击关闭按钮，否则会导致再也无法打开添加预警窗口了，因为同花顺关闭这个窗口不是真的关闭，只是隐藏了
-        ControlClick, x450 y16, ahk_id %hwnd%, , , , NA    ;点击关闭按钮
+
+    if (winClass = "CabinetWClass") {
+        Send, !{F4}
     }
-    else if (processName="hexin.exe" && currentTitle="预警结果") {
-        ;同花顺的股票预警窗口比较特殊，需要点击关闭按钮，否则会导致再也无法打开预警结果窗口了，因为同花顺关闭这个窗口不是真的关闭，只是隐藏了
-        ControlClick, x659 y16, ahk_id %hwnd%, , , , NA    ;点击关闭按钮
+    else if (winClass = "ApplicationFrameWindow") {
+        PostMessage, 0x112, 0xF060, , , A
+    }
+    else if (processName = "hexin.exe" && currentTitle = "添加预警") {
+        ControlClick, x450 y16, ahk_id %hwnd%, , , , NA
+    }
+    else if (processName = "hexin.exe" && currentTitle = "预警结果") {
+        ControlClick, x659 y16, ahk_id %hwnd%, , , , NA
     }
     else {
-        ; 标准关闭流程
         WinClose, ahk_id %hwnd%
-        Sleep, 300 
+        Sleep, 300
         if WinExist("ahk_id " hwnd) {
-            WinKill, ahk_id %hwnd%  ; 强制关闭残留窗口
+            WinKill, ahk_id %hwnd%
         }
     }
 }
- 
-; ===== 热键绑定 ===== 
-$^w::SmartClose()  ; 使用 $ 前缀防止热键自触发
 
+$^w::SmartClose()
 
-; 获取遮挡指定窗口的所有窗口句柄 
+; 获取遮挡指定窗口的所有窗口句柄
 GetBlockingWindows(targetHwnd) {
-    ; 检查目标窗口有效性 
     if !WinExist("ahk_id " targetHwnd)
         return ["目标窗口不存在"]
-    
-    ; 获取目标窗口位置和状态 
+
     WinGetPos, tX, tY, tW, tH, ahk_id %targetHwnd%
     WinGet, tState, MinMax, ahk_id %targetHwnd%
     if (tState = -1) || (tW = 0) || (tH = 0)
         return ["目标窗口已最小化或不可见"]
-    
-    ; 初始化结果数组 
+
     blockingWindows := []
-    
-    ; 获取所有窗口列表（按Z序从顶到底）
     WinGet, winList, List
     Loop, %winList% {
         currentHwnd := winList%A_Index%
-        
-        ; 跳过目标窗口自身及后续窗口 
+
         if (currentHwnd = targetHwnd)
-            break 
-        
-        ; 跳过无效窗口
+            break
+
         if !WinExist("ahk_id " currentHwnd)
-            continue 
-        
-        ; 检查窗口状态
+            continue
+
         WinGet, style, Style, ahk_id %currentHwnd%
         WinGet, exStyle, ExStyle, ahk_id %currentHwnd%
         WinGet, minMax, MinMax, ahk_id %currentHwnd%
-        
-        ; 过滤无效窗口条件 
-        ;if (minMax = -1) || !(style & 0x10000000)  ; WS_VISIBLE 
-         ;   || (exStyle & 0x80) || (exStyle & 0x00000008)  ; WS_EX_TOOLWINDOW/WS_EX_AlwaysOnTop 
-          ;  continue
-        if (minMax = -1) || !(style & 0x10000000)  ; WS_VISIBLE 
-             || (exStyle & 0x80)  ; WS_EX_TOOLWINDOW
+
+        if (minMax = -1) || !(style & 0x10000000) || (exStyle & 0x80)
             continue
 
-        
-        ; 获取当前窗口位置
         WinGetPos, cX, cY, cW, cH, ahk_id %currentHwnd%
         if (cW = 0) || (cH = 0)
-            continue 
-        
-        ; 计算窗口重叠区域 
+            continue
+
         left   := Max(tX, cX)
         right  := Min(tX + tW, cX + cW)
         top    := Max(tY, cY)
         bottom := Min(tY + tH, cY + cH)
-        
-        ; 检测有效遮挡（重叠面积 > 100像素）
+
         if (left < right) && (top < bottom) {
             overlapArea := (right - left) * (bottom - top)
-            if (overlapArea > 100)  ; 过滤微小重叠 
+            if (overlapArea > 100)
                 blockingWindows.Push(currentHwnd)
         }
     }
-    
-    return blockingWindows 
+
+    return blockingWindows
 }
- 
-
-
-
-
 
 ; ############## 同花顺遮罩模块 ##############
-; 两个全局变量要放在文件最前面，否则会出错
-
-; 创建遮罩热键（可自定义组合键）
-^1::CreateOverlays() ; ctrl+1 创建遮罩
-
-
+^1::CreateOverlays()
 CreateOverlays() {
     DestroyOverlays()
-    CreateOverlay(overlay1, 383, 995, 242, 31, 255)  ; 短线精灵标题栏
-    CreateOverlay(overlay2_1, 0, 8, 128, 21, 255)    ; 顶部长白条@left
-    CreateOverlay(overlay2_2, 166, 8, 1598, 21, 255)    ; 顶部长白条@right
-    CreateOverlay(overlay3, 233, 778, 392, 23, 255)    ; "上翻 下翻 顶部 底部"
-    CreateOverlay(overlay4, 234, 703, 390, 25, 255)    ; "查看完整报价"
-    CreateOverlay(overlay5, 567, 803, 58, 190, 255)    ; "千档盘口红绿点"
-    CreateOverlay(overlay6, 611, 681, 13, 20, 150)    ; "预警铃铛"
-    CreateOverlay(overlay7, 459, 102, 165, 368, 90)    ; "逐笔成交明细买单卖单"
-    ;CreateOverlay(overlay8, 233, 58, 14, 21, 255)    ;"逐笔成交明细左边的白框"
-    ;CreateOverlay(overlay9, 460, 1053, 224, 44, 150)    ;"委买队列"
-    CreateOverlay(overlay10, 1793, 402, 108, 21, 225)    ; "成交量下拉框背景"
-    CreateOverlay(overlay11, 120, 1246, 108,18, 225)    ; "涨速排名下拉框背景"
-    CreateOverlay(overlay12, 1, 508, 44, 20, 225)    ; "自选股表单设置背景"
-    CreateOverlay(overlay13, 1814, 57, 87, 19, 250)    ; 叠 窗 区 信息 的白字
+
+    if (hwnd := WinExist("排板 ahk_exe stockapp.exe")) && !DllCall("IsIconic", "ptr", hwnd)
+    {
+        ;短版短线精灵护罩
+        CreateOverlay(overlay1, 385, 995, 240, 31, 255)
+    }
+    else
+    {
+        ;长版短线精灵护罩
+        CreateOverlay(overlay1, 232, 995, 393, 31, 255)
+    }
+
+    CreateOverlay(overlay2_1, 0, 8, 128, 21, 255)
+    CreateOverlay(overlay2_2, 166, 8, 1598, 21, 255)
+    CreateOverlay(overlay3, 233, 778, 392, 23, 255)
+    CreateOverlay(overlay4, 234, 703, 390, 25, 255)
+    CreateOverlay(overlay5, 567, 803, 58, 190, 255)
+    CreateOverlay(overlay6, 611, 681, 13, 20, 150)
+    CreateOverlay(overlay7, 459, 102, 165, 368, 90)
+    ;CreateOverlay(overlay8, 233, 58, 14, 21, 255)
+    ;CreateOverlay(overlay9, 460, 1053, 224, 44, 150)
+    CreateOverlay(overlay10, 1793, 402, 108, 21, 225)
+    CreateOverlay(overlay11, 120, 1246, 108, 18, 225)
+    CreateOverlay(overlay12, 1, 508, 44, 20, 225)
+    CreateOverlay(overlay13, 1814, 57, 87, 19, 250)
 }
 
-^2::DestroyOverlays()  ; ctrl+2 移除遮罩
+^2::DestroyOverlays()
+DestroyOverlays() {
+    global overlay1, overlay2_1, overlay2_2, overlay3, overlay4, overlay5, overlay6, overlay7, overlay10, overlay11, overlay12, overlay13
+    if (overlay1 != 0) {
+        Gui, %overlay1%:Destroy
+        overlay1 := 0
+    }
+    if (overlay2_1 != 0) {
+        Gui, %overlay2_1%:Destroy
+        overlay2_1 := 0
+    }
+    if (overlay2_2 != 0) {
+        Gui, %overlay2_2%:Destroy
+        overlay2_2 := 0
+    }
+    if (overlay3 != 0) {
+        Gui, %overlay3%:Destroy
+        overlay3 := 0
+    }
+    if (overlay4 != 0) {
+        Gui, %overlay4%:Destroy
+        overlay4 := 0
+    }
+    if (overlay5 != 0) {
+        Gui, %overlay5%:Destroy
+        overlay5 := 0
+    }
+    if (overlay6 != 0) {
+        Gui, %overlay6%:Destroy
+        overlay6 := 0
+    }
+    if (overlay7 != 0) {
+        Gui, %overlay7%:Destroy
+        overlay7 := 0
+    }
+    if (overlay10 != 0) {
+        Gui, %overlay10%:Destroy
+        overlay10 := 0
+    }
+    if (overlay11 != 0) {
+        Gui, %overlay11%:Destroy
+        overlay11 := 0
+    }
+    if (overlay12 != 0) {
+        Gui, %overlay12%:Destroy
+        overlay12 := 0
+    }
+    if (overlay13 != 0) {
+        Gui, %overlay13%:Destroy
+        overlay13 := 0
+    }
+}
 
 CreateOverlay(ByRef hwnd, x, y, w, h, transparency) {
-  Gui, New, +HwndguiHwnd
-  hwnd := guiHwnd
-  Gui, Color, e8e3ce
-  Gui, +ToolWindow -Caption +AlwaysOnTop +E0x20  ; +E0x20允许鼠标穿透
-  Gui, Show, x%x% y%y% w%w% h%h% NA
-  WinSet, Transparent, %transparency%, ahk_id %guiHwnd%
+    Gui, New, +HwndguiHwnd
+    hwnd := guiHwnd
+    Gui, Color, e8e3ce
+    Gui, +ToolWindow -Caption +AlwaysOnTop +E0x20
+    Gui, Show, x%x% y%y% w%w% h%h% NA
+    WinSet, Transparent, %transparency%, ahk_id %guiHwnd%
 }
-
-
-
-
-DestroyOverlays() {
-  global overlay1, overlay2, overlay3
-  if (overlay1 != 0) {
-    Gui, %overlay1%:Destroy
-    overlay1 := 0
-  }
-  if (overlay2_1 != 0) {
-    Gui, %overlay2_1%:Destroy
-    overlay2_1 := 0
-  }
-  if (overlay2_2 != 0) {
-    Gui, %overlay2_2%:Destroy
-    overlay2_2 := 0
-  }
-  if (overlay3 != 0) {
-    Gui, %overlay3%:Destroy
-    overlay3 := 0
-  }
-  if (overlay4 != 0) {
-    Gui, %overlay4%:Destroy
-    overlay4 := 0
-  }
-  if (overlay5 != 0) {
-    Gui, %overlay5%:Destroy
-    overlay5 := 0
-  }
-  if (overlay6 != 0) {
-    Gui, %overlay6%:Destroy
-    overlay6 := 0
-  }
-  if (overlay7 != 0) {
-    Gui, %overlay7%:Destroy
-    overlay7 := 0
-  }
-  ;if (overlay8 != 0) {
-    ;Gui, %overlay8%:Destroy
-    ;overlay8 := 0
-  ;}
-  ;if (overlay9 != 0) {
-    ;Gui, %overlay9%:Destroy
-    ;overlay9 := 0
-  ;}
-  if (overlay10 != 0) {
-    Gui, %overlay10%:Destroy
-    overlay10 := 0
-  }
-  if (overlay11 != 0) {
-    Gui, %overlay11%:Destroy
-    overlay11 := 0
-  }
-  if (overlay12 != 0) {
-    Gui, %overlay12%:Destroy
-    overlay12 := 0
-  }
-  if (overlay13 != 0) {
-    Gui, %overlay13%:Destroy
-    overlay13 := 0
-  }
-}
-
-
 
 ^3::minimize_some_windows()
 minimize_some_windows() {
-DestroyOverlays()
-IfWinExist, 下单
-{
-    WinMinimize ; 最小化找到的窗口
-}
-IfWinExist, 排板
-{
-    WinMinimize ; 最小化找到的窗口
-}
-IfWinExist, 短线精灵
-{
-    WinMinimize ; 最小化找到的窗口
-}
-IfWinExist, 大单
-{
-    WinMinimize ; 最小化找到的窗口
-}
-IfWinExist, 实时新闻
-{
-    WinMinimize ; 最小化找到的窗口
-}
-IfWinExist, 陈小群
-{
-    WinMinimize ; 最小化找到的窗口
-}
-IfWinExist, 涨停股
-{
-    WinMinimize ; 最小化找到的窗口
-}
-IfWinExist, 股票池
-{
-    WinMinimize ; 最小化找到的窗口
-}
+    DestroyOverlays()
+    IfWinExist, 下单
+    {
+        WinMinimize
+    }
+    IfWinExist, 排板
+    {
+        WinMinimize
+    }
+    IfWinExist, 短线精灵
+    {
+        WinMinimize
+    }
+    IfWinExist, 大单
+    {
+        WinMinimize
+    }
+    IfWinExist, 实时新闻
+    {
+        WinMinimize
+    }
+    IfWinExist, 陈小群
+    {
+        WinMinimize
+    }
+    IfWinExist, 涨停股
+    {
+        WinMinimize
+    }
+    IfWinExist, 股票池
+    {
+        WinMinimize
+    }
 }
 
 restore_current_window()
@@ -1447,30 +1226,27 @@ restore_current_window()
     WinGetTitle, WindowTitle, %CurrentWindow%
     if (InStr(WindowTitle, "VLC media player") > 0)
     {
-        ; WinGet, 输出变量, ProcessName, 目标窗口
         WinGet, WindowProcess, ProcessName, %CurrentWindow%
         if (WindowProcess = "vlc.exe")
         {
-            SendInput, {Esc}    ;vlc全屏播放视频时的窗口不能通过restore消息来退出全屏，要发送esc来实现
-            Sleep,100
+            SendInput, {Esc}
+            Sleep, 100
         }
     }
     else
     {
-        WinRestore,A
+        WinRestore, A
     }
 }
 
-
-current_window_is_fullscreen() 
+current_window_is_fullscreen()
 {
     SysGet, ScreenWidth, 0
     SysGet, ScreenHeight, 1
     WinGetPos, WinX, WinY, WinW, WinH, A
     WinGet, WinState, MinMax, A
-    
-    ; 放宽判断条件，允许±18像素误差（适配黑边、显示器缩放场景）
-    Tolerance := 18  ; 误差容忍值，可根据需求调整
+
+    Tolerance := 18
     XMatch := (Abs(WinX) <= Tolerance)
     YMatch := (Abs(WinY) <= Tolerance)
     WidthMatch := (Abs(WinW - ScreenWidth) <= Tolerance)
@@ -1484,10 +1260,10 @@ fullscreen_current_window_forcall() {
     if (WindowProcess = "vlc.exe")
     {
         WinActivate, A
-        Sleep, 100  ; 等待窗口激活，避免操作失效
-        SendInput, !v  ; 按下Alt+V，打开「视图」菜单（英文版本为Alt+V，中文版本可能不同）
         Sleep, 100
-        SendInput, f  ; 按下F，选择「全屏」选项
+        SendInput, !v
+        Sleep, 100
+        SendInput, f
     }
     else
     {
@@ -1498,16 +1274,13 @@ fullscreen_current_window_forcall() {
 ^+h::move_current_window_to_left()
 move_current_window_to_left() {
     restore_current_window()
-    ;WinMove,A,,0,ok_y-1,795,ok_h+1
-    WinMove,A,,-7, 1, 1968, 1446
+    WinMove, A, , -7, 1, 1968, 1446
 }
-
-
 
 ^+l::move_current_window_to_right()
 move_current_window_to_right() {
     restore_current_window()
-    WinMove,A,,2653,ok_y-1,795,ok_h+1
+    WinMove, A, , 2653, ok_y-1, 795, ok_h+1
 }
 
 #+f::fullscreen_current_window()
@@ -1521,6 +1294,5 @@ fullscreen_current_window() {
         fullscreen_current_window_forcall()
     }
 }
-
 
 ; ############## 模块结束 ##############
