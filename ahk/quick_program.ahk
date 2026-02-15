@@ -1,6 +1,6 @@
 ;注意，本文件要以ansi编码保存，否则与中文相关的操作会失败
 ;注意，全局变量只能放在文件最前面，否则会出错
-;注意，使用本程序如果安装了迅雷则需要提前在迅雷悬浮球上右键设置悬浮球仅下载时显示
+;注意，使用本程序如果安装了迅雷则需要提前在迅雷悬浮球上右键设置悬浮球仅下载时显示，需要设置下载完成后弹窗提示（载完成后弹窗提示是默认的）
 
 #SingleInstance Force  ; 关键防护（防多实例冲突）
 #InstallKeybdHook      ; 保障Win+热键可靠性
@@ -198,8 +198,7 @@ ShellMessage(wParam, lParam) {
             Carefully_set_A_topmost()
             return
         }
-    } else if (InStr(title, "同花顺(") == 0) {
-        if (triggerSource = "外部进程: Thunder.exe") {
+    } else if (triggerSource = "外部进程: Thunder.exe") {
             if (wParam=32774)
             {
                 ;点击网页中的磁力链接后出的迅雷下载新建任务面板弹窗
@@ -228,8 +227,8 @@ ShellMessage(wParam, lParam) {
                     }
                 }
             }
-
-        } else if (processName = "explorer.exe" && current_title = title && InStr(title, "\\")) {
+    } else if (InStr(title, "同花顺(") == 0) {
+        if (processName = "explorer.exe" && current_title = title && InStr(title, "\\")) {
             WinSet, AlwaysOnTop, On, ahk_class #32768 ahk_exe explorer.exe
         } else if (processName = "Weixin.exe" && title = current_title) {
             WinSet, AlwaysOnTop, On, ahk_id %lParam%
@@ -1296,3 +1295,4 @@ fullscreen_current_window() {
 }
 
 ; ############## 模块结束 ##############
+
