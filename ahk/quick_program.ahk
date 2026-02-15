@@ -1,5 +1,6 @@
 ;注意，本文件要以ansi编码保存，否则与中文相关的操作会失败
 ;注意，全局变量只能放在文件最前面，否则会出错
+;注意，使用本程序如果安装了迅雷则需要提前在迅雷悬浮球上右键设置悬浮球仅下载时显示
 
 #SingleInstance Force  ; 关键防护（防多实例冲突）
 #InstallKeybdHook      ; 保障Win+热键可靠性
@@ -114,8 +115,11 @@ ShellMessage(wParam, lParam) {
     logMessage := (Join "事件: wParam=" wParam " | 窗口标题=" (title ? title : "N/A") " | 进程名=" (processName ? processName : "N/A") " | 句柄=" lParam)
     FormatTime, timestamp,, yyyy-MM-dd HH:mm:ss.fff
     logMessage := Format("{} | 事件: {}({:X}) | 触发者: {} | 进程: {} | 句柄: 0x{:X} `n窗口title: {} `n current_title: {}" , timestamp, GetEventName(wParam), wParam, triggerSource, (processName ? processName : "N/A"), lParam, (title ? StrReplace(title, "|", "∣") : "N/A"), current_title)
+    
+
 
     if (wParam != 2 && wParam != 6) {
+
         if (processName = "hexin.exe") {
             WinGetClass, class, ahk_id %lParam%
             if (class = "#32770") {
@@ -196,14 +200,35 @@ ShellMessage(wParam, lParam) {
         }
     } else if (InStr(title, "同花顺(") == 0) {
         if (triggerSource = "外部进程: Thunder.exe") {
-            SetTitleMatchMode, 3
-            Sleep, 2000
-            WinSet, AlwaysOnTop, On, 新建任务面板
-            Sleep, 2000
-            WinSet, AlwaysOnTop, On, 新建任务面板
-            Sleep, 2000
-            WinSet, AlwaysOnTop, On, 新建任务面板
-            return
+            if (wParam=32774)
+            {
+                ;点击网页中的磁力链接后出的迅雷下载新建任务面板弹窗
+                SetTitleMatchMode, 3
+                Sleep, 2000
+                WinSet, AlwaysOnTop, On, 新建任务面板
+                Sleep, 2000
+                WinSet, AlwaysOnTop, On, 新建任务面板
+                Sleep, 2000
+                WinSet, AlwaysOnTop, On, 新建任务面板
+                return
+            }
+            else if (wParam=16)
+            {
+                ;迅雷完成一个文件的下载后会弹窗提示，对应的消息是0x10，弹出窗口对应的title是“提示框”
+                IfWinExist, 提示框 ahk_exe Thunder.exe
+                {
+                    Sleep,200
+                    ;print("存在迅雷下载完成提示框")
+                    ;如果存在悬浮球则说明还在下载，如果不存在悬浮球则说明已经没有在下载了为了防止迅雷自行上传p2p流量可以经结束迅雷的相关进程了
+                    Sleep,200
+                    IfWinNotExist, 悬浮球 ahk_exe Thunder.exe
+                    {
+                        print("迅雷下载结束，现在结束迅雷相关进程")
+                        Run, z:\xthunder.py
+                    }
+                }
+            }
+
         } else if (processName = "explorer.exe" && current_title = title && InStr(title, "\\")) {
             WinSet, AlwaysOnTop, On, ahk_class #32768 ahk_exe explorer.exe
         } else if (processName = "Weixin.exe" && title = current_title) {
@@ -638,46 +663,21 @@ switchTorealnews()
 
         if (cmds_should_show_realnews == "0")
         {
-            WinMinimize, 实时新闻
-            WinMinimize, 涨停股
-            WinMinimize, 股票池
-
+            WinMinimize, 实时新闻 ahk_exe stockapp.exe
+            WinMinimize, 涨停股 ahk_exe stockapp.exe
+            WinMinimize, 股票池 ahk_exe stockapp.exe
             SetTitleMatchMode RegEx
-            if WinExist("大单.*")
-            {
-                targetWindowTitle := "大单.*"
-                WinMove, %targetWindowTitle%, , 231, 801, 154, 638
-                WinGet, targetWindowID, ID, 大单.*
-                WinSet, AlwaysOnTop, On, ahk_id %targetWindowID%
-                if WinExist("排板")
-                {
-                    SetTitleMatchMode, 1
-                    WinGet, orderlistWindowID, ID, 排板
-                    WinSet, AlwaysOnTop, Off, ahk_id %orderlistWindowID%
-                }
-            }
+            WinMinimize, 大单.* ahk_exe stockapp.exe
             cmds_should_show_realnews := "1"
         }
         else if (cmds_should_show_realnews == "1")
         {
-            WinRestore, 实时新闻
-            WinMove, 实时新闻, , 784, 466, 1033, 499
-            WinRestore, 涨停股
-            WinRestore, 股票池
-
+            WinRestore, 实时新闻 ahk_exe stockapp.exe
+            WinMove, 实时新闻 ahk_exe stockapp.exe, , 784, 466, 1033, 499
+            WinRestore, 涨停股 ahk_exe stockapp.exe
+            WinRestore, 股票池 ahk_exe stockapp.exe
             SetTitleMatchMode RegEx
-            if WinExist("大单.*")
-            {
-                WinRestore, 大单.*
-                targetWindowTitle := "大单.*"
-                WinMove, %targetWindowTitle%, , 626, 466, 158, 499
-                if WinExist("排板")
-                {
-                    SetTitleMatchMode, 1
-                    WinGet, orderlistWindowID, ID, 排板
-                    WinSet, AlwaysOnTop, On, ahk_id %orderlistWindowID%
-                }
-            }
+            WinRestore, 大单.* ahk_exe stockapp.exe
             cmds_should_show_realnews := "0"
         }
     }
