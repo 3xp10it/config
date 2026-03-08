@@ -1,10 +1,3 @@
 ### About
 
-my ahk scripts
-
-### Items
-
-+ caps2esc&ctrl
-    将caps键映射为esc和ctrl,按住为ctrl,按一下为esc
-+ quick_program
-    快速打开/激活应用程序，包括firefox/chrome/wechat
+包含caps->control键映射、快速打开/激活应用程序、窗口置顶、关闭广告等功能
