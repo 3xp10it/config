@@ -705,9 +705,26 @@ set_current_window_to_top() {
 }
 
 set_fenxi_top() {
-    if WinExist("ahk_class #32770 ahk_exe hexin.exe") {
-        WinActivate("ahk_class #32770 ahk_exe hexin.exe")
-        WinSetAlwaysOnTop(1, "ahk_class #32770 ahk_exe hexin.exe")
+    hwnds := WinGetList("ahk_class #32770 ahk_exe hexin.exe")
+    targetHwnd := 0
+    for hwnd in hwnds {
+        try {
+            title := WinGetTitle("ahk_id " hwnd)
+            if (title = "") {
+                WinGetPos(&winX, &winY, &winW, &winH, "ahk_id " hwnd)
+                if (winW == 314 && winH == 116) {
+                    targetHwnd := hwnd
+                    break
+                }
+            }
+        } catch {
+            continue
+        }
+    }
+    if (targetHwnd) {
+        WinActivate("ahk_id " targetHwnd)
+        WinSetAlwaysOnTop(1, "ahk_id " targetHwnd)
+        ;write("置顶了同花顺分析对话框（标题为空，尺寸314x116）")
     }
 }
 
