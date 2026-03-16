@@ -14,7 +14,7 @@ overlays := []
 
 WindowPositionDict := Map()
 ok_x := 776
-ok_y := 8
+ok_y := 7
 ok_w := 1892
 ok_h := 1440
 
@@ -23,7 +23,7 @@ log_FilePath := "d:\WinHistory.log"
 log_MaxSize := 10 * 1024 * 1024
 
 ; 调试开关：是否显示监视器窗口（ListView）
-showMonitorGui := true   ; 设为 false 时完全不创建 GUI，使用脚本主窗口
+showMonitorGui := false   ; 设为 false 时完全不创建 GUI，使用脚本主窗口；true为创建；
 msgWindow := 0            ; 消息接收窗口句柄，将在脚本启动时赋值
 
 ; ---------- 窗口事件监视器相关全局变量 ----------
@@ -100,7 +100,7 @@ CreateOverlays()
 
 ; 退出处理
 OnExit(ExitFunc)
-Persistent
+Persistent()
 
 ; ============================================================
 ; 窗口管理热键定义
@@ -159,11 +159,11 @@ Persistent
     if (lastBPressTime = 0 || timeDiff > 3000) {
         ; 超时或首次：重置基准历史为当前history的副本
         baseHistory := history.Clone()
-        write("按 #b - 超时/首次，重置基准历史，长度: " baseHistory.Length)
+        ;write("按 #b - 超时/首次，重置基准历史，长度: " baseHistory.Length)
         isTimeout := true
     } else {
         ; 未超时，继续使用现有基准历史
-        write("按 #b - 未超时，继续使用基准历史，长度: " baseHistory.Length)
+        ;write("按 #b - 未超时，继续使用基准历史，长度: " baseHistory.Length)
         isTimeout := false
     }
 
@@ -189,11 +189,11 @@ Persistent
     logBase := ""
     for h in baseHistory
         logBase .= Format("0x{:X} ", h)
-    write("按 #b - 基准历史: " logBase)
+    ;write("按 #b - 基准历史: " logBase)
     logDedup := ""
     for h in dedupHistory
         logDedup .= Format("0x{:X} ", h)
-    write("按 #b - 去重 dedupHistory: " logDedup)
+    ;write("按 #b - 去重 dedupHistory: " logDedup)
 
     ; 获取当前活动窗口
     currHwnd := WinExist("A")
@@ -210,7 +210,7 @@ Persistent
         if CarefullySetTopMost(latestHwnd, title) {
             lastBPressTime := currentTime
             lastBWindow := latestHwnd
-            write("按 #b - 激活最小化最新窗口: " Format("0x{:X}", latestHwnd))
+            ;write("按 #b - 激活最小化最新窗口: " Format("0x{:X}", latestHwnd))
             return
         }
     }
@@ -219,7 +219,7 @@ Persistent
     if (isTimeout) {
         ; 超时：从最新窗口的前一个开始
         startIndex := dedupHistory.Length - 1
-        write("按 #b - 超时，起始索引: " startIndex)
+        ;write("按 #b - 超时，起始索引: " startIndex)
     } else {
         ; 未超时：从上一次激活的窗口的前一个开始
         lastIndex := 0
@@ -232,10 +232,10 @@ Persistent
         if (lastIndex = 0) {
             ; 上次窗口不在基准历史中，重置从最新前一个
             startIndex := dedupHistory.Length - 1
-            write("按 #b - 上次窗口不在基准历史，重置从最新前一个")
+            ;write("按 #b - 上次窗口不在基准历史，重置从最新前一个")
         } else {
             startIndex := lastIndex - 1
-            write("按 #b - 未超时，从上一次窗口 " Format("0x{:X}", lastBWindow) " 的前一个开始，索引: " startIndex)
+            ;write("按 #b - 未超时，从上一次窗口 " Format("0x{:X}", lastBWindow) " 的前一个开始，索引: " startIndex)
         }
     }
 
@@ -248,7 +248,7 @@ Persistent
             continue
         }
         if WinExist("ahk_id " targetHwnd) {
-            write("按 #b - 准备激活目标句柄: " Format("0x{:X}", targetHwnd))
+            ;write("按 #b - 准备激活目标句柄: " Format("0x{:X}", targetHwnd))
             WinRestore("ahk_id " targetHwnd)
             WinActivate("ahk_id " targetHwnd)
             title := WinGetTitle("ahk_id " targetHwnd)
@@ -270,7 +270,7 @@ Persistent
             continue
         }
         if WinExist("ahk_id " targetHwnd) {
-            write("按 #b - 准备激活目标句柄（从末尾）: " Format("0x{:X}", targetHwnd))
+            ;write("按 #b - 准备激活目标句柄（从末尾）: " Format("0x{:X}", targetHwnd))
             WinRestore("ahk_id " targetHwnd)
             WinActivate("ahk_id " targetHwnd)
             title := WinGetTitle("ahk_id " targetHwnd)
@@ -349,11 +349,11 @@ $^w::SmartClose()
 
 ; 工具函数
 RemoveToolTip() {
-    ToolTip
+    ToolTip()
 }
 
 print(string) {
-    Tooltip string
+    ToolTip(string)
     SetTimer RemoveToolTip, -3000
 }
 
@@ -396,49 +396,49 @@ CheckProcessExist(exe) {
 switchToChrome() {
     global ok_x, ok_y, ok_h
 
-    SetTitleMatchMode "RegEx"
+    SetTitleMatchMode("RegEx")
     if WinExist("guba_jiucai.*") {
         WinMinimize
     }
 
-    SetTitleMatchMode 2
+    SetTitleMatchMode(2)
     if WinExist("ahk_exe chrome.exe") {
         WinRestore
         chromeTitle := " - Google Chrome"
-        WinMove 2653, ok_y-1, 795, ok_h+1, chromeTitle
+        WinMove(2653, ok_y, 795, ok_h+1, chromeTitle)
         
         chrome_hwnd := WinGetID(chromeTitle)
-        WinActivate "ahk_id " chrome_hwnd
-        WinSetAlwaysOnTop true, "ahk_id " chrome_hwnd
+        WinActivate("ahk_id " chrome_hwnd)
+        WinSetAlwaysOnTop(true, "ahk_id " chrome_hwnd)
     } else {
-        Run "chrome.exe"
+        Run("chrome.exe")
     }
 }
 
 switchToUseChrome() {
     global ok_x, ok_y, ok_w, ok_h
 
-    SetTitleMatchMode "RegEx"
+    SetTitleMatchMode("RegEx")
     if WinExist("guba_jiucai.*") {
         WinMinimize
     }
 
-    SetTitleMatchMode 2
+    SetTitleMatchMode(2)
     if WinExist("ahk_exe chrome.exe") {
         WinRestore
         chromeTitle := " - Google Chrome"
-        WinMove ok_x, ok_y, ok_w, ok_h, chromeTitle
+        WinMove(ok_x, ok_y, ok_w, ok_h, chromeTitle)
         
         chrome_hwnd := WinGetID(chromeTitle)
-        WinActivate "ahk_id " chrome_hwnd
-        WinSetAlwaysOnTop true, "ahk_id " chrome_hwnd
+        WinActivate("ahk_id " chrome_hwnd)
+        WinSetAlwaysOnTop(true, "ahk_id " chrome_hwnd)
     } else {
-        Run "chrome.exe"
+        Run("chrome.exe")
     }
 }
 
 open_tbjl_bat() {
-    Run "z:\tbjl.bat"
+    Run("z:\tbjl.bat")
 }
 
 switchToWechat() {
@@ -446,14 +446,14 @@ switchToWechat() {
 
     WeChat_path := "D:\Program Files\Tencent\Weixin\Weixin.exe"
     if CheckProcessExist("Weixin.exe") = 0
-        Run WeChat_path
+        Run(WeChat_path)
     else {
         if WinExist("ahk_class Qt51514QWindowIcon") {
             Style := WinGetStyle("ahk_class Qt51514QWindowIcon")
             if ((Style & 0x20000000) or (!WinActive("ahk_class Qt51514QWindowIcon"))) {
                 WinActivate
-                WinMove ok_x+8, ok_y, ok_w-16, ok_h, "ahk_class Qt51514QWindowIcon"
-                WinSetAlwaysOnTop true, "ahk_class Qt51514QWindowIcon"
+                WinMove(ok_x+8, ok_y, ok_w-16, ok_h, "ahk_class Qt51514QWindowIcon")
+                WinSetAlwaysOnTop(true, "ahk_class Qt51514QWindowIcon")
             } else {
                 WinMinimize
             }
@@ -465,7 +465,7 @@ switchToryij() {
     global cmds_should_show_realnews
     ryij_path := "\\192.168.0.6\news\ryij.txt"
     
-    SetTitleMatchMode 2
+    SetTitleMatchMode(2)
     
     if WinExist("ryij.txt - 记事本") {
         targetWindowTitle := "ryij.txt - 记事本"
@@ -476,10 +476,10 @@ switchToryij() {
     } else if WinExist("*ryij - 记事本") {
         targetWindowTitle := "*ryij - 记事本"
     } else {
-        Run ryij_path
-        SetTitleMatchMode "RegEx"
+        Run(ryij_path)
+        SetTitleMatchMode("RegEx")
         try {
-            WinWait "ryij.*记事本",, 2
+            WinWait("ryij.*记事本",, 2)
         }
         
         if WinExist("ryij.txt - 记事本") {
@@ -491,10 +491,10 @@ switchToryij() {
     
     if targetWindowTitle {
         WinActivate
-        WinMove 2653, 0, 796, 478, targetWindowTitle
+        WinMove(2653, 0, 796, 478, targetWindowTitle)
         
         realnews_hwnd := WinGetID(targetWindowTitle)
-        WinSetAlwaysOnTop true, "ahk_id " realnews_hwnd
+        WinSetAlwaysOnTop(true, "ahk_id " realnews_hwnd)
     }
     
     cmds_should_show_realnews := "1"
@@ -502,14 +502,14 @@ switchToryij() {
 
 switchToTHS() {
     THS_path := "D:\THS\hexin.exe"
-    SetTitleMatchMode "RegEx"
+    SetTitleMatchMode("RegEx")
     
     ths_hwnd := WinExist("同花顺\(.*\).* ahk_exe hexin.exe")
     if (ths_hwnd) {
-        WinActivate "ahk_id " ths_hwnd
-        WinMove -7, 1, 1968, 1446, "ahk_id " ths_hwnd
+        WinActivate("ahk_id " ths_hwnd)
+        WinMove(-7, 1, 1968, 1446, "ahk_id " ths_hwnd)
     } else {
-        Run THS_path
+        Run(THS_path)
     }
 
     blockers := GetBlockingWindows(ths_hwnd)
@@ -519,13 +519,13 @@ switchToTHS() {
                 title := WinGetTitle("ahk_id " hwnd)
                 processName := WinGetProcessName("ahk_id " hwnd)
                 if (processName != "hexin.exe" && (processName != "stockapp.exe" || InStr(title, "guba_jiucai_xueqiu")) && title != "quick_program.ahk") {
-                    WinMinimize "ahk_id " hwnd
+                    WinMinimize("ahk_id " hwnd)
                 }
             }
         }
     }
 
-    SetTitleMatchMode 2
+    SetTitleMatchMode(2)
     if WinExist("实时新闻") {
         hwnd := WinGetID("实时新闻")
         if (hwnd) {
@@ -533,9 +533,9 @@ switchToTHS() {
             if (!(Style & 0x20000000)) {
                 Style2 := WinGetStyle("涨停股")
                 if (!(Style2 & 0x20000000)) {
-                    WinMove 784, 466, 1033, 499, "ahk_id " hwnd
+                    WinMove(784, 466, 1033, 499, "ahk_id " hwnd)
                 } else {
-                    WinMinimize "ahk_id " hwnd
+                    WinMinimize("ahk_id " hwnd)
                 }
             }
         }
@@ -545,23 +545,23 @@ switchToTHS() {
 tide() {
     dir := "Z:\"
     script := dir . "\tide.py"
-    SetWorkingDir dir
-    Run A_ComSpec " /k python " Chr(34) script Chr(34) " && exit"
+    SetWorkingDir(dir)
+    Run(A_ComSpec " /k python " Chr(34) script Chr(34) " && exit")
 }
 
 switchToZNZ() {
     znz_path := "D:\Compass\WavMain\WavMain.exe"
 
-    SetTitleMatchMode "RegEx"
+    SetTitleMatchMode("RegEx")
 
     if CheckProcessExist("WavMain.exe") = 0
-        Run znz_path
+        Run(znz_path)
     else {
-        SetTitleMatchMode "RegEx"
+        SetTitleMatchMode("RegEx")
         if WinExist("指南针全赢决策系统") {
             znz_hwnd := WinGetID("指南针全赢决策系统")
-            WinActivate "ahk_id " znz_hwnd
-            WinSetAlwaysOnTop true, "ahk_id " znz_hwnd
+            WinActivate("ahk_id " znz_hwnd)
+            WinSetAlwaysOnTop(true, "ahk_id " znz_hwnd)
         }
     }
 }
@@ -569,15 +569,15 @@ switchToZNZ() {
 switchToTL50() {
     tl50_path := "D:\Program Files\天狼50\天狼50证券分析系统\tl50v2.exe"
 
-    SetTitleMatchMode "RegEx"
+    SetTitleMatchMode("RegEx")
 
     if CheckProcessExist("tl50v2.exe") = 0
-        Run tl50_path
+        Run(tl50_path)
     else {
-        SetTitleMatchMode "RegEx"
+        SetTitleMatchMode("RegEx")
         if WinExist(".*天狼50.*") {
             WinActivate
-            WinSetAlwaysOnTop true, ".*天狼50.*"
+            WinSetAlwaysOnTop(true, ".*天狼50.*")
         }
     }
 }
@@ -585,7 +585,7 @@ switchToTL50() {
 switchTorealnews() {
     global cmds_should_show_realnews
 
-    SetTitleMatchMode 2
+    SetTitleMatchMode(2)
     if WinExist("实时新闻") {
         hwnd := WinGetID("实时新闻")
         if (hwnd) {
@@ -595,19 +595,19 @@ switchTorealnews() {
             }
 
             if (cmds_should_show_realnews == "0") {
-                WinMinimize "实时新闻 ahk_exe stockapp.exe"
-                WinMinimize "涨停股 ahk_exe stockapp.exe"
-                WinMinimize "股票池 ahk_exe stockapp.exe"
-                SetTitleMatchMode "RegEx"
-                WinMinimize "大单.* ahk_exe stockapp.exe"
+                WinMinimize("实时新闻 ahk_exe stockapp.exe")
+                WinMinimize("涨停股 ahk_exe stockapp.exe")
+                WinMinimize("股票池 ahk_exe stockapp.exe")
+                SetTitleMatchMode("RegEx")
+                WinMinimize("大单.* ahk_exe stockapp.exe")
                 cmds_should_show_realnews := "1"
             } else if (cmds_should_show_realnews == "1") {
-                WinRestore "实时新闻 ahk_exe stockapp.exe"
-                WinMove 784, 466, 1033, 499, "实时新闻 ahk_exe stockapp.exe"
-                WinRestore "涨停股 ahk_exe stockapp.exe"
-                WinRestore "股票池 ahk_exe stockapp.exe"
-                SetTitleMatchMode "RegEx"
-                WinRestore "大单.* ahk_exe stockapp.exe"
+                WinRestore("实时新闻 ahk_exe stockapp.exe")
+                WinMove(784, 466, 1033, 499, "实时新闻 ahk_exe stockapp.exe")
+                WinRestore("涨停股 ahk_exe stockapp.exe")
+                WinRestore("股票池 ahk_exe stockapp.exe")
+                SetTitleMatchMode("RegEx")
+                WinRestore("大单.* ahk_exe stockapp.exe")
                 cmds_should_show_realnews := "0"
             }
         }
@@ -625,21 +625,21 @@ switchTorealnews() {
 
 moveRealnews() {
     global ok_x, ok_y, ok_w, ok_h
-    SetTitleMatchMode 2
+    SetTitleMatchMode(2)
     if WinExist("实时新闻") {
         hwnd := WinGetID("实时新闻")
         if (hwnd) {
             Style := WinGetStyle("ahk_id " hwnd)
             if (Style & 0x20000000) {
-                WinRestore "实时新闻"
+                WinRestore("实时新闻")
             }
 
             realnewsTitle := "实时新闻"
-            WinMove 2660, ok_y-1, 789, ok_h-2, realnewsTitle
+            WinMove(2660, ok_y, 789, ok_h-2, realnewsTitle)
             realnews_hwnd := WinGetID(realnewsTitle)
-            WinSetAlwaysOnTop false, "ahk_id " realnews_hwnd
-            WinActivate "实时新闻"
-            WinSetAlwaysOnTop true, "ahk_id " realnews_hwnd
+            WinSetAlwaysOnTop(false, "ahk_id " realnews_hwnd)
+            WinActivate("实时新闻")
+            WinSetAlwaysOnTop(true, "ahk_id " realnews_hwnd)
         }
     }
 }
@@ -647,34 +647,34 @@ moveRealnews() {
 switchToGBJC() {
     moveRealnews()
 
-    SetTitleMatchMode "RegEx"
+    SetTitleMatchMode("RegEx")
     if WinExist("guba_jiucai.*") {
         WinActivate
-        WinSetAlwaysOnTop true, "guba_jiucai.*"
+        WinSetAlwaysOnTop(true, "guba_jiucai.*")
     }
 }
 
 switchToXIADAN() {
     global ok_x, ok_y, ok_w, ok_h
 
-    SetTitleMatchMode 2
+    SetTitleMatchMode(2)
     if WinExist("网上股票交易系统5.0") {
         xiadan_hwnd := WinGetID("网上股票交易系统5.0")
         if (xiadan_hwnd) {
             Style := WinGetStyle("ahk_id " xiadan_hwnd)
             if ((Style & 0x20000000) or (!WinActive("ahk_id " xiadan_hwnd))) {
-                WinActivate "ahk_id " xiadan_hwnd
-                WinMove ok_x, ok_y, ok_w, ok_h, "ahk_id " xiadan_hwnd
-                WinSetAlwaysOnTop true, "ahk_id " xiadan_hwnd
+                WinActivate("ahk_id " xiadan_hwnd)
+                WinMove(ok_x, ok_y, ok_w, ok_h, "ahk_id " xiadan_hwnd)
+                WinSetAlwaysOnTop(true, "ahk_id " xiadan_hwnd)
             } else {
-                WinMinimize "ahk_id " xiadan_hwnd
+                WinMinimize("ahk_id " xiadan_hwnd)
             }
         }
     }
 }
 
 minimize_current_window() {
-    WinMinimize "A"
+    WinMinimize("A")
 }
 
 set_current_window_to_top() {
@@ -691,16 +691,16 @@ set_current_window_to_top() {
     if (isAtFixedPos && (ExStyle & 0x8)) {
         if (WindowPositionDict.Has(hwnd)) {
             orig := WindowPositionDict[hwnd]
-            WinMove orig.x, orig.y, orig.w, orig.h, "ahk_id " hwnd
+            WinMove(orig.x, orig.y, orig.w, orig.h, "ahk_id " hwnd)
             WindowPositionDict.Delete(hwnd)
         }
     } else {
         origX := 0, origY := 0, origW := 0, origH := 0
         WinGetPos(&origX, &origY, &origW, &origH, "ahk_id " hwnd)
         WindowPositionDict[hwnd] := {x: origX, y: origY, w: origW, h: origH}
-        WinRestore "ahk_id " hwnd
-        WinMove ok_x, ok_y, ok_w, ok_h, "A"
-        WinSetAlwaysOnTop true, "A"
+        WinRestore("ahk_id " hwnd)
+        WinMove(ok_x, ok_y, ok_w, ok_h, "A")
+        WinSetAlwaysOnTop(true, "A")
     }
 }
 
@@ -731,20 +731,20 @@ set_fenxi_top() {
 ths_fenxi() {
     global win_ctrl_w_should_close_ths_fenxi_window
     if (win_ctrl_w_should_close_ths_fenxi_window == "0") {
-        WinActivate "同花顺("
-        CoordMode "Mouse", "Window"
-        Click 151, 14, 1
-        Click 197, 303, 1
-        CoordMode "Mouse", "Screen"
-        Click 1023, 692, 1
+        WinActivate("同花顺(")
+        CoordMode("Mouse", "Window")
+        Click(151, 14, 1)
+        Click(197, 303, 1)
+        CoordMode("Mouse", "Screen")
+        Click(1023, 692, 1)
         win_ctrl_w_should_close_ths_fenxi_window := "1"
 
         ; 延迟50ms后置顶弹出的对话框（类名 #32770，进程 hexin.exe）
         SetTimer(set_fenxi_top, -50)
 
     } else {
-        CoordMode "Mouse", "Screen"
-        Click 1120, 668, 1
+        CoordMode("Mouse", "Screen")
+        Click(1120, 668, 1)
         win_ctrl_w_should_close_ths_fenxi_window := "0"
     }
 }
@@ -761,30 +761,50 @@ GetControlUnderMousePos(&CtrlX?, &CtrlY?, &CtrlW?, &CtrlH?) {
 
 show_ths_yujin() {
     if WinExist("预警结果") {
-        WinActivate "预警结果"
-        WinSetAlwaysOnTop true, "预警结果"
+        WinActivate("预警结果")
+        WinSetAlwaysOnTop(true, "预警结果")
     }
 }
 
-open_moniqi() {
+open_moniqi(retryCount := 0) {
     global ok_y, ok_h
     windowTitle := "MuMu安卓设备"
-    noxPath := "D:\Program Files\Netease\MuMu\nx_main\MuMuManager.exe"
+    noxPath := "D:\\Program Files\\Netease\\MuMu\\nx_main\\MuMuManager.exe"
 
     if WinExist(windowTitle) {
-        WinActivate windowTitle
-        WinMove 2657, ok_y-1, 786, ok_h+1, windowTitle
+        WinActivate(windowTitle)
+        WinMove(2657, ok_y, 786, ok_h + 1, windowTitle)
     } else {
-        Run Chr(34) noxPath Chr(34) " control -v 0 launch -pkg com.aiyu.kaipanla"
-        WinWait windowTitle,, 30
-        WinActivate windowTitle
-        Sleep 25000
-        WinSetAlwaysOnTop true, windowTitle
-        CoordMode "Mouse", "Window"
-        ControlClick "x233 y1376", windowTitle
-        Sleep 1000
-        ControlClick "x275 y134", windowTitle
-        WinMove 2657, ok_y-1, 786, ok_h+1, windowTitle
+        ; 启动模拟器
+        Run(Format('"{}" control -v 0 launch -pkg com.aiyu.kaipanla', noxPath))
+
+        ; 等待窗口出现
+        if !WinWait(windowTitle,, 30) {
+            MsgBox("等待窗口超时，请检查模拟器是否正常启动")
+            return
+        }
+        WinActivate(windowTitle)
+
+        Sleep(25000)
+
+        ; 检查崩溃（窗口可能消失，且崩溃报告器出现）
+        if !WinExist(windowTitle) && WinExist("MuMuNxCrashReporter ahk_exe MuMuNxCrashReporter.exe") {
+            WinClose("MuMuNxCrashReporter ahk_exe MuMuNxCrashReporter.exe")
+            Sleep(1000)
+            if (retryCount < 3)
+                return open_moniqi(retryCount + 1)
+            else {
+                MsgBox("模拟器多次崩溃，请手动检查")
+                return
+            }
+        }
+
+        WinSetAlwaysOnTop(true, windowTitle)
+        CoordMode("Mouse", "Window")
+        ControlClick("x233 y1376", windowTitle)
+        Sleep(1000)
+        ControlClick("x275 y134", windowTitle)
+        WinMove(2657, ok_y, 786, ok_h+1, windowTitle)
     }
 }
 
@@ -821,61 +841,61 @@ switch_ths_to_fupan() {
 ths_xiadie_yujin_confirm() {
     if !WinExist("添加预警") {
         switchToTHS()
-        CoordMode "Mouse", "Screen"
-        Click 1937, 233, "Right"
-        Send "+t"
-        WinWait "添加预警",, 2
-        WinActivate "添加预警"
+        CoordMode("Mouse", "Screen")
+        Click(1937, 233, "Right")
+        Send("+t")
+        WinWait("添加预警",, 2)
+        WinActivate("添加预警")
         if WinExist("添加预警") {
-            CoordMode "Mouse", "Window"
-            Click 182, 141, 1
+            CoordMode("Mouse", "Window")
+            Click(182, 141, 1)
             return
         } else {
-            ToolTip "不存在添加预警窗口@111"
+            ToolTip("不存在添加预警窗口@111")
             SetTimer RemoveToolTip, -1000
         }
     } else {
         if !WinActive("添加预警") {
             switchToTHS()
-            WinActivate "添加预警"
-            WinWait "添加预警",, 2
+            WinActivate("添加预警")
+            WinWait("添加预警",, 2)
             if WinExist("添加预警") {
-                CoordMode "Mouse", "Window"
-                Click 182, 141, 1
+                CoordMode("Mouse", "Window")
+                Click(182, 141, 1)
                 return
             } else {
-                ToolTip "不存在添加预警窗口@222"
+                ToolTip("不存在添加预警窗口@222")
                 SetTimer RemoveToolTip, -1000
             }
         } else {
             WinGetPos(&WinX, &WinY, &WinWidth, &WinHeight, "添加预警")
             WinRight := WinX + WinWidth
             WinBottom := WinY + WinHeight
-            CoordMode "Mouse", "Screen"
+            CoordMode("Mouse", "Screen")
             MouseGetPos(&MouseX, &MouseY)
             IsMouseInWindow := (MouseX >= WinX && MouseX <= WinRight && MouseY >= WinY && MouseY <= WinBottom)
             if !IsMouseInWindow {
-                ToolTip "存在添加预警窗口且窗口已激活但鼠标不在该窗口范围内"
+                ToolTip("存在添加预警窗口且窗口已激活但鼠标不在该窗口范围内")
                 SetTimer RemoveToolTip, -1000
-                WinActivate "添加预警"
-                WinWait "添加预警",, 2
+                WinActivate("添加预警")
+                WinWait("添加预警",, 2)
                 if WinExist("添加预警") {
-                    CoordMode "Mouse", "Window"
-                    Click 182, 141, 1
+                    CoordMode("Mouse", "Window")
+                    Click(182, 141, 1)
                     return
                 }
             }
         }
     }
 
-    MouseMove -15, 0, 0, "R"
+    MouseMove(-15, 0, 0, "R")
     ctrlInfo := GetControlUnderMousePos(&x, &y, &w, &h)
 
     if (!ctrlInfo) {
-        MouseMove 0, -7, 0, "R"
+        MouseMove(0, -7, 0, "R")
         ctrlInfo := GetControlUnderMousePos(&x, &y, &w, &h)
         if (!ctrlInfo) {
-            MouseMove 0, 14, 0, "R"
+            MouseMove(0, 14, 0, "R")
             ctrlInfo := GetControlUnderMousePos(&x, &y, &w, &h)
         }
         if (!ctrlInfo) {
@@ -883,15 +903,15 @@ ths_xiadie_yujin_confirm() {
         }
     }
 
-    WinActivate "添加预警"
-    WinWait "添加预警",, 2
+    WinActivate("添加预警")
+    WinWait("添加预警",, 2)
 
     newX := ctrlInfo.x - 100
     targetY := ctrlInfo.y + 9
-    CoordMode "Mouse", "Window"
+    CoordMode("Mouse", "Window")
 
-    ControlClick "x" newX " y" targetY, "添加预警"
-    ControlClick "x173 y446", "添加预警"
+    ControlClick("x" newX " y" targetY, "添加预警")
+    ControlClick("x173 y446", "添加预警")
 }
 
 SmartClose() {
@@ -905,24 +925,24 @@ SmartClose() {
     browserProcesses := ["chrome.exe", "msedge.exe", "firefox.exe", "opera.exe", "vivaldi.exe"]
     for browser in browserProcesses {
         if (processName = browser) {
-            Send "^w"
+            Send("^w")
             return
         }
     }
 
     if (winClass = "CabinetWClass") {
-        Send "!{F4}"
+        Send("!{F4}")
     } else if (winClass = "ApplicationFrameWindow") {
-        PostMessage 0x112, 0xF060, , , "A"
+        PostMessage(0x112, 0xF060, , , "A")
     } else if (processName = "hexin.exe" && currentTitle = "添加预警") {
-        ControlClick "x450 y16", "ahk_id " hwnd
+        ControlClick("x450 y16", "ahk_id " hwnd)
     } else if (processName = "hexin.exe" && currentTitle = "预警结果") {
-        ControlClick "x659 y16", "ahk_id " hwnd
+        ControlClick("x659 y16", "ahk_id " hwnd)
     } else {
-        WinClose "ahk_id " hwnd
-        Sleep 300
+        WinClose("ahk_id " hwnd)
+        Sleep(300)
         if WinExist("ahk_id " hwnd) {
-            WinKill "ahk_id " hwnd
+            WinKill("ahk_id " hwnd)
         }
     }
 }
@@ -1021,7 +1041,7 @@ CreateOverlay(x, y, w, h, transparency) {
     myGui.BackColor := "e8e3ce"
     myGui.Show("x" x " y" y " w" w " h" h " NA")
     hwnd := myGui.Hwnd
-    WinSetTransparent transparency, "ahk_id " hwnd
+    WinSetTransparent(transparency, "ahk_id " hwnd)
     return myGui
 }
 
@@ -1059,11 +1079,11 @@ restore_current_window() {
     if (InStr(WindowTitle, "VLC media player") > 0) {
         WindowProcess := WinGetProcessName(CurrentWindow)
         if (WindowProcess = "vlc.exe") {
-            SendInput "{Esc}"
-            Sleep 100
+            SendInput("{Esc}")
+            Sleep(100)
         }
     } else {
-        WinRestore CurrentWindow
+        WinRestore(CurrentWindow)
     }
 }
 
@@ -1085,25 +1105,25 @@ current_window_is_fullscreen() {
 fullscreen_current_window_forcall() {
     WindowProcess := WinGetProcessName("A")
     if (WindowProcess = "vlc.exe") {
-        WinActivate "A"
-        Sleep 100
-        SendInput "!v"
-        Sleep 100
-        SendInput "f"
+        WinActivate("A")
+        Sleep(100)
+        SendInput("!v")
+        Sleep(100)
+        SendInput("f")
     } else {
-        WinMaximize "A"
+        WinMaximize("A")
     }
 }
 
 move_current_window_to_left() {
     restore_current_window()
-    WinMove -7, 1, 1968, 1446, "A"
+    WinMove(-7, 1, 1968, 1446, "A")
 }
 
 move_current_window_to_right() {
     global ok_y, ok_h
     restore_current_window()
-    WinMove 2653, ok_y-1, 795, ok_h+1, "A"
+    WinMove(2653, ok_y, 795, ok_h+1, "A")
 }
 
 fullscreen_current_window() {
@@ -1117,7 +1137,7 @@ fullscreen_current_window() {
 check_to_kill_thunder() {
     if !WinExist("悬浮球 ahk_exe Thunder.exe") {
         print("迅雷下载结束，现在结束迅雷相关进程")
-        Run "z:\xthunder.py"
+        Run("z:\xthunder.py")
     }
 }
 
