@@ -518,7 +518,8 @@ switchToTHS() {
             if WinExist("ahk_id " hwnd) {
                 title := WinGetTitle("ahk_id " hwnd)
                 processName := WinGetProcessName("ahk_id " hwnd)
-                if (processName != "hexin.exe" && (processName != "stockapp.exe" || InStr(title, "guba_jiucai_xueqiu")) && title != "quick_program.ahk") {
+                ;if (processName != "hexin.exe" && (processName != "stockapp.exe" || InStr(title, "guba_jiucai_xueqiu")) && title != "quick_program.ahk") {
+                if (processName != "hexin.exe" && (title != "陈小群" && title != "下单" && title != "排板" && title != "大单异动" && title != "实时新闻" && title != "涨停股" && title != "股票池" && title != "概念" && title != "风向标" && title != "个股新闻") && title != "quick_program.ahk") {
                     WinMinimize("ahk_id " hwnd)
                 }
             }
@@ -595,19 +596,19 @@ switchTorealnews() {
             }
 
             if (cmds_should_show_realnews == "0") {
-                WinMinimize("实时新闻 ahk_exe stockapp.exe")
-                WinMinimize("涨停股 ahk_exe stockapp.exe")
-                WinMinimize("股票池 ahk_exe stockapp.exe")
+                WinMinimize("实时新闻 ahk_exe python.exe")
+                WinMinimize("涨停股 ahk_exe python.exe")
+                WinMinimize("股票池 ahk_exe python.exe")
                 SetTitleMatchMode("RegEx")
-                WinMinimize("大单.* ahk_exe stockapp.exe")
+                WinMinimize("大单.* ahk_exe python.exe")
                 cmds_should_show_realnews := "1"
             } else if (cmds_should_show_realnews == "1") {
-                WinRestore("实时新闻 ahk_exe stockapp.exe")
-                WinMove(784, 466, 1033, 499, "实时新闻 ahk_exe stockapp.exe")
-                WinRestore("涨停股 ahk_exe stockapp.exe")
-                WinRestore("股票池 ahk_exe stockapp.exe")
+                WinRestore("实时新闻 ahk_exe python.exe")
+                WinMove(784, 466, 1033, 499, "实时新闻 ahk_exe python.exe")
+                WinRestore("涨停股 ahk_exe python.exe")
+                WinRestore("股票池 ahk_exe python.exe")
                 SetTitleMatchMode("RegEx")
-                WinRestore("大单.* ahk_exe stockapp.exe")
+                WinRestore("大单.* ahk_exe python.exe")
                 cmds_should_show_realnews := "0"
             }
         }
@@ -644,15 +645,72 @@ moveRealnews() {
     }
 }
 
-switchToGBJC() {
-    moveRealnews()
 
-    SetTitleMatchMode("RegEx")
-    if WinExist("guba_jiucai.*") {
-        WinActivate
-        WinSetAlwaysOnTop(true, "guba_jiucai.*")
-    }
+
+switchToGBJC_old() {
+    static guba_hwnd := 0, jiucai_hwnd := 0, xueqiu_hwnd := 0
+
+    ; 更新句柄（仅在无效时重新查找）
+    if !guba_hwnd || !WinExist("ahk_id " guba_hwnd)
+        guba_hwnd := WinExist("guba ahk_exe python.exe")
+    if !jiucai_hwnd || !WinExist("ahk_id " jiucai_hwnd)
+        jiucai_hwnd := WinExist("jiucai ahk_exe python.exe")
+    if !xueqiu_hwnd || !WinExist("ahk_id " xueqiu_hwnd)
+        xueqiu_hwnd := WinExist("xueqiu ahk_exe python.exe")
+
+    if jiucai_hwnd
+        WinActivate("ahk_id " jiucai_hwnd)
+    if xueqiu_hwnd
+        WinActivate("ahk_id " xueqiu_hwnd)
+    if guba_hwnd
+        WinActivate("ahk_id " guba_hwnd)
+
+    if guba_hwnd
+        WinSetAlwaysOnTop(1, "ahk_id " guba_hwnd)
+    if jiucai_hwnd
+        WinSetAlwaysOnTop(1, "ahk_id " jiucai_hwnd)
+    if xueqiu_hwnd
+        WinSetAlwaysOnTop(1, "ahk_id " xueqiu_hwnd)
+
+    moveRealnews()
 }
+
+switchToGBJC() {
+    static guba_hwnd := 0, jiucai_hwnd := 0, xueqiu_hwnd := 0
+
+    ; 恢复最小化窗口
+    if WinExist("ahk_id " jiucai_hwnd)
+        WinRestore("ahk_id " jiucai_hwnd)
+    else
+        jiucai_hwnd := WinExist("jiucai ahk_exe python.exe")
+        if jiucai_hwnd
+            WinRestore("ahk_id " jiucai_hwnd)
+
+    if WinExist("ahk_id " xueqiu_hwnd)
+        WinRestore("ahk_id " xueqiu_hwnd)
+    else
+        xueqiu_hwnd := WinExist("xueqiu ahk_exe python.exe")
+        if xueqiu_hwnd
+            WinRestore("ahk_id " xueqiu_hwnd)
+
+    if WinExist("ahk_id " guba_hwnd)
+        WinRestore("ahk_id " guba_hwnd)
+    else
+        guba_hwnd := WinExist("guba ahk_exe python.exe")
+        if guba_hwnd
+            WinRestore("ahk_id " guba_hwnd)
+
+    if WinExist("ahk_id " jiucai_hwnd)
+        WinSetAlwaysOnTop(1, "ahk_id " jiucai_hwnd)
+    if WinExist("ahk_id " xueqiu_hwnd)
+        WinSetAlwaysOnTop(1, "ahk_id " xueqiu_hwnd)
+    if WinExist("ahk_id " guba_hwnd)
+        WinSetAlwaysOnTop(1, "ahk_id " guba_hwnd)
+
+
+    moveRealnews()
+}
+
 
 switchToXIADAN() {
     global ok_x, ok_y, ok_w, ok_h
@@ -776,7 +834,8 @@ open_moniqi(retryCount := 0) {
         WinMove(2657, ok_y, 786, ok_h + 1, windowTitle)
     } else {
         ; 启动模拟器
-        Run(Format('"{}" control -v 0 launch -pkg com.aiyu.kaipanla', noxPath))
+        ;Run(Format('"{}" control -v 0 launch -pkg com.aiyu.kaipanla', noxPath))
+        Run(Format('"{}" control -v 0 launch -pkg com.yzj.kaipanh', noxPath))
 
         ; 等待窗口出现
         if !WinWait(windowTitle,, 30) {
@@ -1012,7 +1071,7 @@ CreateOverlays() {
     ]
     
     ; 条件遮罩 overlay1（根据排板窗口状态选择位置）
-    hwnd := WinExist("排板 ahk_exe stockapp.exe")
+    hwnd := WinExist("排板 ahk_exe python.exe")
     if (hwnd && !DllCall("IsIconic", "ptr", hwnd)) {
         overlay1_def := [385, 995, 240, 31, 255]   ;短版短线精灵护罩
     } else {
