@@ -1360,7 +1360,7 @@ EventMessageHandler(wParam, lParam, msg, hwnd) {
         } else if (procName=="hexin.exe" && class=="#32770") {
             WinGetPos(&winX, &winY, &winW, &winH, "ahk_id " hwndTarget)
             if (winW==480 && winH==360) {
-                write("检测到同花顺广告窗口，现在尝试自动关闭")
+                ;write("检测到同花顺广告窗口，现在尝试自动关闭")
                 WinClose("ahk_id " hwndTarget)
             }
         }
