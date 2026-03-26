@@ -13,9 +13,9 @@ win_ctrl_w_should_close_ths_fenxi_window := "0"
 overlays := []
 
 WindowPositionDict := Map()
-ok_x := 776
+ok_x := 770
 ok_y := 7
-ok_w := 1892
+ok_w := 1898
 ok_h := 1440
 
 log_Enabled := true
@@ -534,7 +534,7 @@ switchToTHS() {
             if (!(Style & 0x20000000)) {
                 Style2 := WinGetStyle("涨停股")
                 if (!(Style2 & 0x20000000)) {
-                    WinMove(784, 466, 1033, 499, "ahk_id " hwnd)
+                    WinMove(777, 466, 1040, 499, "ahk_id " hwnd)
                 } else {
                     WinMinimize("ahk_id " hwnd)
                 }
@@ -604,7 +604,7 @@ switchTorealnews() {
                 cmds_should_show_realnews := "1"
             } else if (cmds_should_show_realnews == "1") {
                 WinRestore("实时新闻 ahk_exe python.exe")
-                WinMove(784, 466, 1033, 499, "实时新闻 ahk_exe python.exe")
+                WinMove(777, 466, 1040, 499, "实时新闻 ahk_exe python.exe")
                 WinRestore("涨停股 ahk_exe python.exe")
                 WinRestore("股票池 ahk_exe python.exe")
                 SetTitleMatchMode("RegEx")
@@ -1059,13 +1059,13 @@ CreateOverlays() {
     staticDefs := [
         [0, 8, 128, 21, 255],       ; 顶部白条遮罩句柄@left
         [166, 8, 1598, 21, 255],    ; 顶部白条遮罩句柄@right
-        [233, 778, 392, 23, 255],   ; 上翻 下翻 顶部 底部
-        [234, 703, 390, 25, 255],   ; 查看完整报价
-        [567, 803, 58, 190, 255],   ; 千档盘口红绿点
-        [611, 681, 13, 20, 150],    ; 预警铃铛
-        [459, 102, 165, 368, 90],   ; 逐笔成交明细买单卖单
+        [216, 778, 397, 23, 255],   ; 上翻 下翻 顶部 底部
+        [335, 703, 160, 25, 255],   ; 查看完整报价
+        [556, 803, 57, 190, 255],   ; 千档盘口红绿点
+        [698, 681, 10, 20, 150],    ; 预警铃铛
+        [445, 102, 168, 368, 90],   ; 逐笔成交明细买单卖单
         [1793, 402, 108, 21, 225],  ; 成交量下拉框背景
-        [120, 1246, 108, 18, 225],  ; 涨速排名下拉框背景
+        [103, 1246, 108, 18, 225],  ; 涨速排名下拉框背景
         [1, 508, 44, 20, 225],      ; 自选股表单设置背景
         [1814, 57, 87, 19, 250]     ; 叠 窗 区 信息 的白字
     ]
@@ -1073,9 +1073,9 @@ CreateOverlays() {
     ; 条件遮罩 overlay1（根据排板窗口状态选择位置）
     hwnd := WinExist("排板 ahk_exe python.exe")
     if (hwnd && !DllCall("IsIconic", "ptr", hwnd)) {
-        overlay1_def := [385, 995, 240, 31, 255]   ;短版短线精灵护罩
+        overlay1_def := [369, 995, 244, 31, 255]   ;短版短线精灵护罩
     } else {
-        overlay1_def := [232, 995, 393, 31, 255]   ;长版短线精灵护罩
+        overlay1_def := [215, 995, 398, 31, 255]   ;长版短线精灵护罩
     }
     
     ; 合并所有遮罩定义（先加条件遮罩，再加静态遮罩）
