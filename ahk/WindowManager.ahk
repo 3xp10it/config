@@ -113,6 +113,7 @@ Persistent()
 #w::switchToWechat
 #^b::switchToryij
 #f::switchToTHS
+#^r::openRiLi
 #^f::tide
 #a::switchToZNZ
 #c::switchToTL50
@@ -498,6 +499,10 @@ switchToryij() {
     }
     
     cmds_should_show_realnews := "1"
+}
+
+openRiLi() {
+    Run "https://www.baidu.com/s?wd=%E6%97%A5%E5%8E%86"   ; 请将网址替换为实际需要打开的链接
 }
 
 switchToTHS() {
@@ -1065,7 +1070,7 @@ CreateOverlays() {
         [612, 681, 13, 20, 150],    ; 预警铃铛
         [459, 102, 165, 368, 90],   ; 逐笔成交明细买单卖单
         [1793, 402, 108, 21, 225],  ; 成交量下拉框背景
-        [121, 1246, 109, 18, 225],  ; 涨速排名下拉框背景
+        [120, 1246, 110, 18, 225],  ; 涨速排名下拉框背景
         [1, 508, 44, 20, 225],      ; 自选股表单设置背景
         [1814, 57, 87, 19, 250]     ; 叠 窗 区 信息 的白字
     ]
