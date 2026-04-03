@@ -31,7 +31,6 @@ listview := 0
 hookShow := 0                      ; 仅保留 SHOW 钩子
 WinEventProcCallback := 0
 history := []                       ; 最近使用窗口历史（包含所有激活，允许重复）
-ignoreActivate := false             ; 临时忽略下一次激活事件（不再使用，但保留）
 lastBPressTime := 0                  ; 上次按 #b 的时间戳
 lastBWindow := 0                     ; 上次 #b 激活的窗口句柄
 baseHistory := []                    ; 用于连续 #b 切换的基准历史（副本）
@@ -1302,7 +1301,7 @@ ShellMessageHandler(wParam, lParam, msg, hwnd) {
 }
 
 EventMessageHandler(wParam, lParam, msg, hwnd) {
-    global listview, history, ignoreActivate, ActivateProcesses
+    global listview, history, ActivateProcesses
     event := wParam
     hwndTarget := lParam
 
@@ -1329,7 +1328,6 @@ EventMessageHandler(wParam, lParam, msg, hwnd) {
             CarefullySetTopMost(hwndTarget, title)
         }
 
-        ; 无论是否 ignoreActivate，都记录到历史（因为需求是全部记录）
         if (history.Length >= 20)
             history.RemoveAt(1)
         history.Push(hwndTarget)
@@ -1343,7 +1341,7 @@ EventMessageHandler(wParam, lParam, msg, hwnd) {
         }
 
     } else if (event == EVENT_OBJECT_SHOW) {
-        if (title="EAGrid") {
+        if (class=="SysShadow" || title=="EAGrid") {
             return
         }
         eventName := "SHOW"
@@ -1363,6 +1361,10 @@ EventMessageHandler(wParam, lParam, msg, hwnd) {
         if (title=="提示框" && procName=="Thunder.exe") {
             SetTimer(check_to_kill_thunder, -1000)
         } else if (procName=="hexin.exe" && class=="#32770") {
+            ;同花顺的从板块中删除打开的窗口需要这里再激活并置顶一下，否则会被realnews挡住而无法置顶
+            WinActivate("ahk_id " hwndTarget)
+            CarefullySetTopMost(hwndTarget, title)
+
             WinGetPos(&winX, &winY, &winW, &winH, "ahk_id " hwndTarget)
             if (winW==480 && winH==360) {
                 ;write("检测到同花顺广告窗口，现在尝试自动关闭")
