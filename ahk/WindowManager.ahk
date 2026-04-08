@@ -1362,16 +1362,22 @@ EventMessageHandler(wParam, lParam, msg, hwnd) {
             SetTimer(check_to_kill_thunder, -1000)
         } else if (procName=="hexin.exe" && class=="#32770") {
             ;同花顺的从板块中删除打开的窗口需要这里再激活并置顶一下，否则会被realnews挡住而无法置顶
-            WinActivate("ahk_id " hwndTarget)
-            CarefullySetTopMost(hwndTarget, title)
-            ; 再次确认窗口存在（激活后可能被关闭）
-            if WinExist("ahk_id " hwndTarget) {
+            try {
+                WinActivate("ahk_id " hwndTarget)
+                CarefullySetTopMost(hwndTarget, title)
                 WinGetPos(&winX, &winY, &winW, &winH, "ahk_id " hwndTarget)
                 if (winW==480 && winH==360) {
                     ;write("检测到同花顺广告窗口，现在尝试自动关闭")
                     WinClose("ahk_id " hwndTarget)
                 }
+            } catch as err {
+                write("错误消息：" err.Message "`n"
+                . "所在函数/命令：" err.What "`n"
+                . "额外信息：" (err.Extra ? err.Extra : "无") "`n"
+                . "行号：" err.Line)
             }
+
+            
 
         }
     } else {
