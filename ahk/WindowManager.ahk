@@ -405,7 +405,7 @@ switchToChrome() {
     if WinExist("ahk_exe chrome.exe") {
         WinRestore
         chromeTitle := " - Google Chrome"
-        WinMove(2653, ok_y, 795, ok_h+1, chromeTitle)
+        WinMove(2652, ok_y, 796, ok_h+1, chromeTitle)
         
         chrome_hwnd := WinGetID(chromeTitle)
         WinActivate("ahk_id " chrome_hwnd)
@@ -452,7 +452,8 @@ switchToWechat() {
             Style := WinGetStyle("ahk_class Qt51514QWindowIcon")
             if ((Style & 0x20000000) or (!WinActive("ahk_class Qt51514QWindowIcon"))) {
                 WinActivate
-                WinMove(ok_x+8, ok_y, ok_w-16, ok_h, "ahk_class Qt51514QWindowIcon")
+                ;WinMove(ok_x+8, ok_y, ok_w-16, ok_h, "ahk_class Qt51514QWindowIcon")
+                WinMove(ok_x, ok_y, ok_w, ok_h, "ahk_class Qt51514QWindowIcon")
                 WinSetAlwaysOnTop(true, "ahk_class Qt51514QWindowIcon")
             } else {
                 WinMinimize
