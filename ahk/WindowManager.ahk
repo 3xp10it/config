@@ -127,7 +127,7 @@ Persistent()
 #3::open_moniqi
 #1::switch_ths_to_paiban
 #2::switch_ths_to_fupan
-#^s::ths_xiadie_yujin_confirm
+$#^s::ths_xiadie_yujin_confirm
 
 ; ----- 同花顺遮罩控制热键 -----
 ^1::CreateOverlays
@@ -903,6 +903,9 @@ switch_ths_to_fupan() {
 }
 
 ths_xiadie_yujin_confirm() {
+    ; 关键步骤：在系统看到按键组合前，先发送 Win 和 Ctrl 的抬起事件，避免触发系统自带的win+ctrl的快捷键（对应音频识别）
+    Send "{Blind}{LWin up}{RWin up}{LCtrl up}{RCtrl up}"
+
     if !WinExist("添加预警") {
         switchToTHS()
         CoordMode("Mouse", "Screen")
