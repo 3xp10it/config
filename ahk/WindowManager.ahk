@@ -127,7 +127,7 @@ Persistent()
 #3::open_moniqi
 #1::switch_ths_to_paiban
 #2::switch_ths_to_fupan
-$#^s::ths_xiadie_yujin_confirm
+#^s::ths_xiadie_yujin_confirm
 
 ; ----- 同花顺遮罩控制热键 -----
 ^1::CreateOverlays
@@ -450,7 +450,8 @@ switchToWechat() {
     else {
         if WinExist("ahk_class Qt51514QWindowIcon") {
             Style := WinGetStyle("ahk_class Qt51514QWindowIcon")
-            if ((Style & 0x20000000) or (!WinActive("ahk_class Qt51514QWindowIcon"))) {
+            ;if ((Style & 0x20000000) or (!WinActive("ahk_class Qt51514QWindowIcon"))) {
+            if IsWindowCovered("ahk_class Qt51514QWindowIcon") {
                 WinActivate
                 ;WinMove(ok_x+8, ok_y, ok_w-16, ok_h, "ahk_class Qt51514QWindowIcon")
                 WinMove(ok_x, ok_y, ok_w, ok_h, "ahk_class Qt51514QWindowIcon")
@@ -716,6 +717,51 @@ switchToGBJC() {
     moveRealnews()
 }
 
+; 用法：IsWindowCoveredFast("记事本") 或 IsWindowCoveredFast("ahk_id " hWnd)
+; 返回：true = 被遮挡，false = 完全可见
+IsWindowCovered(WinTitle) {
+    hWnd := WinExist(WinTitle)
+    if !hWnd
+        return true   ; 不存在视为遮挡
+
+    ; 不可见或最小化 -> 遮挡
+    if !DllCall("IsWindowVisible", "Ptr", hWnd) || (WinGetMinMax(hWnd) = -1)
+        return true
+
+    ; --- 获取目标窗口的屏幕矩形（使用原生 API 更快）---
+    tRect := Buffer(16)   ; RECT: left, top, right, bottom (各 4 字节 Int)
+    if !DllCall("GetWindowRect", "Ptr", hWnd, "Ptr", tRect, "Int")
+        return true
+    tLeft   := NumGet(tRect,  0, "Int")
+    tTop    := NumGet(tRect,  4, "Int")
+    tRight  := NumGet(tRect,  8, "Int")
+    tBottom := NumGet(tRect, 12, "Int")
+    ; 无效面积
+    if (tRight <= tLeft || tBottom <= tTop)
+        return true
+
+    ; --- 从 Z 序向上遍历，检查所有可见的前置窗口 ---
+    aRect := Buffer(16)   ; 复用缓冲区，每次覆盖即可
+    hAbove := DllCall("GetWindow", "Ptr", hWnd, "UInt", 3, "Ptr")  ; GW_HWNDPREV = 3
+    while hAbove {
+        ; 只检查可见的窗口
+        if DllCall("IsWindowVisible", "Ptr", hAbove) {
+            DllCall("GetWindowRect", "Ptr", hAbove, "Ptr", aRect)
+            aLeft   := NumGet(aRect,  0, "Int")
+            aTop    := NumGet(aRect,  4, "Int")
+            aRight  := NumGet(aRect,  8, "Int")
+            aBottom := NumGet(aRect, 12, "Int")
+
+            ; 如果有任何重叠，立即判定为被遮挡
+            if (tLeft < aRight && tRight > aLeft && tTop < aBottom && tBottom > aTop)
+                return true
+        }
+        ; 继续向上一级
+        hAbove := DllCall("GetWindow", "Ptr", hAbove, "UInt", 3, "Ptr")
+    }
+
+    return false  ; 检查完所有上方窗口，没有遮挡
+}
 
 switchToXIADAN() {
     global ok_x, ok_y, ok_w, ok_h
@@ -725,7 +771,8 @@ switchToXIADAN() {
         xiadan_hwnd := WinGetID("网上股票交易系统5.0")
         if (xiadan_hwnd) {
             Style := WinGetStyle("ahk_id " xiadan_hwnd)
-            if ((Style & 0x20000000) or (!WinActive("ahk_id " xiadan_hwnd))) {
+            ;if ((Style & 0x20000000) or (!WinActive("ahk_id " xiadan_hwnd))) {
+            if IsWindowCovered("ahk_id " xiadan_hwnd) {
                 WinActivate("ahk_id " xiadan_hwnd)
                 WinMove(ok_x, ok_y, ok_w, ok_h, "ahk_id " xiadan_hwnd)
                 WinSetAlwaysOnTop(true, "ahk_id " xiadan_hwnd)
