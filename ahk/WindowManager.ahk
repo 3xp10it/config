@@ -23,7 +23,7 @@ log_FilePath := "d:\WinHistory.log"
 log_MaxSize := 10 * 1024 * 1024
 
 ; 调试开关：是否显示监视器窗口（ListView）
-showMonitorGui := false   ; 设为 false 时完全不创建 GUI，使用脚本主窗口；true为创建；
+showMonitorGui := true   ; 设为 false 时完全不创建 GUI，使用脚本主窗口；true为创建；
 msgWindow := 0            ; 消息接收窗口句柄，将在脚本启动时赋值
 
 ; ---------- 窗口事件监视器相关全局变量 ----------
@@ -574,7 +574,8 @@ switchToZNZ() {
 }
 
 switchToTL50() {
-    tl50_path := "D:\Program Files\天狼50\天狼50证券分析系统\tl50v2.exe"
+    tl50_path := "D:\Program Files\tl50\tl50v2.exe"
+    
 
     SetTitleMatchMode("RegEx")
 
@@ -1412,14 +1413,18 @@ EventMessageHandler(wParam, lParam, msg, hwnd) {
         if (title=="提示框" && procName=="Thunder.exe") {
             SetTimer(check_to_kill_thunder, -1000)
         } else if (procName=="hexin.exe" && class=="#32770") {
-            ;同花顺的从板块中删除打开的窗口需要这里再激活并置顶一下，否则会被realnews挡住而无法置顶
             try {
-                WinActivate("ahk_id " hwndTarget)
-                CarefullySetTopMost(hwndTarget, title)
                 WinGetPos(&winX, &winY, &winW, &winH, "ahk_id " hwndTarget)
+                write("hexin.exe #32770 window:" . winX . "," . winY . "," . winW . "," . winH)
                 if (winW==480 && winH==360) {
                     ;write("检测到同花顺广告窗口，现在尝试自动关闭")
                     WinClose("ahk_id " hwndTarget)
+                } else if (winW==280 && winH==180) {
+                    ;说明是右下角弹窗新闻
+                } else {
+                    ;同花顺的从板块中删除打开的窗口需要这里再激活并置顶一下，否则会被realnews挡住而无法置顶
+                    WinActivate("ahk_id " hwndTarget)
+                    CarefullySetTopMost(hwndTarget, title)
                 }
             } catch as err {
                 write("错误消息：" err.Message "`n"
