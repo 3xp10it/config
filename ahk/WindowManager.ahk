@@ -23,7 +23,7 @@ log_FilePath := "d:\WinHistory.log"
 log_MaxSize := 10 * 1024 * 1024
 
 ; 调试开关：是否显示监视器窗口（ListView）
-showMonitorGui := true   ; 设为 false 时完全不创建 GUI，使用脚本主窗口；true为创建；
+showMonitorGui := false   ; 设为 false 时完全不创建 GUI，使用脚本主窗口；true为创建；
 msgWindow := 0            ; 消息接收窗口句柄，将在脚本启动时赋值
 
 ; ---------- 窗口事件监视器相关全局变量 ----------
@@ -444,7 +444,7 @@ open_tbjl_bat() {
 switchToWechat() {
     global ok_x, ok_y, ok_w, ok_h
 
-    WeChat_path := "D:\Program Files\Tencent\Weixin\Weixin.exe"
+    WeChat_path := "C:\Program Files\Tencent\Weixin\Weixin.exe"
     if CheckProcessExist("Weixin.exe") = 0
         Run(WeChat_path)
     else {
@@ -507,7 +507,7 @@ openRiLi() {
 }
 
 switchToTHS() {
-    THS_path := "D:\THS\hexin.exe"
+    THS_path := "C:\THS\hexin.exe"
     SetTitleMatchMode("RegEx")
     
     ths_hwnd := WinExist("同花顺\(.*\).* ahk_exe hexin.exe")
@@ -557,7 +557,7 @@ tide() {
 }
 
 switchToZNZ() {
-    znz_path := "D:\Compass\WavMain\WavMain.exe"
+    znz_path := "C:\Compass\WavMain\WavMain.exe"
 
     SetTitleMatchMode("RegEx")
 
@@ -574,7 +574,7 @@ switchToZNZ() {
 }
 
 switchToTL50() {
-    tl50_path := "D:\Program Files\tl50\tl50v2.exe"
+    tl50_path := "C:\Program Files\tl50\tl50v2.exe"
     
 
     SetTitleMatchMode("RegEx")
@@ -880,7 +880,7 @@ show_ths_yujin() {
 open_moniqi(retryCount := 0) {
     global ok_y, ok_h
     windowTitle := "MuMu安卓设备"
-    noxPath := "D:\\Program Files\\Netease\\MuMu\\nx_main\\MuMuManager.exe"
+    noxPath := "C:\\Program Files\\Netease\\MuMu\\nx_main\\MuMuManager.exe"
 
     if WinExist(windowTitle) {
         WinActivate(windowTitle)
