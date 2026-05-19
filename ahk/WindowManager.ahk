@@ -411,7 +411,7 @@ switchToChrome() {
         WinActivate("ahk_id " chrome_hwnd)
         WinSetAlwaysOnTop(true, "ahk_id " chrome_hwnd)
     } else {
-        Run("chrome.exe")
+        Run('"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --user-data-dir="D:\\Program Files\\chrome_user_data"')
     }
 }
 
