@@ -411,7 +411,7 @@ switchToChrome() {
         WinActivate("ahk_id " chrome_hwnd)
         WinSetAlwaysOnTop(true, "ahk_id " chrome_hwnd)
     } else {
-        Run('"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --user-data-dir="D:\\Program Files\\chrome_user_data"')
+        Run('"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --user-data-dir="D:\Program Files\chrome_user_data"')
     }
 }
 
@@ -433,7 +433,7 @@ switchToUseChrome() {
         WinActivate("ahk_id " chrome_hwnd)
         WinSetAlwaysOnTop(true, "ahk_id " chrome_hwnd)
     } else {
-        Run("chrome.exe")
+        Run('"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --user-data-dir="D:\Program Files\chrome_user_data"')
     }
 }
 
@@ -1250,6 +1250,7 @@ fullscreen_current_window() {
 }
 
 check_to_kill_thunder() {
+    ;需要在迅雷中设置悬浮球仅在下载时显示
     if !WinExist("悬浮球 ahk_exe Thunder.exe") {
         print("迅雷下载结束，现在结束迅雷相关进程")
         Run("z:\xthunder.py")
