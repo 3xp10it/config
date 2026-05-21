@@ -411,7 +411,8 @@ switchToChrome() {
         WinActivate("ahk_id " chrome_hwnd)
         WinSetAlwaysOnTop(true, "ahk_id " chrome_hwnd)
     } else {
-        Run('"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --user-data-dir="D:\Program Files\chrome_user_data"')
+        Run("chrome.exe")
+        ;Run('"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --user-data-dir="D:\Program Files\chrome_user_data"')
     }
 }
 
@@ -433,7 +434,8 @@ switchToUseChrome() {
         WinActivate("ahk_id " chrome_hwnd)
         WinSetAlwaysOnTop(true, "ahk_id " chrome_hwnd)
     } else {
-        Run('"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --user-data-dir="D:\Program Files\chrome_user_data"')
+        Run("chrome.exe")
+        ;Run('"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --user-data-dir="D:\Program Files\chrome_user_data"')
     }
 }
 
@@ -574,7 +576,7 @@ switchToZNZ() {
 }
 
 switchToTL50() {
-    tl50_path := "C:\Program Files\tl50\tl50v2.exe"
+    tl50_path := "D:\Program Files\tl50\tl50v2.exe"
     
 
     SetTitleMatchMode("RegEx")
@@ -951,8 +953,8 @@ switch_ths_to_fupan() {
 }
 
 ths_xiadie_yujin_confirm() {
-    ; 关键步骤：在系统看到按键组合前，先发送 Win 和 Ctrl 的抬起事件，避免触发系统自带的win+ctrl的快捷键（对应音频识别）
-    Send "{Blind}{LWin up}{RWin up}{LCtrl up}{RCtrl up}"
+    ; 关键步骤：在系统看到按键组合前，先发送 Win 和 Ctrl 的抬起事件，避免触发系统自带的win+ctrl的快捷键（对应音频识别）。后来发现是微信的快捷键，在微信中设置取消这个快捷键即可。
+    ;Send "{Blind}{LWin up}{RWin up}{LCtrl up}{RCtrl up}"
 
     if !WinExist("添加预警") {
         switchToTHS()
