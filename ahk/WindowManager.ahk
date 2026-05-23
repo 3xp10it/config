@@ -35,15 +35,27 @@ lastBPressTime := 0                  ; 上次按 #b 的时间戳
 lastBWindow := 0                     ; 上次 #b 激活的窗口句柄
 baseHistory := []                    ; 用于连续 #b 切换的基准历史（副本）
 
+; ---------- 新增：鼠标点击监听与 Caret 检测 ----------
+EVENT_CLICK_CARET := 0x9000      ; 自定义事件码：鼠标点击后检测到光标
+hookMouse := 0                   ; 鼠标钩子句柄
+lastCaretHwnd := 0               ; 上次检测到的光标窗口句柄，用于避免重复触发
+MouseProcCallback := 0           ; 回调指针
+
+; 缓存点击时的前台窗口信息，避免重复获取
+g_clickForeHwnd := 0
+g_clickForeProcName := ""
+
 ; ---------- 窗口事件监视器常量 ----------
 EVENT_OBJECT_SHOW       := 0x8002   ; 窗口显示
 WM_APP                  := 0x8000
 WM_USER_EVENT           := WM_APP + 1
+WM_USER_CARET_CHECK     := WM_APP + 2   ; 延迟检查 Caret 的消息
 WS_VISIBLE    := 0x10000000
 WS_CHILD      := 0x40000000
 TargetProcessId := 0
 MinWidth  := 150
-MinHeight := 150
+;Listary.exe的搜索框是612*100
+MinHeight := 100
 
 ; Shell 钩子常量
 HSHELL_RUDEAPPACTIVATED := 0x8004   ; 窗口激活事件
@@ -54,6 +66,54 @@ ActivateProcesses := Map(
     ; 添加其他需要激活的进程...
 )
 
+PorcessIMEDICT := Map(
+    "hexin.exe","英文",
+    "tl50v2.exe","英文",
+    "WavMain.exe","英文",
+    "Listary.exe","英文",
+    "explorer.exe","英文",
+    "cmd.exe","英文",
+    "powershell.exe","英文",
+    "xiadan.exe","英文",
+    ;注意，Code.exe在初始打开的时候有点慢，要求操作系统设置的默认输入法是"英文".否则如果操作系统设置的默认输入法是"中文"则要求对于Code.exe要加个延时切换，如果操作系统设置的默认输入法是"中文"且对于Code.exe的自动设置输入法的操作不加延时再设置的话，那么初次打开Code.exe时会是"中文"输入法.因此最小动作是设置操作系统的默认输入法是"英文"，这样对于Code.exe就不用延时再自动设置输入法了.
+    "Code.exe","英文",
+    "Weixin.exe","中文",
+    "notepad.exe","中文",
+    "chrome.exe","中文",
+)
+
+
+GetImeModeEx(hwnd) {
+    ;获取目标窗口当前的输入法
+    static WM_IME_CONTROL := 0x283
+    static IMC_GETOPENSTATUS := 0x005
+    static IMC_GETCONVERSIONMODE := 0x001
+    static SMTO_ABORTIFHUNG := 0x0002
+    static timeout := 200
+
+    imeWnd := DllCall("imm32\ImmGetDefaultIMEWnd", "Ptr", hwnd, "Ptr")
+    if !imeWnd
+        return { mode: "英文", openStatus: 0, convMode: 0 }
+
+    openStatus := 0
+    DllCall("SendMessageTimeoutW", "Ptr", imeWnd, "UInt", WM_IME_CONTROL, "Ptr", IMC_GETOPENSTATUS, "Ptr", 0, "UInt", SMTO_ABORTIFHUNG, "UInt", timeout, "UInt*", &openStatus)
+
+    convMode := 0
+    DllCall("SendMessageTimeoutW", "Ptr", imeWnd, "UInt", WM_IME_CONTROL, "Ptr", IMC_GETCONVERSIONMODE, "Ptr", 0, "UInt", SMTO_ABORTIFHUNG, "UInt", timeout, "UInt*", &convMode)
+
+    if (openStatus && (convMode & 1))
+        mode := "中文"
+    else
+        mode := "英文"
+
+    return { mode: mode, openStatus: openStatus, convMode: convMode }
+}
+
+switchState() {
+    ;通过模拟左Shift键来切换输入法
+    SendInput("{LShift}")
+}
+
 ; ============================================================
 ; 脚本启动时自动执行
 ; ============================================================
@@ -61,7 +121,7 @@ ActivateProcesses := Map(
 if (showMonitorGui) {
     ; 创建可见的监视器窗口
     MyGui := Gui()
-    MyGui.Title := "窗口事件监视器 (激活+显示)"
+    MyGui.Title := "窗口事件监视器 (激活+显示+光标)"
     MyGui.OnEvent("Close", GuiClose)
     MyGui.OnEvent("Escape", GuiClose)
     listview := MyGui.AddListView("w800 h400", ["事件", "窗口句柄", "类名", "标题"])
@@ -90,6 +150,19 @@ if !hookShow {
 DllCall("RegisterShellHookWindow", "ptr", msgWindow)
 WM_SHELLHOOK := DllCall("RegisterWindowMessage", "str", "SHELLHOOK")
 OnMessage(WM_SHELLHOOK, ShellMessageHandler)
+
+; 注册延迟检查 Caret 的消息
+OnMessage(WM_USER_CARET_CHECK, OnCaretCheck)
+
+; 安装低级鼠标钩子，捕获左键弹起
+MouseProcCallback := CallbackCreate(MouseProc, "Fast")
+hookMouse := DllCall("SetWindowsHookEx", "int", 14        ; WH_MOUSE_LL = 14
+    , "ptr", MouseProcCallback
+    , "ptr", DllCall("GetModuleHandle", "ptr", 0, "ptr")  ; 当前模块句柄
+    , "uint", 0                                           ; 全局钩子
+    , "ptr")
+if !hookMouse
+    MsgBox("鼠标钩子安装失败，Caret 事件监听不可用。")
 
 ; 设置CapsLock状态
 SetCapsLockState("AlwaysOff")
@@ -352,7 +425,27 @@ RemoveToolTip() {
     ToolTip()
 }
 
-print(string) {
+print(str) {
+    static nextId := 1          ; 下一个要用的 ToolTip 编号 (1-20)
+    static step := 0            ; 当前偏移步数，决定垂直位置
+
+    ; 取一个编号，并循环 1~20
+    id := nextId
+    nextId := Mod(nextId, 20) + 1
+
+    ; 计算 Y 坐标：从屏幕底部开始，每次向上偏移 30 像素
+    x := 10
+    y := A_ScreenHeight - 50 - step * 30
+    ToolTip(str, x, y, id)      ; 在指定位置用独立编号显示
+
+    ; 步数 +1，最多 20 级（与 20 个 ToolTip 对应），超出后回到底部
+    step := Mod(step + 1, 20)
+
+    ; 6 秒后移除这个编号的 ToolTip
+    SetTimer(() => ToolTip(,,, id), -6000)
+}
+
+print_old(string) {
     ToolTip(string)
     SetTimer RemoveToolTip, -3000
 }
@@ -882,7 +975,7 @@ show_ths_yujin() {
 open_moniqi(retryCount := 0) {
     global ok_y, ok_h
     windowTitle := "MuMu安卓设备"
-    noxPath := "C:\\Program Files\\Netease\\MuMu\\nx_main\\MuMuManager.exe"
+    noxPath := "D:\\Program Files\\Netease\\MuMu\\nx_main\\MuMuManager.exe"
 
     if WinExist(windowTitle) {
         WinActivate(windowTitle)
@@ -1332,6 +1425,50 @@ CarefullySetTopMost(hwnd, title) {
     }
 }
 
+; 处理自动切换输入法：先判断要不要自动切换，如果需要则切换
+HandleAutoIme_old(hwnd, procName) {
+    if !WinExist("ahk_id " hwnd)
+        return
+    currentMode := GetImeModeEx(hwnd).mode
+    targetMode := PorcessIMEDICT[procName]
+    print(procName " 此前的输入法是： " currentMode)
+    if (currentMode != targetMode) {
+        print(procName " 切换输入法到 " targetMode)
+        switchState()
+    }
+}
+; 主切换函数（重试入口）
+HandleAutoIme(hwnd, procName, retryCount := 3) {
+    if !WinExist("ahk_id " hwnd)
+        return
+    currentMode := GetImeModeEx(hwnd).mode
+    targetMode := PorcessIMEDICT[procName]
+    if (currentMode = targetMode)
+        return  ; 已处于目标模式，无需切换
+
+    ; 执行切换
+    ;print(procName " 切换输入法到 " targetMode)
+    switchState()
+
+    ; 若还有重试机会，则延迟 150ms 进行检查
+    if (retryCount > 0)
+        SetTimer(CheckAndRetryIme.Bind(hwnd, procName, retryCount - 1), -150)
+}
+
+; 延迟检查函数：若仍未成功，则进行下一次重试
+CheckAndRetryIme(hwnd, procName, retriesLeft) {
+    if !WinExist("ahk_id " hwnd)
+        return
+    currentMode := GetImeModeEx(hwnd).mode
+    targetMode := PorcessIMEDICT[procName]
+    if (currentMode = targetMode)
+        return  ; 切换成功，不再重试
+
+    ; 仍然不匹配，消耗一次重试机会
+    ;print(procName " 输入法仍未切换，重试剩余 " retriesLeft " 次")
+    HandleAutoIme(hwnd, procName, retriesLeft)
+}
+
 WinEventProc(hWinEventHook, event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime) {
     global msgWindow, WM_USER_EVENT
     if (hwnd = 0 || idObject != 0)
@@ -1345,6 +1482,66 @@ WinEventProc(hWinEventHook, event, hwnd, idObject, idChild, dwEventThread, dwmsE
     }
 
     DllCall("PostMessage", "ptr", msgWindow, "uint", WM_USER_EVENT, "ptr", event, "ptr", hwnd)
+}
+
+; 低级鼠标钩子回调：左键弹起时
+MouseProc(nCode, wParam, lParam) {
+    Critical
+    global msgWindow, WM_USER_CARET_CHECK, g_clickForeHwnd, g_clickForeProcName
+    if (nCode >= 0 && wParam = 0x0202) {   ; WM_LBUTTONUP
+        hwndFore := DllCall("GetForegroundWindow", "Ptr")
+        if hwndFore {
+            try {
+                procName := WinGetProcessName("ahk_id " hwndFore)
+            } catch {
+                procName := ""
+            }
+            
+            if (procName = "Weixin.exe") {
+                ;只对微信窗口触发 Caret 检查，目前只有微信在自动切换输入法时需要用到CLICK_CARET事件（当先点击微信窗口的非编辑区，再点击该窗口的输入文本框时，这种情况需要通过CLICK_CARET事件来触发检测是否需要自动切换输入法），后面如果发现其他进程也需要这样处理时可以再在这里加入进程名判断
+                g_clickForeHwnd := hwndFore
+                g_clickForeProcName := procName
+                DllCall("PostMessage", "Ptr", msgWindow, "UInt", WM_USER_CARET_CHECK, "Ptr", 0, "Ptr", 0)
+            }
+        }
+    }
+    return DllCall("CallNextHookEx", "ptr", 0, "int", nCode, "ptr", wParam, "ptr", lParam)
+}
+
+; 收到延迟检查消息后，启动 50ms 一次性定时器
+OnCaretCheck(wParam, lParam, msg, hwnd) {
+    SetTimer(CheckCaretTimerProc, -50)
+}
+
+; 定时器到期后检查 Caret，并直接切换微信输入法
+CheckCaretTimerProc() {
+    global msgWindow, WM_USER_EVENT, EVENT_CLICK_CARET, lastCaretHwnd
+    global g_clickForeHwnd, g_clickForeProcName
+
+    if !g_clickForeHwnd
+        return
+    hwndFore := g_clickForeHwnd
+    g_clickForeHwnd := 0
+    procName := g_clickForeProcName
+
+    threadId := DllCall("GetWindowThreadProcessId", "Ptr", hwndFore, "Ptr", 0, "UInt")
+    cbSize := 24 + 6 * A_PtrSize
+    guiInfo := Buffer(cbSize)
+    NumPut("UInt", cbSize, guiInfo.Ptr)
+    if DllCall("GetGUIThreadInfo", "UInt", threadId, "Ptr", guiInfo) {
+        caretHwnd := NumGet(guiInfo, 8 + 6 * A_PtrSize, "Ptr")
+        if (caretHwnd && caretHwnd != lastCaretHwnd) {
+            lastCaretHwnd := caretHwnd
+
+            HandleAutoIme(hwndFore,procName)
+
+            ; 仍发送事件供 ListView 显示
+            DllCall("PostMessage", "Ptr", msgWindow, "UInt", WM_USER_EVENT
+                , "Ptr", EVENT_CLICK_CARET, "Ptr", hwndFore)
+        } else if (!caretHwnd) {
+            lastCaretHwnd := 0
+        }
+    }
 }
 
 ShellMessageHandler(wParam, lParam, msg, hwnd) {
@@ -1395,6 +1592,13 @@ EventMessageHandler(wParam, lParam, msg, hwnd) {
             try WinSetAlwaysOnTop(1, "预警结果 ahk_exe hexin.exe")
         }
 
+
+        if PorcessIMEDICT.Has(procName) {
+            ;这里要延时50ms后再进行HandleAutoIme处理，因为HandleAutoIme中的获取目标句柄当前输入法需要延时50ms才能准确获取，否则在窗口初始化的时候可能会获取到错误的值,例如win+r可复现
+            SetTimer(HandleAutoIme.Bind(hwndTarget, procName), -50)
+            ;HandleAutoIme(hwndTarget, procName)
+        }
+
     } else if (event == EVENT_OBJECT_SHOW) {
         if (class=="SysShadow" || title=="EAGrid") {
             return
@@ -1420,12 +1624,10 @@ EventMessageHandler(wParam, lParam, msg, hwnd) {
                 WinGetPos(&winX, &winY, &winW, &winH, "ahk_id " hwndTarget)
                 write("hexin.exe #32770 window:" . winX . "," . winY . "," . winW . "," . winH)
                 if (winW==480 && winH==360) {
-                    ;write("检测到同花顺广告窗口，现在尝试自动关闭")
                     WinClose("ahk_id " hwndTarget)
                 } else if (winW==280 && winH==180) {
-                    ;说明是右下角弹窗新闻
+                    ; 右下角弹窗新闻
                 } else {
-                    ;同花顺的从板块中删除打开的窗口需要这里再激活并置顶一下，否则会被realnews挡住而无法置顶
                     WinActivate("ahk_id " hwndTarget)
                     CarefullySetTopMost(hwndTarget, title)
                 }
@@ -1435,10 +1637,19 @@ EventMessageHandler(wParam, lParam, msg, hwnd) {
                 . "额外信息：" (err.Extra ? err.Extra : "无") "`n"
                 . "行号：" err.Line)
             }
-
-            
-
         }
+
+
+        if PorcessIMEDICT.Has(procName) {
+            ;这里要延时50ms后再进行HandleAutoIme处理，因为HandleAutoIme中的获取目标句柄当前输入法需要延时50ms才能准确获取，否则在窗口初始化的时候可能会获取到错误的值,例如win+r可复现
+            SetTimer(HandleAutoIme.Bind(hwndTarget, procName), -50)
+            ;HandleAutoIme(hwndTarget, procName)
+        }
+
+    } else if (event == EVENT_CLICK_CARET) {
+        eventName := "CLICK_CARET"
+        ; 输入法切换已在 CheckCaretTimerProc 完成，此处仅记录事件
+
     } else {
         eventName := "UNKNOWN"
     }
@@ -1452,11 +1663,13 @@ GuiClose(*) {
 }
 
 ExitFunc(*) {
-    global hookShow, WinEventProcCallback, msgWindow
+    global hookShow, WinEventProcCallback, hookMouse, MouseProcCallback
     if (hookShow)
         UnhookWinEvent(hookShow)
     if (WinEventProcCallback)
         CallbackFree(WinEventProcCallback)
-    ; 可选：注销 ShellHook
-    ; DllCall("DeregisterShellHookWindow", "ptr", msgWindow)
+    if (hookMouse)
+        DllCall("UnhookWindowsHookEx", "ptr", hookMouse)
+    if (MouseProcCallback)
+        CallbackFree(MouseProcCallback)
 }
