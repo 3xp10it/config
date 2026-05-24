@@ -1,6 +1,6 @@
 #Requires AutoHotkey v2.0
 #SingleInstance Force
-
+DllCall("SetProcessDPIAware")
 ; ============================================================
 ; 全局变量声明（函数外部无需加 global）
 ; ============================================================
@@ -19,8 +19,9 @@ overlays := []
 WindowPositionDict := Map()
 ok_x := 776
 ok_y := 7
-ok_w := 1892
+ok_w := 1883
 ok_h := 1440
+right_ok_x := 2653
 
 log_Enabled := true
 log_FilePath := "d:\WinHistory.log"
@@ -395,6 +396,55 @@ CapsLock & [::Send("^[")
 CapsLock & ]::Send("^]")
 CapsLock & \::Send("^\")
 
+
+; 将窗口从视觉上移动到 x,y 并调整大小为 w,h
+; 参数 winTitle 可以是任何 AHK 窗口定位字符串（如 "ahk_id 0x12345"、"ahk_class Notepad"、标题等）
+MoveWindowVisually(x, y, w, h, winTitle) {
+    ; 1. 获取窗口句柄
+    hwnd := WinExist(winTitle)
+    if !hwnd
+        throw ValueError("找不到窗口: " . winTitle)
+
+    ; 2. 获取当前窗口矩形（不含阴影/扩展边界）
+    WinGetPos(&wx, &wy, &ww, &wh, "ahk_id " hwnd)
+
+    ; 3. 尝试获取 DWM 扩展边界（包含阴影/圆角等），以计算四周的偏移量
+    marginLeft := 0, marginTop := 0, marginRight := 0, marginBottom := 0
+    rect := Buffer(16)                              ; RECT 结构（left, top, right, bottom）
+    if DllCall("dwmapi.dll\DwmGetWindowAttribute"
+        , "ptr", hwnd
+        , "uint", 9                                ; DWMWA_EXTENDED_FRAME_BOUNDS
+        , "ptr", rect
+        , "uint", 16                               ; sizeof(RECT)
+        , "int") = 0 {                             ; S_OK 成功
+        extLeft   := NumGet(rect,  0, "int")
+        extTop    := NumGet(rect,  4, "int")
+        extRight  := NumGet(rect,  8, "int")
+        extBottom := NumGet(rect, 12, "int")
+        ; 计算视觉边界相对于窗口矩形的外延量
+        marginLeft   := wx - extLeft
+        marginTop    := wy - extTop
+        marginRight  := extRight - (wx + ww)
+        marginBottom := extBottom - (wy + wh)
+    }
+    ; 如果 DWM 调用失败（例如经典主题或无阴影），margin 保留 0，按窗口矩形直接处理
+
+    ; 4. 计算为了达到目标视觉矩形，窗口矩形应设置的位置与大小
+    newX := x + marginLeft
+    newY := y + marginTop
+    newW := w - marginLeft - marginRight
+    newH := h - marginTop - marginBottom
+
+    ; 防止负尺寸
+    if (newW < 1)
+        newW := 1
+    if (newH < 1)
+        newH := 1
+
+    ; 5. 执行移动
+    WinMove(newX, newY, newW, newH, "ahk_id " hwnd)
+}
+
 ; ============================================================
 ; 智能关闭窗口热键
 ; ============================================================
@@ -505,7 +555,8 @@ switchToUseChrome() {
     if WinExist("ahk_exe chrome.exe") {
         WinRestore
         chromeTitle := " - Google Chrome"
-        WinMove(ok_x, ok_y, ok_w, ok_h, chromeTitle)
+        ;WinMove(ok_x, ok_y, ok_w, ok_h, chromeTitle)
+        MoveWindowVisually(ok_x, ok_y, ok_w, ok_h, chromeTitle)
         
         chrome_hwnd := WinGetID(chromeTitle)
         WinActivate("ahk_id " chrome_hwnd)
@@ -854,7 +905,8 @@ switchToXIADAN() {
             ;if ((Style & 0x20000000) or (!WinActive("ahk_id " xiadan_hwnd))) {
             if IsWindowCovered("ahk_id " xiadan_hwnd) {
                 WinActivate("ahk_id " xiadan_hwnd)
-                WinMove(ok_x, ok_y, ok_w, ok_h, "ahk_id " xiadan_hwnd)
+                ;WinMove(ok_x, ok_y, ok_w, ok_h, "ahk_id " xiadan_hwnd)
+                MoveWindowVisually(ok_x, ok_y, ok_w, ok_h, "ahk_id " xiadan_hwnd)
                 WinSetAlwaysOnTop(true, "ahk_id " xiadan_hwnd)
             } else {
                 WinMinimize("ahk_id " xiadan_hwnd)
@@ -889,7 +941,8 @@ set_current_window_to_top() {
         WinGetPos(&origX, &origY, &origW, &origH, "ahk_id " hwnd)
         WindowPositionDict[hwnd] := {x: origX, y: origY, w: origW, h: origH}
         WinRestore("ahk_id " hwnd)
-        WinMove(ok_x, ok_y, ok_w, ok_h, "A")
+        ;WinMove(ok_x, ok_y, ok_w, ok_h, "A")
+        MoveWindowVisually(ok_x, ok_y, ok_w, ok_h, "A")
         WinSetAlwaysOnTop(true, "A")
     }
 }
@@ -963,7 +1016,7 @@ open_moniqi(retryCount := 0) {
 
     if WinExist(windowTitle) {
         WinActivate(windowTitle)
-        WinMove(2657, ok_y, 786, ok_h + 1, windowTitle)
+        WinMove(2656, ok_y, 786, ok_h + 1, windowTitle)
     } else {
         ; 启动模拟器
         ;Run(Format('"{}" control -v 0 launch -pkg com.aiyu.kaipanla', noxPath))
@@ -995,7 +1048,7 @@ open_moniqi(retryCount := 0) {
         ControlClick("x233 y1376", windowTitle)
         Sleep(1000)
         ControlClick("x275 y134", windowTitle)
-        WinMove(2657, ok_y, 786, ok_h+1, windowTitle)
+        WinMove(2656, ok_y, 786, ok_h+1, windowTitle)
     }
 }
 
@@ -1311,13 +1364,14 @@ fullscreen_current_window_forcall() {
 
 move_current_window_to_left() {
     restore_current_window()
-    WinMove(-7, 1, 1968, 1446, "A")
+    ;WinMove(-7, 1, 1968, 1446, "A")
+    MoveWindowVisually(0, 8, 1954, 1446, "A")
 }
 
 move_current_window_to_right() {
     global ok_y, ok_h
     restore_current_window()
-    WinMove(2653, ok_y, 795, ok_h+1, "A")
+    WinMove(right_ok_x, ok_y, 795, ok_h+1, "A")
 }
 
 fullscreen_current_window() {
