@@ -1047,7 +1047,7 @@ open_moniqi(retryCount := 0) {
         CoordMode("Mouse", "Window")
         ControlClick("x233 y1376", windowTitle)
         Sleep(1000)
-        ControlClick("x275 y134", windowTitle)
+        ControlClick("x351 y134", windowTitle)
         WinMove(2656, ok_y, 786, ok_h+1, windowTitle)
     }
 }
