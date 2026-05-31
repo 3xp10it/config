@@ -550,6 +550,9 @@ switchToUseChrome() {
     if WinExist("guba_jiucai.*") {
         WinMinimize
     }
+    if WinExist(".*天狼50.*") {
+        WinMinimize
+    }
 
     SetTitleMatchMode(2)
     if WinExist("ahk_exe chrome.exe") {
