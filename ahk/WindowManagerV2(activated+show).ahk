@@ -1047,10 +1047,15 @@ open_moniqi(retryCount := 0) {
         }
 
         WinSetAlwaysOnTop(true, windowTitle)
+        ;“行情”需要点2次，因为有时候会有弹窗，点第一次相当于关闭弹窗，点第二次才是真的点到了行情
+        CoordMode("Mouse", "Window")
+        ControlClick("x233 y1376", windowTitle)
+        Sleep(1000)
         CoordMode("Mouse", "Window")
         ControlClick("x233 y1376", windowTitle)
         Sleep(1000)
         ControlClick("x351 y134", windowTitle)
+        WinActivate(windowTitle)
         WinMove(2656, ok_y, 786, ok_h+1, windowTitle)
     }
 }
