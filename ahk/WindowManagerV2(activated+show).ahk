@@ -919,7 +919,7 @@ switchToXIADAN() {
 }
 
 minimize_current_window() {
-    WinMinimize("A")
+    try WinMinimize("A")
 }
 
 set_current_window_to_top() {
@@ -1097,10 +1097,10 @@ ths_xiadie_yujin_confirm() {
     if !WinExist("添加预警") {
         switchToTHS()
         CoordMode("Mouse", "Screen")
-        Click(1937, 233, "Right")
+        Click(990, 63, "Right")
         Send("+t")
         WinWait("添加预警",, 2)
-        WinActivate("添加预警")
+        try WinActivate("添加预警")
         if WinExist("添加预警") {
             CoordMode("Mouse", "Window")
             Click(182, 141, 1)
