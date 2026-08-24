@@ -1022,8 +1022,7 @@ open_moniqi(retryCount := 0) {
         WinMove(2656, ok_y, 786, ok_h + 1, windowTitle)
     } else {
         ; 启动模拟器
-        ;Run(Format('"{}" control -v 0 launch -pkg com.aiyu.kaipanla', noxPath))
-        Run(Format('"{}" control -v 0 launch -pkg com.yzj.kaipanh', noxPath))
+        Run(Format('"{}" control -v 0 app launch -pkg com.yzj.kaipanh', noxPath))
 
         ; 等待窗口出现
         if !WinWait(windowTitle,, 30) {
@@ -1097,7 +1096,7 @@ ths_xiadie_yujin_confirm() {
     if !WinExist("添加预警") {
         switchToTHS()
         CoordMode("Mouse", "Screen")
-        Click(990, 63, "Right")
+        Click(990, 65, "Right")
         Send("+t")
         WinWait("添加预警",, 2)
         try WinActivate("添加预警")
