@@ -541,6 +541,16 @@ switchToChrome() {
         Run("chrome.exe")
         ;Run('"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --user-data-dir="D:\Program Files\chrome_user_data"')
     }
+
+    hwnd := WinGetID("实时新闻")
+    if (hwnd) {
+        Style := WinGetStyle("ahk_id " hwnd)
+        if (!(Style & 0x20000000)) {
+            ;如果实时新闻窗口没有最小化则将该窗口移到中间
+            WinMove(784, 466, 1033, 499, "实时新闻 ahk_exe python.exe")
+        }
+    }
+
 }
 
 switchToUseChrome() {
@@ -568,6 +578,17 @@ switchToUseChrome() {
         Run("chrome.exe")
         ;Run('"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --user-data-dir="D:\Program Files\chrome_user_data"')
     }
+
+
+    hwnd := WinGetID("实时新闻")
+    if (hwnd) {
+        Style := WinGetStyle("ahk_id " hwnd)
+        if (!(Style & 0x20000000)) {
+            ;如果实时新闻窗口没有最小化则将该窗口移到右边
+            moveRealnews()
+        }
+    }
+
 }
 
 open_tbjl_bat() {
@@ -640,7 +661,7 @@ openRiLi() {
 }
 
 switchToTHS() {
-    THS_path := "C:\THS\hexin.exe"
+    THS_path := "D:\THS\hexin.exe"
     SetTitleMatchMode("RegEx")
     
     ths_hwnd := WinExist("同花顺\(.*\).* ahk_exe hexin.exe")
@@ -1022,6 +1043,8 @@ open_moniqi(retryCount := 0) {
         WinMove(2656, ok_y, 786, ok_h + 1, windowTitle)
     } else {
         ; 启动模拟器
+        Run(Format('"{}" control -v 0 launch', noxPath))
+        Sleep(5000)
         Run(Format('"{}" control -v 0 app launch -pkg com.yzj.kaipanh', noxPath))
 
         ; 等待窗口出现
@@ -1048,12 +1071,12 @@ open_moniqi(retryCount := 0) {
         WinSetAlwaysOnTop(true, windowTitle)
         ;“行情”需要点2次，因为有时候会有弹窗，点第一次相当于关闭弹窗，点第二次才是真的点到了行情
         CoordMode("Mouse", "Window")
-        ControlClick("x233 y1390", windowTitle)
+        ControlClick("x236 y1365", windowTitle)
         Sleep(1000)
         CoordMode("Mouse", "Window")
-        ControlClick("x233 y1390", windowTitle)
+        ControlClick("x236 y1365", windowTitle)
         Sleep(1000)
-        ControlClick("x249 y79", windowTitle)
+        ControlClick("x349 y132", windowTitle)
         WinActivate(windowTitle)
         WinMove(2656, ok_y, 786, ok_h+1, windowTitle)
     }
