@@ -680,7 +680,15 @@ switchToTHS() {
                 processName := WinGetProcessName("ahk_id " hwnd)
                 ;if (processName != "hexin.exe" && (processName != "stockapp.exe" || InStr(title, "guba_jiucai_xueqiu")) && title != "quick_program.ahk") {
                 if (processName != "hexin.exe" && (title != "陈小群" && title != "下单" && title != "排板" && title != "大单异动" && title != "实时新闻" && title != "涨停股" && title != "股票池" && title != "概念" && title != "风向标" && title != "个股新闻") && title != "quick_program.ahk") {
-                    WinMinimize("ahk_id " hwnd)
+                    if (processName == "chrome.exe") {
+                        Style := WinGetStyle("ahk_id " hwnd)
+                        if (!(Style & 0x20000000)) {
+                            switchToChrome()
+                        }
+                    } else {
+                        WinMinimize("ahk_id " hwnd)
+                    }
+
                 }
             }
         }
