@@ -22,6 +22,8 @@ alias Cknife='java -jar /usr/share/Cknife/Cknife.jar'
 alias vs='vim ~/note/note.md'
 alias z='cd ~/Desktop; or cd ~/桌面'
 alias v="vim ~/news/bug.txt"
+alias r="vim ~/news/rqg.txt"
+alias rl="vim ~/news/rili.txt"
 alias c="rm ~/.vimswap/tmp.txt.swp"
 alias b='cd ~/myblog'
 alias p='cd ~/myblog/_posts; and ls -lh'
@@ -39,7 +41,7 @@ alias py="cd ~/exp10it/; and ls -al"
 alias s0="sudo shutdown -r +0"
 alias pj="pkill jekyll;pkill ruby"
 alias ip="ifconfig | ack '(?<=inet )(.*)(?= netmask)' -o"
-alias od='cd ~/news; and tmux splitw -h -p 62; and tmux splitw -v -p 30; and tmux selectp -L; and tmux splitw -v -p 30; and tmux send -t 4 "py3 news.py" Enter; and tmux selectp -t 4; and tmux splitw -h -p 50; and tmux send -t 5 "cd thsapi" Enter "sudo python3 thsapi.py" Enter; and tmux selectp -t 3; open kmtrigger://macro=move_iterm2_and_click_ths'
+alias od='cd ~/news; and tmux splitw -h -p 62; and tmux splitw -v -p 30; and tmux selectp -L; and tmux splitw -v -p 30; and tmux send -t 4 "py3 news.py" Enter; and tmux selectp -t 4; and tmux splitw -h -p 50; and tmux send -t 5 "cd thsapi" Enter "sudo python3 thsapi.py" Enter; and tmux selectp -t 3; open kmtrigger://macro=move_iTerm2_and_click_ths'
 alias pp='pkill -9 python'
 alias 2p="cd (pip3 show exp10it | egrep 'Location:' | egrep -o '/.*')"
 
@@ -54,12 +56,13 @@ alias ida64="sudo (locate ida64 | grep '/ida64\$')"
 alias ge="cd ~/godseye"
 alias up="git add .; and git commit -a -m 'up'; and git push -u origin master"
 alias efficient="cd ~/efficient; and python3 efficient.py"
+alias n="cd ~/news/"
 export EDITOR=vim
 export THEOS=/opt/theos
 set PATH $THEOS $PATH 
 set PATH /opt/theos/bin/ $PATH
 export PATH="/opt/local/bin:/opt/local/sbin:$PATH"
-ulimit -n 1024
+#ulimit -n 1024
 
 
 #brew加速
@@ -71,3 +74,4 @@ export HOMEBREW_BOTTLE_DOMAIN="https://mirrors.ustc.edu.cn/homebrew-bottles"
 export HOMEBREW_API_DOMAIN="https://mirrors.ustc.edu.cn/homebrew-bottles/api"
 # hide
 export HOMEBREW_NO_ENV_HINTS="1"
+
