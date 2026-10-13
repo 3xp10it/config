@@ -551,6 +551,14 @@ switchToChrome() {
         }
     }
 
+
+    SetTitleMatchMode("RegEx")
+    ths_hwnd := WinExist("同花顺\(.*\).* ahk_exe hexin.exe")               
+    if (ths_hwnd) {
+        WinActivate("ahk_id " ths_hwnd)
+    }
+
+
 }
 
 switchToUseChrome() {
@@ -684,6 +692,10 @@ switchToTHS() {
                         Style := WinGetStyle("ahk_id " hwnd)
                         if (!(Style & 0x20000000)) {
                             switchToChrome()
+                            ;switchToChrome之后会导致焦点移动到chrome上，需要转回ths
+                            if (ths_hwnd) {
+                                WinActivate("ahk_id " ths_hwnd)
+                            }
                         }
                     } else {
                         WinMinimize("ahk_id " hwnd)
