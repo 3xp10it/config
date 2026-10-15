@@ -542,15 +542,14 @@ switchToChrome() {
         ;Run('"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --user-data-dir="D:\Program Files\chrome_user_data"')
     }
 
-    hwnd := WinGetID("实时新闻")
-    if (hwnd) {
+
+    if (hwnd := WinExist("实时新闻 ahk_exe python.exe")) {
         Style := WinGetStyle("ahk_id " hwnd)
         if (!(Style & 0x20000000)) {
             ;如果实时新闻窗口没有最小化则将该窗口移到中间
             WinMove(784, 466, 1033, 499, "实时新闻 ahk_exe python.exe")
         }
     }
-
 
     SetTitleMatchMode("RegEx")
     ths_hwnd := WinExist("同花顺\(.*\).* ahk_exe hexin.exe")               
@@ -588,8 +587,7 @@ switchToUseChrome() {
     }
 
 
-    hwnd := WinGetID("实时新闻")
-    if (hwnd) {
+    if (hwnd := WinExist("实时新闻 ahk_exe python.exe")) {
         Style := WinGetStyle("ahk_id " hwnd)
         if (!(Style & 0x20000000)) {
             ;如果实时新闻窗口没有最小化则将该窗口移到右边
