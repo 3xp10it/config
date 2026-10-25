@@ -6,7 +6,7 @@ DllCall("SetProcessDPIAware")
 ; ============================================================
 
 ; 调试开关：是否显示监视器窗口（ListView）
-showMonitorGui := false   ; 设为 false 时完全不创建 GUI，使用脚本主窗口；true为创建；
+showMonitorGui := true   ; 设为 false 时完全不创建 GUI，使用脚本主窗口；true为创建；
 msgWindow := 0            ; 消息接收窗口句柄，将在脚本启动时赋值
 
 ; ---------- 同花顺相关全局变量 ----------
@@ -60,6 +60,9 @@ ActivateProcesses := Map(
     "Thunder.exe", 1,      ; 迅雷
     ; 添加其他需要激活的进程...
 )
+
+ignoreShowTitles := Map("EAGrid", 1, "MuMu模拟器", 1)
+ignoreActivateTitles := Map("Program Manager", 1, "MuMu模拟器", 1)
 
 PorcessIMEDICT := Map(
     "hexin.exe","英文",
@@ -186,6 +189,22 @@ Persistent()
 #1::switch_ths_to_paiban
 #2::switch_ths_to_fupan
 #^s::ths_xiadie_yujin_confirm
+
+
+#^a:: {
+    ; 检查 WorkBuddy 窗口是否存在
+    if WinExist("WorkBuddy AI") {
+        ; 如果窗口是最小化状态，先恢复它
+        if (WinGetMinMax("WorkBuddy AI") == -1)
+            WinRestore("WorkBuddy AI")
+            
+        ; 激活窗口
+        WinActivate("WorkBuddy AI")
+    } else {
+        ; 没找到窗口时的提示（如果不需要提示可以删掉这行）
+        MsgBox("未找到 WorkBuddy 窗口，请确认程序已运行。", "提示", "Icon!")
+    }
+}
 
 ; ----- 同花顺遮罩控制热键 -----
 ^1::CreateOverlays
@@ -1103,7 +1122,7 @@ open_moniqi(retryCount := 0) {
 switch_ths_to_paiban() {
     whr := ComObject("WinHttp.WinHttpRequest.5.1")
     whr.SetTimeouts(30000, 60000, 30000, 30000)
-    whr.Open("GET", "http://192.168.1.7:7777/set_stock_code_to_ths?stock_code=.10", true)
+    whr.Open("GET", "http://192.168.1.7:7777/set_stock_code_to_ths?stock_code=.10&callback=lala", true)
     whr.Send()
     try {
         whr.WaitForResponse()
@@ -1115,7 +1134,7 @@ switch_ths_to_paiban() {
 switch_ths_to_fupan() {
     whr := ComObject("WinHttp.WinHttpRequest.5.1")
     whr.SetTimeouts(30000, 60000, 30000, 30000)
-    whr.Open("GET", "http://192.168.1.7:7777/set_stock_code_to_ths?stock_code=.11", true)
+    whr.Open("GET", "http://192.168.1.7:7777/set_stock_code_to_ths?stock_code=.11&callback=lala", true)
     whr.Send()
     try {
         whr.WaitForResponse()
@@ -1208,6 +1227,8 @@ ths_xiadie_yujin_confirm() {
     ControlClick("x" newX " y" targetY, "添加预警")
     ControlClick("x173 y446", "添加预警")
 }
+
+
 
 SmartClose() {
     if !WinExist("A")      ; 检查是否有活动窗口
@@ -1590,7 +1611,7 @@ EventMessageHandler(wParam, lParam, msg, hwnd) {
     try title := WinGetTitle("ahk_id " hwndTarget)
 
     if (event == HSHELL_RUDEAPPACTIVATED) {
-        if (title="Program Manager") {
+        if (ignoreActivateTitles.Has(title)) {
             return
         }
         eventName := "ACTIVATED"
@@ -1628,9 +1649,10 @@ EventMessageHandler(wParam, lParam, msg, hwnd) {
         }
 
     } else if (event == EVENT_OBJECT_SHOW) {
-        if (class=="SysShadow" || title=="EAGrid") {
+        if (class == "SysShadow" || ignoreShowTitles.Has(title)) {
             return
         }
+    
         eventName := "SHOW"
 
         try {
