@@ -191,7 +191,7 @@ Persistent()
 #^s::ths_xiadie_yujin_confirm
 
 
-#^a:: {
+#Esc:: {
     ; 检查 WorkBuddy 窗口是否存在
     if WinExist("WorkBuddy AI") {
         ; 如果窗口是最小化状态，先恢复它
