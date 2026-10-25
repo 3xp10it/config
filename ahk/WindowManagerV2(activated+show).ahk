@@ -6,7 +6,7 @@ DllCall("SetProcessDPIAware")
 ; ============================================================
 
 ; 调试开关：是否显示监视器窗口（ListView）
-showMonitorGui := true   ; 设为 false 时完全不创建 GUI，使用脚本主窗口；true为创建；
+showMonitorGui := false   ; 设为 false 时完全不创建 GUI，使用脚本主窗口；true为创建；
 msgWindow := 0            ; 消息接收窗口句柄，将在脚本启动时赋值
 
 ; ---------- 同花顺相关全局变量 ----------
