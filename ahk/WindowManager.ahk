@@ -134,22 +134,24 @@ if (showMonitorGui) {
     msgWindow := A_ScriptHwnd
 }
 
+
+
+
 ; 安装窗口事件钩子（SHOW）
 OnMessage(WM_USER_EVENT, EventMessageHandler)
 WinEventProcCallback := CallbackCreate(WinEventProc)
 hookShow := SetWinEventHook(EVENT_OBJECT_SHOW, EVENT_OBJECT_SHOW, 0, WinEventProcCallback, TargetProcessId, 0, 0)
-
 if !hookShow {
     MsgBox("SHOW 钩子安装失败，请以管理员身份运行。")
     ExitApp
 }
 
-
-
 ; 注册 ShellHook 以接收窗口激活事件
 DllCall("RegisterShellHookWindow", "ptr", msgWindow)
 WM_SHELLHOOK := DllCall("RegisterWindowMessage", "str", "SHELLHOOK")
 OnMessage(WM_SHELLHOOK, ShellMessageHandler)
+
+
 
 
 ; 设置CapsLock状态
