@@ -539,7 +539,7 @@ CheckProcessExist(exe) {
 }
 
 ; 浏览器相关函数
-switchToChrome() {
+switchToChrome(activate := 1) {
     global ok_x, ok_y, ok_h
 
     SetTitleMatchMode("RegEx")
@@ -552,30 +552,30 @@ switchToChrome() {
         WinRestore
         chromeTitle := " - Google Chrome"
         WinMove(2652, ok_y, 796, ok_h+1, chromeTitle)
-        
         chrome_hwnd := WinGetID(chromeTitle)
-        WinActivate("ahk_id " chrome_hwnd)
+        if (activate) {
+            WinActivate("ahk_id " chrome_hwnd)
+        }
         WinSetAlwaysOnTop(true, "ahk_id " chrome_hwnd)
     } else {
         Run("chrome.exe")
         ;Run('"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --user-data-dir="D:\Program Files\chrome_user_data"')
     }
 
-
     if (hwnd := WinExist("实时新闻 ahk_exe python.exe")) {
         Style := WinGetStyle("ahk_id " hwnd)
         if (!(Style & 0x20000000)) {
-            ;如果实时新闻窗口没有最小化则将该窗口移到中间
             WinMove(784, 466, 1033, 499, "实时新闻 ahk_exe python.exe")
         }
     }
-
-    SetTitleMatchMode("RegEx")
-    ths_hwnd := WinExist("同花顺\(.*\).* ahk_exe hexin.exe")               
-    if (ths_hwnd) {
-        WinActivate("ahk_id " ths_hwnd)
+    if (activate) {
+        ;从#f过来的不要再激活同花顺，否则如果在#f后再快速输入股票代码会导致只能输入部分字符串，例如dfcf只会成功输入cf，因为我输入df后就会被因同花顺主窗口被激活而导致键盘精灵失焦
+        SetTitleMatchMode("RegEx")
+        ths_hwnd := WinExist("同花顺\(.*\).* ahk_exe hexin.exe")               
+        if (ths_hwnd) {
+            WinActivate("ahk_id " ths_hwnd)
+        }
     }
-
 
 }
 
@@ -708,11 +708,8 @@ switchToTHS() {
                     if (processName == "chrome.exe") {
                         Style := WinGetStyle("ahk_id " hwnd)
                         if (!(Style & 0x20000000)) {
-                            switchToChrome()
-                            ;switchToChrome之后会导致焦点移动到chrome上，需要转回ths
-                            if (ths_hwnd) {
-                                WinActivate("ahk_id " ths_hwnd)
-                            }
+                            ;switchToChrome之后会导致焦点移动到chrome上，如果再快速切换到hexin.exe后再快速输入股票代码会导致只能输入部分字符串，例如dfcf只会成功输入cf，所以这里不能激活chrome只能把它移个位置
+                            switchToChrome(0)
                         }
                     } else {
                         WinMinimize("ahk_id " hwnd)
