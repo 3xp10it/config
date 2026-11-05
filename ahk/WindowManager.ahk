@@ -13,6 +13,12 @@ msgWindow := 0            ; 消息接收窗口句柄，将在脚本启动时赋�
 cmds_should_show_realnews := "0"
 win_ctrl_w_should_close_ths_fenxi_window := "0"
 
+; ---------- 微信相关全局变量 ----------
+WeChatExePath := "C:\Program Files\Tencent\Weixin\Weixin.exe"
+WeChatMainClass := "Qt51514QWindowIcon"          ; 微信4.x 主窗口类名，版本升级后可能变化（下面有兜底逻辑）
+WeChatTitles := ["微信", "Weixin", "WeChat"]     ; 主窗口标题兜底匹配
+WeChatRelaunchToRestore := true                  ; 主窗口被彻底销毁时，是否再执行一次 Weixin.exe 让已有实例把窗口弹出来
+
 ; 遮罩窗口对象（将由数组管理）
 overlays := []
 
@@ -160,6 +166,9 @@ OnMessage(WM_SHELLHOOK, ShellMessageHandler)
 
 ; 初始化同花顺遮罩
 CreateOverlays()
+
+; 启动/重载标记，便于确认当前运行的是哪一版代码
+write("=== WindowManager 启动/重载 ===")
 
 ; 退出处理
 OnExit(ExitFunc)
@@ -636,25 +645,368 @@ open_tbjl_bat() {
     Run("z:\tbjl.bat")
 }
 
-switchToWechat() {
-    global ok_x, ok_y, ok_w, ok_h
+; ============================================================
+; 微信主窗口定位与唤醒
+; 覆盖三种状态：
+;   1) 窗口可见（含被遮挡、最小化）
+;   2) 被 Ctrl+W 关掉 / 隐藏到托盘 —— 进程还在，窗口句柄还在，只是 WS_VISIBLE 被去掉了
+;   3) 窗口已被真正销毁 —— 再执行一次 Weixin.exe，靠单实例机制让已有实例把主窗口弹出来
+; ============================================================
 
-    WeChat_path := "C:\Program Files\Tencent\Weixin\Weixin.exe"
-    if CheckProcessExist("Weixin.exe") = 0
-        Run(WeChat_path)
-    else {
-        if WinExist("ahk_class Qt51514QWindowIcon") {
-            Style := WinGetStyle("ahk_class Qt51514QWindowIcon")
-            ;if ((Style & 0x20000000) or (!WinActive("ahk_class Qt51514QWindowIcon"))) {
-            if IsWindowCovered("ahk_class Qt51514QWindowIcon") {
-                WinActivate
-                ;WinMove(ok_x+8, ok_y, ok_w-16, ok_h, "ahk_class Qt51514QWindowIcon")
-                WinMove(ok_x, ok_y, ok_w, ok_h, "ahk_class Qt51514QWindowIcon")
-                WinSetAlwaysOnTop(true, "ahk_class Qt51514QWindowIcon")
-            } else {
-                WinMinimize
+; 窗口是否真的“看得见”
+IsHwndVisible(hwnd) {
+    if !hwnd
+        return false
+    return DllCall("IsWindowVisible", "ptr", hwnd) != 0
+}
+
+; 是否被 DWM 隐形（IsWindowVisible 仍为真，但屏幕上看不到，常见于其他虚拟桌面）
+IsHwndCloaked(hwnd) {
+    static DWMWA_CLOAKED := 14
+    cloaked := 0
+    if (DllCall("dwmapi\DwmGetWindowAttribute", "ptr", hwnd, "uint", DWMWA_CLOAKED, "uint*", &cloaked, "uint", 4) = 0)
+        return (cloaked != 0)
+    return false
+}
+
+; 连隐藏窗口一起找微信主窗口：返回句柄，找不到返回 0
+GetWeChatHiddenWindow() {
+    global WeChatMainClass, WeChatTitles, MinWidth, MinHeight
+    oldDHW := A_DetectHiddenWindows
+    DetectHiddenWindows(true)
+    found := 0
+    try {
+        ; ① 按类名 + 标题（最准）：微信同时有主窗口「微信」和一个 176x199 的「Weixin」小窗口，
+        ;    只按类名会抓错，必须用标题锁定
+        for h in WinGetList("ahk_class " WeChatMainClass " ahk_exe Weixin.exe") {
+            try t := WinGetTitle("ahk_id " h)
+            catch
+                continue
+            for name in WeChatTitles {
+                if (t = name) {
+                    found := h
+                    break 2
+                }
             }
         }
+
+        ; ①b 类名只有一个命中时兜底（标题被改过的情况）
+        if !found {
+            lst := WinGetList("ahk_class " WeChatMainClass " ahk_exe Weixin.exe")
+            if (lst.Length = 1)
+                found := lst[1]
+        }
+
+        ; ② 按标题兜底（类名随版本变化时），同名窗口取面积最大的那个
+        ;    注意：微信还有 176x199 的 "Weixin" 小窗口，必须按面积取最大才拿到主窗口
+        if !found {
+            bestArea := 0
+            for h in WinGetList("ahk_exe Weixin.exe") {
+                try {
+                    t := WinGetTitle("ahk_id " h)
+                    WinGetPos(&px, &py, &pw, &ph, "ahk_id " h)
+                } catch {
+                    continue
+                }
+                isMatch := false
+                for name in WeChatTitles {
+                    if (t = name) {
+                        isMatch := true
+                        break
+                    }
+                }
+                if (isMatch && pw * ph > bestArea) {
+                    bestArea := pw * ph
+                    found := h
+                }
+            }
+        }
+
+        ; ③ 最后兜底：Weixin.exe 里“当前不可见”的最大窗口（隐藏到托盘的主窗口）
+        if !found {
+            bestArea := 0
+            for h in WinGetList("ahk_exe Weixin.exe") {
+                if IsHwndVisible(h)
+                    continue
+                try {
+                    if (WinGetExStyle("ahk_id " h) & 0x80)   ; WS_EX_TOOLWINDOW 的工具窗口跳过
+                        continue
+                    WinGetPos(&px, &py, &pw, &ph, "ahk_id " h)
+                } catch {
+                    continue
+                }
+                if (pw < MinWidth || ph < MinHeight)
+                    continue
+                if (pw * ph > bestArea) {
+                    bestArea := pw * ph
+                    found := h
+                }
+            }
+        }
+    }
+    DetectHiddenWindows(oldDHW)
+    return found
+}
+
+; ============================================================
+; 微信托盘图标唤起（正解）
+; 微信 Ctrl+W 后主窗口只是被隐藏，托盘图标仍在。Explorer 点击图标时会向图标窗口
+; 发送微信自己 RegisterWindowMessage 注册的回调消息（wParam=uID，lParam=鼠标消息）。
+; 我们自己发这条消息 = 让微信自己把窗口显示出来，微信内部状态与窗口状态一致，
+; 唤出后再按 Ctrl+W 依然正常（强行 ShowWindow 会导致 Ctrl+W 失效）。
+; 实测：lParam 必须是 WM_LBUTTONDBLCLK(0x203)，WM_LBUTTONUP(0x202) 无效。
+; ============================================================
+
+; AHK v2 没有内置 SendMessageTimeout，用 DllCall（带超时，避免 Explorer 卡住拖死脚本）
+SendMsgTimeout(hwnd, msg, wParam, lParam, timeout := 1200) {
+    res := 0
+    DllCall("SendMessageTimeoutW", "ptr", hwnd, "uint", msg, "uptr", wParam, "ptr", lParam
+          , "uint", 2, "uint", timeout, "uptr*", &res)
+    return res
+}
+
+; 递归收集任务栏 / 溢出面板里的 ToolbarWindow32
+CollectTrayToolbars(parent, arr, depth := 0) {
+    if (depth > 8)
+        return
+    h := 0
+    loop {
+        h := DllCall("FindWindowExW", "ptr", parent, "ptr", h, "ptr", 0, "ptr", 0, "ptr")
+        if !h
+            break
+        cls := ""
+        try cls := WinGetClass("ahk_id " h)
+        if (cls = "ToolbarWindow32")
+            arr.Push(h)
+        CollectTrayToolbars(h, arr, depth + 1)
+    }
+}
+
+IsWeixinHwnd(h) {
+    if !h
+        return false
+    try nm := WinGetProcessName("ahk_id " h)
+    catch
+        return false
+    return (nm = "Weixin.exe")
+}
+
+; 微信的托盘图标消息窗口（类名 Qt51514WxTrayIconMessageWindowClass）
+GetWeChatTrayWnd() {
+    t := 0
+    oldDHW := A_DetectHiddenWindows
+    DetectHiddenWindows(true)
+    try {
+        for h in WinGetList("ahk_exe Weixin.exe") {
+            try cls := WinGetClass("ahk_id " h)
+            catch
+                continue
+            if InStr(cls, "WxTrayIcon")
+                t := h
+        }
+    } finally {
+        DetectHiddenWindows(oldDHW)
+    }
+    return t
+}
+
+; 从通知区域读出微信图标注册的 (hwnd, uID, uCallbackMessage)
+; TRAYDATA 布局：hwnd(0) / uID(8) / uCallbackMessage(12)
+; 返回 {hwnd, uID, msg}，找不到返回 0
+ReadWeChatTrayInfo() {
+    static TB_BUTTONCOUNT := 0x0418, TB_GETBUTTON := 0x0417
+    roots := []
+    for h in WinGetList("ahk_class Shell_TrayWnd")
+        roots.Push(h)
+    ov := DllCall("FindWindowW", "wstr", "NotifyIconOverflowWindow", "ptr", 0, "ptr")
+    if ov
+        roots.Push(ov)
+
+    for root in roots {
+        toolbars := []
+        CollectTrayToolbars(root, toolbars)
+        for tb in toolbars {
+            pid := 0
+            DllCall("GetWindowThreadProcessId", "ptr", tb, "uint*", &pid)
+            if !pid
+                continue
+            cnt := SendMsgTimeout(tb, TB_BUTTONCOUNT, 0, 0)
+            if (cnt <= 0)
+                continue
+            hProc := DllCall("OpenProcess", "uint", 0x1F0FFF, "int", 0, "uint", pid, "ptr")
+            if !hProc
+                continue
+            addr := DllCall("VirtualAllocEx", "ptr", hProc, "ptr", 0, "uptr", 256, "uint", 0x3000, "uint", 0x04, "ptr")
+            if !addr {
+                DllCall("CloseHandle", "ptr", hProc)
+                continue
+            }
+            result := 0
+            try {
+                loop cnt {
+                    idx := A_Index - 1
+                    SendMsgTimeout(tb, TB_GETBUTTON, idx, addr)
+                    btn := Buffer(32, 0)
+                    rd := 0
+                    if !DllCall("ReadProcessMemory", "ptr", hProc, "ptr", addr, "ptr", btn, "uptr", 32, "uptr*", &rd)
+                        continue
+                    dwData := NumGet(btn, 16, "Ptr")      ; TBBUTTON.dwData -> TRAYDATA
+                    if !dwData
+                        continue
+                    td := Buffer(64, 0)
+                    rd2 := 0
+                    if !DllCall("ReadProcessMemory", "ptr", hProc, "ptr", dwData, "ptr", td, "uptr", 64, "uptr*", &rd2)
+                        continue
+                    iconHwnd := NumGet(td, 0, "Ptr")
+                    if IsWeixinHwnd(iconHwnd) {
+                        result := {hwnd: iconHwnd, uID: NumGet(td, 8, "UInt"), msg: NumGet(td, 12, "UInt")}
+                        break
+                    }
+                }
+            } finally {
+                DllCall("VirtualFreeEx", "ptr", hProc, "ptr", addr, "uptr", 0, "uint", 0x8000)
+                DllCall("CloseHandle", "ptr", hProc)
+            }
+            if result
+                return result
+        }
+    }
+    return 0
+}
+
+; 模拟点击微信托盘图标，让微信自己显示主窗口。返回 true 表示已显示
+WakeWeChatByTray() {
+    global WeChatMainClass
+    trayWnd := GetWeChatTrayWnd()
+    info := ReadWeChatTrayInfo()
+    if !info && !trayWnd
+        return false
+    if !info
+        info := {hwnd: trayWnd, uID: 0, msg: 0x8385}   ; 读不到托盘数据时的兜底
+
+    DllCall("PostMessageW", "ptr", info.hwnd, "uint", info.msg, "uptr", info.uID, "ptr", 0x0203)
+    loop 25 {
+        Sleep(100)
+        hwnd := WinExist("ahk_class " WeChatMainClass " ahk_exe Weixin.exe")
+        if (hwnd && IsHwndVisible(hwnd))
+            return true
+    }
+    return false
+}
+
+; 把隐藏的微信主窗口“拉”出来（兜底手段，可能导致 Ctrl+W 失效）
+; 注意：必须用 DllCall 的 ShowWindow，AHK 的 WinShow 对这类被应用隐藏的窗口不生效（实测无效）
+; 返回 true 表示已成功显示并激活
+ShowWeChatWindow(hwnd) {
+    global ok_x, ok_y, ok_w, ok_h
+    if !hwnd || !DllCall("IsWindow", "ptr", hwnd)
+        return false
+
+    ; cloaked 的窗口（例如停留在别的虚拟桌面）先 SW_HIDE 再 SW_SHOW 才会重新上屏
+    if IsHwndCloaked(hwnd) {
+        DllCall("ShowWindow", "ptr", hwnd, "int", 0)      ; SW_HIDE
+        Sleep(30)
+    }
+
+    DllCall("ShowWindow", "ptr", hwnd, "int", 9)          ; SW_RESTORE（还原并显示）
+    DllCall("ShowWindow", "ptr", hwnd, "int", 5)          ; SW_SHOW（确保 WS_VISIBLE 打开）
+    ; SWP_NOSIZE(0x1)|SWP_NOMOVE(0x2)|SWP_NOACTIVATE(0x10)|SWP_SHOWWINDOW(0x40)
+    DllCall("SetWindowPos", "ptr", hwnd, "ptr", 0, "int", 0, "int", 0, "int", 0, "int", 0, "uint", 0x53)
+    Sleep(60)
+
+    if !IsHwndVisible(hwnd)      ; 还是不可见，说明应用层把窗口又隐藏了
+        return false
+
+    oldDHW := A_DetectHiddenWindows
+    DetectHiddenWindows(true)
+    try {
+        WinActivate("ahk_id " hwnd)
+        WinMove(ok_x, ok_y, ok_w, ok_h, "ahk_id " hwnd)
+        WinSetAlwaysOnTop(true, "ahk_id " hwnd)
+    } finally {
+        DetectHiddenWindows(oldDHW)
+    }
+    return true
+}
+
+switchToWechat() {
+    global ok_x, ok_y, ok_w, ok_h, WeChatExePath, WeChatMainClass, WeChatRelaunchToRestore
+
+    ; 进程没起来 -> 直接启动
+    if (ProcessExist("Weixin.exe") = 0) {
+        Run('"' WeChatExePath '"')
+        return
+    }
+
+    ; ---- ① 正常：主窗口可见 ----
+    hwnd := WinExist("ahk_class " WeChatMainClass " ahk_exe Weixin.exe")
+
+    ; ---- ② 主窗口被隐藏（Ctrl+W 关掉 / 隐藏到托盘，进程与句柄都还在）----
+    if !hwnd {
+        hwnd := GetWeChatHiddenWindow()
+        if hwnd {
+            write("微信主窗口不可见（句柄 " Format("0x{:X}", hwnd) "），尝试点托盘图标唤出")
+            if WakeWeChatByTray() {
+                write("已通过托盘图标唤出微信主窗口")
+                hwnd := WinExist("ahk_class " WeChatMainClass " ahk_exe Weixin.exe")
+                if hwnd {
+                    WinActivate("ahk_id " hwnd)
+                    WinMove(ok_x, ok_y, ok_w, ok_h, "ahk_id " hwnd)
+                    WinSetAlwaysOnTop(true, "ahk_id " hwnd)
+                }
+                return
+            }
+            write("托盘唤出失败，回退 ShowWindow（注意：之后 Ctrl+W 可能失效）")
+            if ShowWeChatWindow(hwnd) {
+                write("已通过 ShowWindow 恢复微信主窗口")
+                return
+            }
+            write("ShowWindow 也无效，窗口可能已被销毁")
+            hwnd := 0
+        }
+    }
+
+    ; ---- ③ 主窗口已被销毁：再跑一次 Weixin.exe，靠单实例机制唤醒已有实例 ----
+    if !hwnd {
+        if !WeChatRelaunchToRestore {
+            write("未找到微信主窗口，且已禁用重新拉起")
+            return
+        }
+        write("未找到微信主窗口，重新拉起 Weixin.exe 唤醒已有实例")
+        Run('"' WeChatExePath '"')
+        loop 40 {
+            Sleep(100)
+            if (hwnd := WinExist("ahk_class " WeChatMainClass " ahk_exe Weixin.exe"))
+                break
+            if (hwnd := GetWeChatHiddenWindow())
+                break
+        }
+        if !hwnd {
+            write("重新拉起后仍未找到微信主窗口")
+            return
+        }
+        if !IsHwndVisible(hwnd) {
+            ShowWeChatWindow(hwnd)
+            return
+        }
+    }
+
+    ; ---- ④ 窗口可见：恢复最小化 / 被遮挡就提到前面，否则最小化 ----
+    if (WinGetMinMax("ahk_id " hwnd) = -1) {
+        WinRestore("ahk_id " hwnd)
+        WinActivate("ahk_id " hwnd)
+        WinMove(ok_x, ok_y, ok_w, ok_h, "ahk_id " hwnd)
+        WinSetAlwaysOnTop(true, "ahk_id " hwnd)
+        return
+    }
+
+    if IsWindowCovered("ahk_id " hwnd) {
+        WinActivate("ahk_id " hwnd)
+        ;WinMove(ok_x+8, ok_y, ok_w-16, ok_h, "ahk_id " hwnd)
+        WinMove(ok_x, ok_y, ok_w, ok_h, "ahk_id " hwnd)
+        WinSetAlwaysOnTop(true, "ahk_id " hwnd)
+    } else {
+        WinMinimize("ahk_id " hwnd)
     }
 }
 
