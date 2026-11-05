@@ -136,7 +136,15 @@ inoremap <c-e> <esc>A
 
 "方便操作
 map ; :
-map mm :wq<enter>
+
+"map mm :wq<enter>
+"用ctrl+s替代mm
+" 覆盖普通、可视、选择、操作符等待模式
+noremap  <C-s> <C-\><C-N>:wq<CR>
+" 覆盖插入和命令行模式
+noremap! <C-s> <C-\><C-N>:wq<CR>
+
+
 noremap ' `
 map sy "+y
 map sp "+p
