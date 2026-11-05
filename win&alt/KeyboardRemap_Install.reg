@@ -1,0 +1,13 @@
+Windows Registry Editor Version 5.00
+
+; Keyboard remap, applied by the keyboard driver at boot:
+;   1) Left Alt <-> Left Win   (full swap)
+;
+;
+; NOTE: "Scancode Map" is a SINGLE value - every mapping must live in this
+; one hex blob. Importing another .reg with a Scancode Map overwrites it.
+;
+; Requires a reboot. Undo with "KeyboardRemap_Restore.reg" + reboot.
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Keyboard Layout]
+"Scancode Map"=hex:00,00,00,00,00,00,00,00,03,00,00,00,38,00,5B,E0,5B,E0,38,00,00,00,00,00

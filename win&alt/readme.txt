@@ -1,0 +1,2 @@
+KeyboardRemap_Install.reg用于将左win和左alt互换，适用于普通windows键盘（左win的右边是左alt的普通的windows键盘）,hhkb键盘不需要KeyboardRemap_Install.reg
+KeyboardRemap_Install.reg运行后需要重启，如需恢复需要运行KeyboardRemap_Restore.reg
