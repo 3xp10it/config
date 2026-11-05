@@ -154,8 +154,9 @@ OnMessage(WM_SHELLHOOK, ShellMessageHandler)
 
 
 
-; 设置CapsLock状态
-SetCapsLockState("AlwaysOff")
+
+
+
 
 ; 初始化同花顺遮罩
 CreateOverlays()
@@ -367,55 +368,68 @@ Persistent()
 }
 
 ; ============================================================
-; CapsLock 热键映射
+; CapsLock 热键映射,按一下为ESC,与其他键组合时为Ctrl
 ; ============================================================
-CapsLock::Send("{Esc}")
 
-CapsLock & a::Send("^a")
-CapsLock & b::Send("^b")
-CapsLock & c::Send("^c")
-CapsLock & d::Send("^d")
-CapsLock & e::Send("^e")
-CapsLock & f::Send("^f")
-CapsLock & g::Send("^g")
-CapsLock & h::Send("^h")
-CapsLock & i::Send("^i")
-CapsLock & j::Send("^j")
-CapsLock & k::Send("^k")
-CapsLock & l::Send("^l")
-CapsLock & m::Send("^m")
-CapsLock & n::Send("^n")
-CapsLock & o::Send("^o")
-CapsLock & p::Send("^p")
-CapsLock & q::Send("^q")
-CapsLock & r::Send("^r")
-CapsLock & s::Send("^s")
-CapsLock & t::Send("^t")
-CapsLock & u::Send("^u")
-CapsLock & v::Send("^v")
-CapsLock & w::Send("^w")
-CapsLock & x::Send("^x")
-CapsLock & y::Send("^y")
-CapsLock & z::Send("^z")
-CapsLock & 0::Send("^0")
-CapsLock & 1::Send("^1")
-CapsLock & 2::Send("^2")
-CapsLock & 3::Send("^3")
-CapsLock & 4::Send("^4")
-CapsLock & 5::Send("^5")
-CapsLock & 6::Send("^6")
-CapsLock & 7::Send("^7")
-CapsLock & 8::Send("^8")
-CapsLock & 9::Send("^9")
-CapsLock & '::Send("^'")
-CapsLock & ,::Send("^,")
-CapsLock & -::Send("^-")
-CapsLock & .::Send("^.")
-CapsLock & /::Send("^/")
-CapsLock & =::Send("^=")
-CapsLock & [::Send("^[")
-CapsLock & ]::Send("^]")
-CapsLock & \::Send("^\")
+*CapsLock::{
+    SendLevel 1
+    Send "{Blind}{LCtrl down}"
+}
+
+*CapsLock Up::{
+    SendLevel 1
+    Send "{Blind}{LCtrl up}"
+    if (A_PriorKey = "CapsLock")
+        Send "{Esc}"
+}
+
+; 脚本退出/重载时确保 Ctrl 不会被卡住
+OnExit(ReleaseCtrl)
+
+ReleaseCtrl(*) {
+    SendLevel 1
+    Send "{Blind}{LCtrl up}"
+}
+
+; 设置CapsLock状态
+SetCapsLockState("AlwaysOff")
+
+; ============================================================
+; 左 Ctrl 双角色：轻敲 = Esc，与其他键组合 = 正常 Ctrl
+;
+; ~ 前缀表示【不拦截】，物理 Ctrl 原样放行，所以 Ctrl+C / Ctrl+V /
+; Ctrl+Tab 这些组合完全走系统原生路径，不需要注入、不涉及 SendLevel。
+; 松开时用 A_PriorKey 判断这段按住期间有没有按过别的键：
+; 没按过 -> 是一次轻敲 -> 补发 Esc。
+;
+; 注意：A_PriorKey 只记录键盘，不记录鼠标。所以 Ctrl+单击、Ctrl+拖拽
+; 之后松开 Ctrl 也会出 Esc。下面的 g_mouseUsed 就是用来挡掉这类情况的。
+; ============================================================
+
+; Ctrl 按住期间的鼠标点击 -> 标记为「已使用」，松开 Ctrl 时不再转 Esc。
+; ~ 前缀同样不拦截，点击行为完全正常。
+#HotIf GetKeyState("LCtrl", "P")
+~*LButton::{
+    global g_mouseUsed := true
+}
+~*RButton::{
+    global g_mouseUsed := true
+}
+~*MButton::{
+    global g_mouseUsed := true
+}
+#HotIf
+
+$~*LCtrl::{
+    global g_mouseUsed := false
+}
+
+$~*LCtrl Up::{
+    global g_mouseUsed
+    if (A_PriorKey = "LControl" && !g_mouseUsed)
+        Send "{LCtrl up}{Esc}"
+}
+
 
 
 ; 将窗口从视觉上移动到 x,y 并调整大小为 w,h
@@ -1246,7 +1260,10 @@ SmartClose() {
     }
 
     if (winClass = "CabinetWClass") {
-        Send("!{F4}")
+        ; 不能用 Send("!{F4}")：CapsLock 充当 Ctrl 时 Ctrl 仍被按住，
+        ; 发出去的会变成 Ctrl+Alt+F4，资源管理器不响应。
+        ; 改用窗口消息，绕开键盘状态。
+        WinClose("ahk_id " hwnd)
     } else if (winClass = "ApplicationFrameWindow") {
         PostMessage(0x112, 0xF060, , , "A")
     } else if (processName = "hexin.exe" && currentTitle = "添加预警") {
