@@ -9,6 +9,13 @@ DllCall("SetProcessDPIAware")
 showMonitorGui := false   ; 设为 false 时完全不创建 GUI，使用脚本主窗口；true为创建；
 msgWindow := 0            ; 消息接收窗口句柄，将在脚本启动时赋值
 
+; ---------- 修饰键双角色相关全局变量 ----------
+; 必须在最外层初始化，否则 #HotIf 条件里读到未赋值变量会直接报错
+g_capsHeld  := false      ; CapsLock 是否按住
+g_capsRepeated := false   ; 本次按住期间是否出现过键盘自动重复
+g_mouseUsed := false      ; 按住期间是否点过鼠标（CapsLock / 左 Ctrl 共用）
+g_injCtrlUpTick := 0      ; 最近一次 CapsLock 注入 Ctrl up 的时刻（用于忽略对应的 LCtrl Up）
+
 ; ---------- 同花顺相关全局变量 ----------
 cmds_should_show_realnews := "0"
 win_ctrl_w_should_close_ths_fenxi_window := "0"
@@ -378,18 +385,57 @@ Persistent()
 
 ; ============================================================
 ; CapsLock 热键映射,按一下为ESC,与其他键组合时为Ctrl
+;
+; g_capsHeld  : CapsLock 当前是否按住
+; g_mouseUsed : 按住期间是否点过鼠标（CapsLock 与左 Ctrl 共用）
 ; ============================================================
 
+; 临时诊断日志（排查完会删掉）
+DiagLog(s) {
+    try FileAppend(A_TickCount " " s "`n", "C:\Users\Administrator\AppData\Local\Temp\ahk_diag.log")
+}
+
+; 兜底：按住修饰键期间用定时器轮询鼠标按钮状态。
+; 不依赖鼠标热键、不依赖钩子，只要按键真的按下过就一定能捕捉到。
+WatchMouse() {
+    global g_mouseUsed
+    if (GetKeyState("LButton", "P") || GetKeyState("RButton", "P")
+        || GetKeyState("MButton", "P")
+        || GetKeyState("XButton1", "P") || GetKeyState("XButton2", "P"))
+        g_mouseUsed := true
+}
+
 *CapsLock::{
+    global g_capsHeld, g_mouseUsed, g_capsRepeated
+    ; 按住不放时键盘会自动重复，这个热键会被反复触发（每 30ms 一次）。
+    ; 重复的那几次必须直接忽略，否则会把 g_mouseUsed 清掉、把 A_PriorKey
+    ; 重置回 CapsLock，导致「点过鼠标/按过别的键」的判断全部失效。
+    if (g_capsHeld) {
+        g_capsRepeated := true      ; 出现过重复 = 按住超过系统重复延迟，不可能是轻敲
+        return
+    }
+    g_capsHeld  := true
+    g_capsRepeated := false
+    g_mouseUsed := false
+    DiagLog("CAPS_DOWN")
+    SetTimer(WatchMouse, 15)
     SendLevel 1
     Send "{Blind}{LCtrl down}"
 }
 
 *CapsLock Up::{
+    global g_capsHeld, g_mouseUsed, g_capsRepeated, g_injCtrlUpTick
+    g_capsHeld := false
+    SetTimer(WatchMouse, 0)
+    g_injCtrlUpTick := A_TickCount       ; 记下这次注入 Ctrl up 的时间，供 LCtrl Up 忽略
     SendLevel 1
     Send "{Blind}{LCtrl up}"
-    if (A_PriorKey = "CapsLock")
+    ; 注入的 Ctrl down 会把 A_PriorKey 变成 LControl，所以这两个值都算「没按过别的键」
+    DiagLog("CAPS_UP prior=[" A_PriorKey "] mouseUsed=" g_mouseUsed " repeated=" g_capsRepeated)
+    if (!g_capsRepeated && (A_PriorKey = "CapsLock" || A_PriorKey = "LControl") && !g_mouseUsed) {
+        DiagLog("  -> SEND_ESC (from CapsLock)")
         Send "{Esc}"
+    }
 }
 
 ; 脚本退出/重载时确保 Ctrl 不会被卡住
@@ -411,32 +457,52 @@ SetCapsLockState("AlwaysOff")
 ; 松开时用 A_PriorKey 判断这段按住期间有没有按过别的键：
 ; 没按过 -> 是一次轻敲 -> 补发 Esc。
 ;
-; 注意：A_PriorKey 只记录键盘，不记录鼠标。所以 Ctrl+单击、Ctrl+拖拽
-; 之后松开 Ctrl 也会出 Esc。下面的 g_mouseUsed 就是用来挡掉这类情况的。
+; 注意：A_PriorKey 对鼠标的跟踪并不可靠。所以 Ctrl / CapsLock 按住期间的
+; 鼠标点击统一用 g_mouseUsed 标记，松开时不再转 Esc。
 ; ============================================================
 
-; Ctrl 按住期间的鼠标点击 -> 标记为「已使用」，松开 Ctrl 时不再转 Esc。
-; ~ 前缀同样不拦截，点击行为完全正常。
-#HotIf GetKeyState("LCtrl", "P")
+; 按住期间的鼠标点击 -> 标记为「已使用」，松开时不再转 Esc。
+; ~ 前缀不拦截点击，行为完全正常。
+; 这里刻意【不加 #HotIf】：条件式热键在某些情况下不触发，改成无条件注册、
+; 在函数内部判断，最可靠。
 ~*LButton::{
-    global g_mouseUsed := true
+    global g_capsHeld, g_mouseUsed
+    DiagLog("LBUTTON capsHeld=" g_capsHeld " lctrlP=" GetKeyState("LCtrl", "P"))
+    if (g_capsHeld || GetKeyState("LCtrl", "P"))
+        g_mouseUsed := true
 }
 ~*RButton::{
-    global g_mouseUsed := true
+    global g_capsHeld, g_mouseUsed
+    if (g_capsHeld || GetKeyState("LCtrl", "P"))
+        g_mouseUsed := true
 }
 ~*MButton::{
-    global g_mouseUsed := true
+    global g_capsHeld, g_mouseUsed
+    if (g_capsHeld || GetKeyState("LCtrl", "P"))
+        g_mouseUsed := true
 }
-#HotIf
 
 $~*LCtrl::{
-    global g_mouseUsed := false
+    global g_mouseUsed, g_capsHeld
+    DiagLog("LCTRL_DOWN capsHeld=" g_capsHeld)
+    ; CapsLock 按住期间的那次 Ctrl down 是注入的，不要清掉鼠标标记
+    if (g_capsHeld)
+        return
+    g_mouseUsed := false
+    SetTimer(WatchMouse, 15)
 }
 
 $~*LCtrl Up::{
-    global g_mouseUsed
-    if (A_PriorKey = "LControl" && !g_mouseUsed)
+    global g_mouseUsed, g_injCtrlUpTick
+    DiagLog("LCTRL_UP prior=[" A_PriorKey "] mouseUsed=" g_mouseUsed " dt=" (A_TickCount - g_injCtrlUpTick))
+    ; CapsLock 松开时注入的那次 Ctrl up 会异步触发到这里，靠时间戳忽略掉
+    if (A_TickCount - g_injCtrlUpTick < 250)
+        return
+    SetTimer(WatchMouse, 0)
+    if (A_PriorKey = "LControl" && !g_mouseUsed) {
+        DiagLog("  -> SEND_ESC (from LCtrl)")
         Send "{LCtrl up}{Esc}"
+    }
 }
 
 
