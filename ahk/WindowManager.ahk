@@ -15,6 +15,9 @@ g_capsHeld  := false      ; CapsLock 是否按住
 g_capsRepeated := false   ; 本次按住期间是否出现过键盘自动重复
 g_mouseUsed := false      ; 按住期间是否点过鼠标（CapsLock / 左 Ctrl 共用）
 g_injCtrlUpTick := 0      ; 最近一次 CapsLock 注入 Ctrl up 的时刻（用于忽略对应的 LCtrl Up）
+g_ctrlRemapped := false   ; 本次按住 Ctrl/CapsLock 期间是否触发过 Ctrl+J / Ctrl+K 重映射
+                          ; （重映射会把 Ctrl 重新按下，A_PriorKey 因此变成 LControl，
+                          ;   松开时不能再当轻敲补发 Esc）
 
 ; ---------- 同花顺相关全局变量 ----------
 cmds_should_show_realnews := "0"
@@ -236,6 +239,55 @@ Persistent()
 #+f::fullscreen_current_window
 
 ; ============================================================
+; Ctrl+J / Ctrl+K  →  下 / 上 方向键
+;
+; 为什么要「抬 Ctrl → 发键 → 还原」：
+;   热键触发时 Ctrl 逻辑上按着，直接发 Down 应用会收到 Ctrl+↓
+;   （编辑器里是「跳到下一段」），所以必须抬起来再还原。
+;
+; 【重要】GetKeyState(..., "P") 会被本脚本自己注入的按键改变（实测：
+;   Send "{LCtrl down}" 后 P=1，Send "{LCtrl up}" 后 P=0）。所以物理状态
+;   必须在注入任何 up/down 之前一次性读出来，注入之后再读就不准了。
+;
+; 为什么需要 g_ctrlRemapped：
+;   注入的 LCtrl down 会把 A_PriorKey 改写成 LControl（本脚本靠
+;   A_PriorKey 判断「Ctrl 轻敲 = Esc」），若不管它，Ctrl+J 之后一松 Ctrl
+;   就会白白多打一个 Esc。标记位在松开 Ctrl / CapsLock 时消费掉。
+;
+; 抬/按 Ctrl 全部用 SendLevel 1 注入，不会回头触发本脚本的 LCtrl 热键，
+; 也就不会打乱 g_mouseUsed 之类的状态。
+; ============================================================
+
+^j::SendArrowKey("Down")
+^k::SendArrowKey("Up")
+
+SendArrowKey(key) {
+    global g_ctrlRemapped, g_capsHeld
+
+    ; 注入之前读物理状态（CapsLock 注入的那个 LCtrl 用 g_capsHeld 兜住）。
+    ; 只有会重新按下 LCtrl 时才需要标记位：纯右 Ctrl 不涉及「轻敲 = Esc」。
+    restoreL := (g_capsHeld || GetKeyState("LCtrl", "P"))
+    restoreR := GetKeyState("RCtrl", "P")
+    DiagLog("ARROW key=" key " restoreL=" restoreL " restoreR=" restoreR)
+    if restoreL
+        g_ctrlRemapped := true
+
+    SendLevel 1
+    ; 1) 抬起逻辑上的 Ctrl
+    if restoreL
+        Send "{Blind}{LCtrl up}"
+    if restoreR
+        Send "{Blind}{RCtrl up}"
+    ; 2) 发方向键：此刻 Ctrl 是抬起的，应用收到的是纯 ↓ / ↑
+    Send "{Blind}{" key "}"
+    ; 3) 按回去，用上面捕获的状态，不要再读 GetKeyState
+    if restoreL
+        Send "{Blind}{LCtrl down}"
+    if restoreR
+        Send "{Blind}{RCtrl down}"
+}
+
+; ============================================================
 ; 窗口历史切换热键（基于基准历史，区分超时）
 ; ============================================================
 
@@ -424,7 +476,7 @@ WatchMouse() {
 }
 
 *CapsLock Up::{
-    global g_capsHeld, g_mouseUsed, g_capsRepeated, g_injCtrlUpTick
+    global g_capsHeld, g_mouseUsed, g_capsRepeated, g_injCtrlUpTick, g_ctrlRemapped
     g_capsHeld := false
     SetTimer(WatchMouse, 0)
     g_injCtrlUpTick := A_TickCount       ; 记下这次注入 Ctrl up 的时间，供 LCtrl Up 忽略
@@ -432,6 +484,12 @@ WatchMouse() {
     Send "{Blind}{LCtrl up}"
     ; 注入的 Ctrl down 会把 A_PriorKey 变成 LControl，所以这两个值都算「没按过别的键」
     DiagLog("CAPS_UP prior=[" A_PriorKey "] mouseUsed=" g_mouseUsed " repeated=" g_capsRepeated)
+    ; 本次按住期间按过 Ctrl+J / Ctrl+K：重映射结束时把 Ctrl 重新按下了，
+    ; A_PriorKey 被改写成 LControl，不能当成轻敲再补发 Esc
+    if (g_ctrlRemapped) {
+        g_ctrlRemapped := false
+        return
+    }
     if (!g_capsRepeated && (A_PriorKey = "CapsLock" || A_PriorKey = "LControl") && !g_mouseUsed) {
         DiagLog("  -> SEND_ESC (from CapsLock)")
         Send "{Esc}"
@@ -493,12 +551,18 @@ $~*LCtrl::{
 }
 
 $~*LCtrl Up::{
-    global g_mouseUsed, g_injCtrlUpTick
+    global g_mouseUsed, g_injCtrlUpTick, g_ctrlRemapped
     DiagLog("LCTRL_UP prior=[" A_PriorKey "] mouseUsed=" g_mouseUsed " dt=" (A_TickCount - g_injCtrlUpTick))
     ; CapsLock 松开时注入的那次 Ctrl up 会异步触发到这里，靠时间戳忽略掉
     if (A_TickCount - g_injCtrlUpTick < 250)
         return
     SetTimer(WatchMouse, 0)
+    ; 见 SendArrowKey：Ctrl+J / Ctrl+K 结束时会把 Ctrl 重新按下，
+    ; A_PriorKey 因此变成 LControl，这里不能当成轻敲
+    if (g_ctrlRemapped) {
+        g_ctrlRemapped := false
+        return
+    }
     if (A_PriorKey = "LControl" && !g_mouseUsed) {
         DiagLog("  -> SEND_ESC (from LCtrl)")
         Send "{LCtrl up}{Esc}"
