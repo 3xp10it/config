@@ -143,6 +143,8 @@ map ; :
 noremap  <C-s> <C-\><C-N>:wq<CR>
 " 覆盖插入和命令行模式
 noremap! <C-s> <C-\><C-N>:wq<CR>
+" 覆盖命令行模式/搜索模式 (新增，使用 <C-C>)
+cnoremap <C-s> <C-C>:wq<CR>
 
 
 noremap ' `
