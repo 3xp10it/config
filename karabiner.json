@@ -16,31 +16,6 @@
                 },
                 "rules": [
                     {
-                        "description": "Left Command -> ctrl+shift+z",
-                        "manipulators": [
-                            {
-                                "from": {
-                                    "key_code": "left_command"
-                                },
-                                "to": [
-                                    {
-                                        "key_code": "left_command"
-                                    }
-                                ],
-                                "to_if_alone": [
-                                    {
-                                        "key_code": "z",
-                                        "modifiers": [
-                                            "control",
-                                            "shift"
-                                        ]
-                                    }
-                                ],
-                                "type": "basic"
-                            }
-                        ]
-                    },
-                    {
                         "description": "Change shift + delete to forward delete (rev 2)",
                         "manipulators": [
                             {
