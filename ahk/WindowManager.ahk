@@ -224,7 +224,8 @@ Persistent()
         WinActivate("WorkBuddy AI")
     } else {
         ; 没找到窗口时的提示（如果不需要提示可以删掉这行）
-        MsgBox("未找到 WorkBuddy 窗口，请确认程序已运行。", "提示", "Icon!")
+        ; MsgBox("未找到 WorkBuddy 窗口，请确认程序已运行。", "提示", "Icon!")
+        Run("D:\Program Files\WorkBuddyAI\WorkBuddyAI.exe")
     }
 }
 
@@ -745,6 +746,14 @@ switchToUseChrome() {
         WinMinimize
     }
 
+    if (hwnd := WinExist("实时新闻 ahk_exe python.exe")) {
+        Style := WinGetStyle("ahk_id " hwnd)
+        if (!(Style & 0x20000000)) {
+            ;如果实时新闻窗口没有最小化则将该窗口移到右边
+            moveRealnews()
+        }
+    }
+    
     SetTitleMatchMode(2)
     if WinExist("ahk_exe chrome.exe") {
         WinRestore
@@ -761,13 +770,7 @@ switchToUseChrome() {
     }
 
 
-    if (hwnd := WinExist("实时新闻 ahk_exe python.exe")) {
-        Style := WinGetStyle("ahk_id " hwnd)
-        if (!(Style & 0x20000000)) {
-            ;如果实时新闻窗口没有最小化则将该窗口移到右边
-            moveRealnews()
-        }
-    }
+
 
 }
 
