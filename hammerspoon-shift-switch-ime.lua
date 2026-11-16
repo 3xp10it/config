@@ -1,0 +1,321 @@
+
+-- ==============================================================
+-- 放在 Mac 上：~/.hammerspoon/init.lua
+--
+-- 单按 Shift → 切换 macOS 输入法。
+-- 物理键盘和 Synergy 转发的按键都由本脚本处理
+-- （Karabiner 里原来那条 left_command → ctrl+shift+z 已经删掉，
+--   现在只有一个地方管这件事，不再有双触发和配置分散的问题）。
+--
+-- 为什么判定要比 Command 严：
+--   Shift 是打字时最忙的修饰键，除了「按下别的键」之外，还有两类
+--   不产生 keyDown 的用法会误触发：
+--     · Shift + 鼠标点击（框选、Shift+点链接、Shift+拖拽）
+--     · Shift + 滚轮（横向滚动）
+--   所以 eventtap 里额外监听了鼠标事件，见 handle()。
+--
+-- 中文输入源怎么来的：
+--   Hammerspoon 1.0+ 是 Lua 5.4，没有 LuaJIT 的 ffi，枚举不了 TIS；
+--   defaults 那张 plist 又只登记 Apple 自家的输入法，看不到第三方输入法。
+--   所以：发 Ctrl+Shift+Z 让系统轮转输入源，转到中文就记下它的 ID，
+--   然后恢复原状。全程自动，不做缓存（删掉的输入法 ID 依然"长得合法"，
+--   缓存下来只会指着一个已经不存在的东西）。
+--
+-- 为什么要补焦点抖动：
+--   iTerm2 / Chrome 这类自己实现输入栈的 App，不会在输入源变更时
+--   重建输入上下文，只在窗口重新成为 key window 时才重读。
+--   表现：菜单栏显示中文，打出来还是英文。
+--   办法：借 Hammerspoon（无窗口的后台程序）顶一下焦点，再切回来。
+--
+-- 「切到某些 App 自动回英文」也在本脚本里做（AUTO_EN_APPS），
+-- 不用 Keyboard Maestro——这样抖动期间可以临时屏蔽，两者不会打架。
+-- ==============================================================
+
+local T = hs.eventtap.event.types
+
+local EN = "com.apple.keylayout.US"
+
+-- ---------- 中文输入源：自动识别 ----------
+-- 只用来判断「轮转到的这个是不是中文输入法」，
+-- 免得把越南语、日文之类误认成中文。
+local CN_PATTERNS = {
+  "^com%.apple%.inputmethod%.SCIM",   -- 简体：拼音 / 五笔 / 手写
+  "^com%.apple%.inputmethod%.TCIM",   -- 繁体：仓颉 / 速成 / 五笔 / 拼音
+  "^com%.baidu%.inputmethod",         -- 百度
+  "^com%.sogou%.inputmethod",         -- 搜狗
+  "^com%.tencent%.inputmethod",       -- 腾讯
+  "^com%.iflytek%.inputmethod",       -- 讯飞
+}
+
+local function isChinese(id)
+  if not id or id == EN then return false end
+  if id:find("Handwriting", 1, true) then return false end
+  for _, p in ipairs(CN_PATTERNS) do
+    if id:match(p) then return true end
+  end
+  return false
+end
+
+local ZH             -- 当前认定的中文输入源，识别完成后才有值
+local discovering = false
+
+-- 发一次「选择上一个输入源」。必须走 System Events：
+-- hs.eventtap.keyStroke 用的是私有事件源，系统符号快捷键不认。
+local function pressSwitch()
+  hs.osascript.applescript(
+    [[tell application "System Events" to key code 6 using {control down, shift down}]])
+end
+
+-- 异步轮转输入源，转到中文就记下来并恢复原状。
+-- 必须异步：applescript 是同步阻塞的，阻塞期间事件循环不动，
+-- 输入源不会真的切过去。
+local function discoverZH(done)
+  if discovering then return end
+  discovering = true
+
+  local start = hs.keycodes.currentSourceID()
+
+  if isChinese(start) then
+    discovering = false
+    print("[IME] 中文输入源 = " .. start)
+    done(start)
+    return
+  end
+
+  local seen  = { [start] = true }
+  local tries = 0
+
+  local function finish(id)
+    discovering = false
+    if id then
+      print("[IME] 中文输入源 = " .. id .. "（轮转识别）")
+    else
+      print("[IME] 自动识别失败：轮转完所有输入源都没找到中文输入法")
+    end
+    done(id)
+  end
+
+  local function step()
+    tries = tries + 1
+    if tries > 8 then
+      hs.keycodes.currentSourceID(start)
+      finish(nil)
+      return
+    end
+
+    pressSwitch()
+
+    -- 存到全局，避免定时器被 GC 掉导致回调不执行
+    hs.imeDiscoverTimer = hs.timer.doAfter(0.12, function()
+      local id = hs.keycodes.currentSourceID()
+
+      if isChinese(id) then
+        if id ~= start then hs.keycodes.currentSourceID(start) end
+        finish(id)
+        return
+      end
+
+      if seen[id] then                 -- 转回起点了，说明确实没有
+        hs.keycodes.currentSourceID(start)
+        finish(nil)
+        return
+      end
+
+      seen[id] = true
+      step()
+    end)
+  end
+
+  step()
+end
+
+-- ---------- 切到某些 App 时自动回英文 ----------
+-- 原来这条规则在 Keyboard Maestro 里（「iTerm2 激活 → 切英文」）。
+-- 搬过来的原因：焦点抖动会让 iTerm2 重新激活，KM 那条规则会跟着触发，
+-- 把刚切好的中文又顶回英文。放在同一个进程里才能协调。
+local AUTO_EN_APPS = {
+  ["com.googlecode.iterm2"] = true,
+}
+
+-- 抖动进行中，屏蔽上面的自动切英文
+local dancing = false
+
+-- ---------- 切完之后补一次焦点抖动 ----------
+-- 借道的 App 必须是无窗口的后台程序（agent）：它激活时只产生
+-- 「目标 App 失去 / 重获 active」的通知对，画面上什么都不变。
+-- 换成 Finder 这种正常 App 会真的抢焦点，画面会闪。
+local NEED_REFRESH = {
+  ["com.googlecode.iterm2"]      = true,   -- iTerm2
+  -- ["com.google.Chrome"]         = true,   -- Chrome
+  -- ["com.microsoft.VSCode"]      = true,   -- VS Code
+  -- ["com.tinyspeck.slackmacgap"] = true,   -- Slack
+  -- ["com.hnc.Discord"]           = true,   -- Discord
+}
+
+local REFRESH_VIA   = "Hammerspoon"
+local REFRESH_DELAY = 0.02      -- 顶出去多久再让回来（只要够 Hammerspoon 真的拿到前台）
+
+local function refreshFrontApp()
+  local app = hs.application.frontmostApplication()
+  if not app then return end
+
+  local bid = app:bundleID()
+  if not bid or not NEED_REFRESH[bid] then return end
+
+  local pivot = hs.application.get(REFRESH_VIA)
+  if not pivot or pivot:bundleID() == bid then return end
+
+  dancing = true                  -- 先屏蔽自动切英文，再动焦点
+
+  pivot:activate()
+
+  hs.imeRefreshTimer = hs.timer.doAfter(REFRESH_DELAY, function()
+    local back = hs.application.get(bid)
+    if back then back:activate() end
+
+    -- 抖动结束后再解除屏蔽，避免自己的激活触发自动切英文。
+    -- 只要覆盖住 watcher 收到 activated 的那几毫秒就够，不必留长。
+    hs.imeRefreshTimer2 = hs.timer.doAfter(0.05, function()
+      dancing = false
+    end)
+  end)
+end
+
+-- ---------- 单按 Shift 判定 ----------
+-- 触发键只有 Shift（左右都算）。不再区分「Mac 键盘的 Shift」还是
+-- 「Synergy 转发过来的 Shift」——同一个键、同一个语义，没有区分的必要。
+--
+-- 唯一保留的是 `or kc == 0`：Synergy 转发修饰键时 keycode 是 0
+-- （当初用 Command 实测出来的）。那只是兼容「到达形式」，不是在判断来源。
+--
+-- 为什么不再有「Synergy Win 键」那条：
+--   物理键盘按 Command 会跟着来一个 kc=0 的余波，而「kc=0 + cmd flag」
+--   正是 Synergy Win 键的特征。留着那条的话，按左 Command 依然会切输入法，
+--   与「改用 Shift」矛盾；要靠 physicalUntil 时间窗才能挡住，而那个时间窗
+--   又必须监听 kc=55 去维护——绕一圈就回到了「区分来源」。
+--   删掉之后两个问题一起消失。
+--
+-- 「单按」的三道拦截：
+--   1. 按下任何真正的键（字母 / 数字 / 符号 / 方向键）→ solo = false
+--   2. 按着 Shift 又按了别的修饰键（Cmd / Opt / Ctrl）→ solo = false
+--   3. Shift + 鼠标点击 / 滚轮 → solo = false（这类操作不产生 keyDown，必须单独拦）
+local SHIFT_KC = { [56] = true, [60] = true }   -- 左 / 右 Shift
+local TRIGGER_RELEASE_KC = { [0] = true, [56] = true, [60] = true }
+
+local pressed = false
+local solo    = false          -- 按下期间有没有夹带其它键 / 鼠标动作
+
+-- 切换延迟。0 = 收到按键立刻切。
+-- 之前为了绕开「切太快 App 漏通知」用过 0.2，但那样手感明显变钝；
+-- 现在改用焦点抖动来刷新上下文，延迟可以回到 0。
+local SWITCH_DELAY = 0
+
+local function armPress()
+  pressed, solo = true, true
+  -- 兜底：万一收不到「松开」事件，3 秒后自动复位。
+  -- 顺带的好处：按住 Shift 超过 3 秒（显然不是在「点一下」）不会触发切换。
+  hs.timer.doAfter(3, function()
+    if pressed then pressed, solo = false, false end
+  end)
+end
+
+local function fire()
+  hs.timer.doAfter(SWITCH_DELAY, function()
+    if not ZH then return end          -- 还在识别，这次先不管
+
+    local cur    = hs.keycodes.currentSourceID()
+    local target = (cur == ZH) and EN or ZH
+
+    if hs.keycodes.currentSourceID(target) == false then
+      -- 这个 ID 已经不可用了（换了输入法、或者卸载了）。重新识别，
+      -- 识别完会自动切到新的中文输入法，用户不用管。
+      print("[IME] 输入源已失效，正在重新识别…")
+      ZH = nil
+      discoverZH(function(id)
+        ZH = id
+        if id and hs.keycodes.currentSourceID() ~= id then
+          hs.keycodes.currentSourceID(id)
+        end
+      end)
+      return
+    end
+
+    refreshFrontApp()
+  end)
+end
+
+local function release()
+  local wasSolo = solo
+  pressed, solo = false, false
+
+  if wasSolo then fire() end        -- fire() 末尾会自己调 refreshFrontApp()
+end
+
+local function handle(e)
+  local t  = e:getType()
+  local kc = e:getKeyCode()
+  local f  = e:getFlags()
+
+  -- Shift + 鼠标：框选、Shift+点链接、Shift+拖拽、横向滚动，都不是单按
+  if t == T.leftMouseDown or t == T.rightMouseDown
+     or t == T.otherMouseDown or t == T.scrollWheel then
+    if pressed then solo = false end
+    return false
+  end
+
+  if t == T.flagsChanged then
+    if f.shift then
+      -- kc=0 也认：Synergy 转发修饰键时用的是 keycode 0
+      if (SHIFT_KC[kc] or kc == 0) and not (f.cmd or f.alt or f.ctrl) then
+        if not pressed then armPress() end
+      else
+        -- 按着 Shift 又按了别的修饰键 → 组合键，不是单按
+        if pressed then solo = false end
+      end
+    else
+      if pressed then
+        -- 松开时还按着别的修饰键 → 组合键，不是单按
+        if f.cmd or f.alt or f.ctrl then solo = false end
+        release()
+      end
+    end
+    return false
+  end
+
+  if t == T.keyUp then
+    if pressed and TRIGGER_RELEASE_KC[kc] then release() end
+    return false
+  end
+
+  if t == T.keyDown then
+    -- 按下任何「真正的」按键，说明不是单按
+    if not TRIGGER_RELEASE_KC[kc] and pressed then
+      solo = false
+    end
+    return false
+  end
+
+  return false
+end
+
+-- 挂到全局，避免被 Lua 垃圾回收（写成 local 会在几秒后失效）
+hs.imeTap = hs.eventtap.new({
+  T.flagsChanged, T.keyDown, T.keyUp,
+  T.leftMouseDown, T.rightMouseDown, T.otherMouseDown, T.scrollWheel,
+}, handle)
+hs.imeTap:start()
+
+-- 切到 AUTO_EN_APPS 里的 App 时自动回英文
+hs.imeAppWatcher = hs.application.watcher.new(function(_, event, app)
+  if event ~= hs.application.watcher.activated then return end
+  if dancing then return end
+
+  local bid = app and app:bundleID()
+  if bid and AUTO_EN_APPS[bid] then
+    hs.keycodes.currentSourceID(EN)
+  end
+end)
+hs.imeAppWatcher:start()
+
+-- ---------- 启动时识别中文输入源 ----------
+discoverZH(function(id) ZH = id end)
