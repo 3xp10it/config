@@ -1,0 +1,7 @@
+Windows Registry Editor Version 5.00
+
+; Remove all keyboard remapping and restore stock key behavior.
+; Requires a reboot.
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Keyboard Layout]
+"Scancode Map"=-
