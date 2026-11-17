@@ -188,6 +188,9 @@ Persistent()
 ; 窗口管理热键定义
 ; ============================================================
 
+; ----- 拦截 Shift+空格，防止误触全角/半角切换 -----
++Space::Return
+
 ; ----- 应用程序快速切换热键 -----
 #g::switchToChrome
 #^g::switchToUseChrome
@@ -1204,8 +1207,12 @@ switchToTHS() {
             if WinExist("ahk_id " hwnd) {
                 title := WinGetTitle("ahk_id " hwnd)
                 processName := WinGetProcessName("ahk_id " hwnd)
+                winClass := WinGetClass("ahk_id " hwnd)
                 ;if (processName != "hexin.exe" && (processName != "stockapp.exe" || InStr(title, "guba_jiucai_xueqiu")) && title != "quick_program.ahk") {
-                if (processName != "hexin.exe" && (title != "陈小群" && title != "下单" && title != "排板" && title != "大单异动" && title != "实时新闻" && title != "涨停股" && title != "股票池" && title != "概念" && title != "风向标" && title != "个股新闻") && title != "quick_program.ahk") {
+                ;2026-11-17: 跳过 tl50 的键盘精灵(#32770, 标题空)。它是置顶窗口,一定压在同花顺上面,
+                ;以前会被下面 WinMinimize 掉;而最小化会让 tl50 的 DuiLib 布局塌掉(Edit 宽度变 0),
+                ;用户切回 tl50 后精灵只剩一条残条、敲字只出系统"叮",必须按 Esc 才能重建。这里直接不管它。
+                if (processName != "hexin.exe" && !(processName = "tl50v2.exe" && winClass = "#32770" && title = "") && (title != "陈小群" && title != "下单" && title != "排板" && title != "大单异动" && title != "实时新闻" && title != "涨停股" && title != "股票池" && title != "概念" && title != "风向标" && title != "个股新闻") && title != "quick_program.ahk") {
                     if (processName == "chrome.exe") {
                         Style := WinGetStyle("ahk_id " hwnd)
                         if (!(Style & 0x20000000)) {
