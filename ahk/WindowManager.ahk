@@ -12,12 +12,11 @@ msgWindow := 0            ; 消息接收窗口句柄，将在脚本启动时赋�
 ; ---------- 修饰键双角色相关全局变量 ----------
 ; 必须在最外层初始化，否则 #HotIf 条件里读到未赋值变量会直接报错
 g_capsHeld  := false      ; CapsLock 是否按住
-g_capsRepeated := false   ; 本次按住期间是否出现过键盘自动重复
+g_capsRepeated := false   ; 本次按住 CapsLock 期间是否「用过」（自动重复 / Ctrl+J/K 重写）
+g_ctrlHeld  := false      ; 左 Ctrl 是否处于按住状态（区分首次按下与自动重复）
+g_ctrlRepeated := false   ; 本次按住左 Ctrl 期间是否「用过」（自动重复 / Ctrl+J/K 重写）
 g_mouseUsed := false      ; 按住期间是否点过鼠标（CapsLock / 左 Ctrl 共用）
 g_injCtrlUpTick := 0      ; 最近一次 CapsLock 注入 Ctrl up 的时刻（用于忽略对应的 LCtrl Up）
-g_ctrlRemapped := false   ; 本次按住 Ctrl/CapsLock 期间是否触发过 Ctrl+J / Ctrl+K 重映射
-                          ; （重映射会把 Ctrl 重新按下，A_PriorKey 因此变成 LControl，
-                          ;   松开时不能再当轻敲补发 Esc）
 
 ; ---------- 同花顺相关全局变量 ----------
 cmds_should_show_realnews := "0"
@@ -243,7 +242,7 @@ Persistent()
 #+f::fullscreen_current_window
 
 ; ============================================================
-; Ctrl+J / Ctrl+K  →  下 / 上 方向键
+; Ctrl+J / Ctrl+K → 下 / 上 方向键
 ;
 ; 为什么要「抬 Ctrl → 发键 → 还原」：
 ;   热键触发时 Ctrl 逻辑上按着，直接发 Down 应用会收到 Ctrl+↓
@@ -253,28 +252,33 @@ Persistent()
 ;   Send "{LCtrl down}" 后 P=1，Send "{LCtrl up}" 后 P=0）。所以物理状态
 ;   必须在注入任何 up/down 之前一次性读出来，注入之后再读就不准了。
 ;
-; 为什么需要 g_ctrlRemapped：
-;   注入的 LCtrl down 会把 A_PriorKey 改写成 LControl（本脚本靠
-;   A_PriorKey 判断「Ctrl 轻敲 = Esc」），若不管它，Ctrl+J 之后一松 Ctrl
-;   就会白白多打一个 Esc。标记位在松开 Ctrl / CapsLock 时消费掉。
+; 为什么要把 Ctrl+J/K 计入「用过」：
+;   还原时注入的 LCtrl down 会把 A_PriorKey 改写成 LControl（本脚本靠
+;   A_PriorKey 判断「修饰键轻敲 = Esc」）。这跟按住期间按了别的键是同一类
+;   「不是轻敲」的情况，统一并入 repeated 标记。
 ;
-; 抬/按 Ctrl 全部用 SendLevel 1 注入，不会回头触发本脚本的 LCtrl 热键，
-; 也就不会打乱 g_mouseUsed 之类的状态。
+; 抬/按 Ctrl 全部用 SendLevel 1 注入，不会回头触发本脚本的 Ctrl 热键，
+; 也就不会打乱 g_mouseUsed / repeated 之类的状态。
 ; ============================================================
 
 ^j::SendArrowKey("Down")
 ^k::SendArrowKey("Up")
 
 SendArrowKey(key) {
-    global g_ctrlRemapped, g_capsHeld
+    global g_capsHeld, g_capsRepeated, g_ctrlRepeated
 
     ; 注入之前读物理状态（CapsLock 注入的那个 LCtrl 用 g_capsHeld 兜住）。
-    ; 只有会重新按下 LCtrl 时才需要标记位：纯右 Ctrl 不涉及「轻敲 = Esc」。
+    ; 只有会重新按下 LCtrl 时才需要标记：纯右 Ctrl 不涉及「轻敲 = Esc」。
     restoreL := (g_capsHeld || GetKeyState("LCtrl", "P"))
     restoreR := GetKeyState("RCtrl", "P")
-    DiagLog("ARROW key=" key " restoreL=" restoreL " restoreR=" restoreR)
-    if restoreL
-        g_ctrlRemapped := true
+    if restoreL {
+        ; 置位到当前按住的那个修饰键的「用过」标记，等价于「按了其他键」。
+        ; g_capsHeld 为真说明是 CapsLock 注入的 Ctrl；否则是物理左 Ctrl。
+        if g_capsHeld
+            g_capsRepeated := true
+        else
+            g_ctrlRepeated := true
+    }
 
     SendLevel 1
     ; 1) 抬起逻辑上的 Ctrl
@@ -446,11 +450,6 @@ SendArrowKey(key) {
 ; g_mouseUsed : 按住期间是否点过鼠标（CapsLock 与左 Ctrl 共用）
 ; ============================================================
 
-; 临时诊断日志（排查完会删掉）
-DiagLog(s) {
-    try FileAppend(A_TickCount " " s "`n", "C:\Users\Administrator\AppData\Local\Temp\ahk_diag.log")
-}
-
 ; 兜底：按住修饰键期间用定时器轮询鼠标按钮状态。
 ; 不依赖鼠标热键、不依赖钩子，只要按键真的按下过就一定能捕捉到。
 WatchMouse() {
@@ -473,29 +472,22 @@ WatchMouse() {
     g_capsHeld  := true
     g_capsRepeated := false
     g_mouseUsed := false
-    DiagLog("CAPS_DOWN")
     SetTimer(WatchMouse, 15)
     SendLevel 1
     Send "{Blind}{LCtrl down}"
 }
 
 *CapsLock Up::{
-    global g_capsHeld, g_mouseUsed, g_capsRepeated, g_injCtrlUpTick, g_ctrlRemapped
+    global g_capsHeld, g_mouseUsed, g_capsRepeated, g_injCtrlUpTick
     g_capsHeld := false
     SetTimer(WatchMouse, 0)
     g_injCtrlUpTick := A_TickCount       ; 记下这次注入 Ctrl up 的时间，供 LCtrl Up 忽略
     SendLevel 1
     Send "{Blind}{LCtrl up}"
-    ; 注入的 Ctrl down 会把 A_PriorKey 变成 LControl，所以这两个值都算「没按过别的键」
-    DiagLog("CAPS_UP prior=[" A_PriorKey "] mouseUsed=" g_mouseUsed " repeated=" g_capsRepeated)
-    ; 本次按住期间按过 Ctrl+J / Ctrl+K：重映射结束时把 Ctrl 重新按下了，
-    ; A_PriorKey 被改写成 LControl，不能当成轻敲再补发 Esc
-    if (g_ctrlRemapped) {
-        g_ctrlRemapped := false
-        return
-    }
-    if (!g_capsRepeated && (A_PriorKey = "CapsLock" || A_PriorKey = "LControl") && !g_mouseUsed) {
-        DiagLog("  -> SEND_ESC (from CapsLock)")
+    ; 只有「没用过、也没点过鼠标、A_PriorKey 仍是修饰键」的纯轻敲才补发 Esc。
+    ; 按过其他键或触发过 Ctrl+J/K 时 repeated 已为 true，不会误发。
+    if (!g_capsRepeated && !g_mouseUsed
+        && (A_PriorKey = "CapsLock" || A_PriorKey = "LControl")) {
         Send "{Esc}"
     }
 }
@@ -529,7 +521,6 @@ SetCapsLockState("AlwaysOff")
 ; 在函数内部判断，最可靠。
 ~*LButton::{
     global g_capsHeld, g_mouseUsed
-    DiagLog("LBUTTON capsHeld=" g_capsHeld " lctrlP=" GetKeyState("LCtrl", "P"))
     if (g_capsHeld || GetKeyState("LCtrl", "P"))
         g_mouseUsed := true
 }
@@ -545,30 +536,33 @@ SetCapsLockState("AlwaysOff")
 }
 
 $~*LCtrl::{
-    global g_mouseUsed, g_capsHeld
-    DiagLog("LCTRL_DOWN capsHeld=" g_capsHeld)
-    ; CapsLock 按住期间的那次 Ctrl down 是注入的，不要清掉鼠标标记
+    global g_mouseUsed, g_capsHeld, g_ctrlHeld, g_ctrlRepeated
     if (g_capsHeld)
         return
+    ; 按住 Ctrl 时键盘会自动重复触发这个热键（每 30ms 一次）。
+    ; 重复触发时：绝不能清掉 g_mouseUsed（否则「按住 Ctrl + 点击」的标记被抹掉），
+    ; 并置 g_ctrlRepeated = true —— 出现过重复就说明这是「按住」，不可能是轻敲，
+    ; 所以 Ctrl+C / Ctrl+V / Ctrl+Tab 等组合键只要按得稍久，松开时就不会误发 Esc。
+    if (g_ctrlHeld) {
+        g_ctrlRepeated := true
+        return
+    }
+    g_ctrlHeld := true
+    g_ctrlRepeated := false
     g_mouseUsed := false
     SetTimer(WatchMouse, 15)
 }
 
 $~*LCtrl Up::{
-    global g_mouseUsed, g_injCtrlUpTick, g_ctrlRemapped
-    DiagLog("LCTRL_UP prior=[" A_PriorKey "] mouseUsed=" g_mouseUsed " dt=" (A_TickCount - g_injCtrlUpTick))
+    global g_mouseUsed, g_injCtrlUpTick, g_ctrlHeld, g_ctrlRepeated
+    g_ctrlHeld := false
     ; CapsLock 松开时注入的那次 Ctrl up 会异步触发到这里，靠时间戳忽略掉
     if (A_TickCount - g_injCtrlUpTick < 250)
         return
     SetTimer(WatchMouse, 0)
-    ; 见 SendArrowKey：Ctrl+J / Ctrl+K 结束时会把 Ctrl 重新按下，
-    ; A_PriorKey 因此变成 LControl，这里不能当成轻敲
-    if (g_ctrlRemapped) {
-        g_ctrlRemapped := false
-        return
-    }
-    if (A_PriorKey = "LControl" && !g_mouseUsed) {
-        DiagLog("  -> SEND_ESC (from LCtrl)")
+    ; 只有「没用过、也没点过鼠标、A_PriorKey 仍是修饰键」的纯轻敲才补发 Esc。
+    ; 按过其他键或触发过 Ctrl+J/K 时 repeated 已为 true，不会误发。
+    if (!g_ctrlRepeated && !g_mouseUsed && A_PriorKey = "LControl") {
         Send "{LCtrl up}{Esc}"
     }
 }
@@ -1749,6 +1743,12 @@ SmartClose() {
             Send("^w")
             return
         }
+    }
+
+    ; WorkBuddy：Ctrl+W 关不掉它的窗口，直接结束进程（Electron 多进程，按名字杀全部）
+    if (processName = "WorkBuddyAI.exe") {
+        ProcessClose("WorkBuddyAI.exe")
+        return
     }
 
     if (winClass = "CabinetWClass") {
