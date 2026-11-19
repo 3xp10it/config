@@ -406,3 +406,18 @@ augroup pencil
   autocmd FileType markdown,mkd call pencil#init()
   "autocmd FileType text         call pencil#init({'wrap': 'hard'})
 augroup END
+
+"从cmdline/搜索模式回到普通模式时也切回英文,但不碰fcitx插件用来记录插入模式输入法状态的b:inputtoggle
+"这样下一次按i时,仍然按进入cmdline之前的b:inputtoggle决定恢复哪种输入法,cmdline搜索不会污染原有切换逻辑
+function! FcitxCmdline2en()
+  if !executable('fcitx-remote') || exists('$SSH_TTY')
+    return
+  endif
+  if system('fcitx-remote') == 2
+    call system('fcitx-remote -c')
+  endif
+endfunction
+augroup FcitxCmdline
+  autocmd!
+  autocmd CmdlineLeave * call FcitxCmdline2en()
+augroup END
