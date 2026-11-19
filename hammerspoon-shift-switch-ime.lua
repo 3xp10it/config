@@ -199,8 +199,12 @@ end
 --   1. 按下任何真正的键（字母 / 数字 / 符号 / 方向键）→ solo = false
 --   2. 按着 Shift 又按了别的修饰键（Cmd / Opt / Ctrl）→ solo = false
 --   3. Shift + 鼠标点击 / 滚轮 → solo = false（这类操作不产生 keyDown，必须单独拦）
+--
+-- ★ 坑：keycode 0 在 keyDown / keyUp 里是字母 A（kVK_ANSI_A = 0），
+--   不是「Synergy 的修饰键」。所以 kc==0 的兼容**只能**写在 flagsChanged 分支里，
+--   绝不能进这张键盘事件判定表——否则 Shift+A（打大写 A）会被当成
+--   「按着 Shift 又按了个特殊键」，solo 清不掉，松开就切了输入法。
 local SHIFT_KC = { [56] = true, [60] = true }   -- 左 / 右 Shift
-local TRIGGER_RELEASE_KC = { [0] = true, [56] = true, [60] = true }
 
 local pressed = false
 local solo    = false          -- 按下期间有没有夹带其它键 / 鼠标动作
@@ -283,13 +287,16 @@ local function handle(e)
   end
 
   if t == T.keyUp then
-    if pressed and TRIGGER_RELEASE_KC[kc] then release() end
+    -- kc=0 只有在「Shift 已经不在了」的情况下才是 Synergy 的修饰键松开；
+    -- 否则它是字母 A 的 keyUp（A 的 keycode 就是 0），绝不能当成松开。
+    if pressed and (SHIFT_KC[kc] or (kc == 0 and not f.shift)) then release() end
     return false
   end
 
   if t == T.keyDown then
-    -- 按下任何「真正的」按键，说明不是单按
-    if not TRIGGER_RELEASE_KC[kc] and pressed then
+    -- 按下任何「真正的」按键，说明不是单按。
+    -- 注意这里用 SHIFT_KC 而不是任何含 0 的表：kc=0 是字母 A。
+    if not SHIFT_KC[kc] and pressed then
       solo = false
     end
     return false
