@@ -294,6 +294,14 @@ local function handle(e)
   end
 
   if t == T.keyDown then
+    -- Magic Keyboard 没有独立 forward delete：把 Deskflow 转发的
+    -- Shift+Backspace（kc=51 带 shift）改发 forward delete（kc=117）。
+    -- 必须在这里 return true 吃掉原事件，否则 MacVim 会先向左删一格。
+    if kc == 51 and f.shift then
+      hs.eventtap.event.newKeyEvent(117, true):post()
+      hs.eventtap.event.newKeyEvent(117, false):post()
+      return true
+    end
     -- 按下任何「真正的」按键，说明不是单按。
     -- 注意这里用 SHIFT_KC 而不是任何含 0 的表：kc=0 是字母 A。
     if not SHIFT_KC[kc] and pressed then
