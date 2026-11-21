@@ -190,6 +190,13 @@ Persistent()
 ; ----- 拦截 Shift+空格，防止误触全角/半角切换 -----
 +Space::Return
 
+; ----- Magic Keyboard 没有独立的 forward delete 键 -----
+; Magic Keyboard 上标着 "delete" 的键在 Windows 就是 Backspace（向左删）。
+; Shift + 该键 → 拦掉原始组合键，改发 Delete（向右删 / forward delete），
+; 由 Deskflow 转发到 Mac。不带 ~ 前缀：必须消费掉 Shift+Backspace，
+; 否则 Mac 上会既向左删又向右删，且会重新触发 auto-pairs 的输入法问题。
++Backspace::SendInput("{Delete}")
+
 ; ----- 应用程序快速切换热键 -----
 #g::switchToChrome
 #^g::switchToUseChrome
