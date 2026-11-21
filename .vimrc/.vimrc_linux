@@ -125,6 +125,14 @@ noremap! <C-s> <C-\><C-N>:wq<CR>
 " 覆盖命令行模式/搜索模式 (新增，使用 <C-C>)
 cnoremap <C-s> <C-C>:wq<CR>
 
+"快速不保存退出(丢弃本buffer改动,不覆盖AI等外部对文件的修改)
+" ctrl+t 覆盖vim默认:pop(tag栈回退,本机无tags文件用不上,E73即空栈报错)
+" 覆盖普通、可视、选择、操作符等待模式
+noremap  <C-t> <C-\><C-N>:q!<CR>
+" 覆盖插入和命令行模式
+noremap! <C-t> <C-\><C-N>:q!<CR>
+" 覆盖命令行模式/搜索模式 (使用 <C-C> 先中断当前命令行)
+cnoremap <C-t> <C-C>:q!<CR>
 
 
 noremap ' `
