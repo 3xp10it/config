@@ -419,6 +419,12 @@ augroup END
 "从cmdline/搜索模式回到普通模式时也切回英文,但不碰fcitx插件用来记录插入模式输入法状态的b:inputtoggle
 "这样下一次按i时,仍然按进入cmdline之前的b:inputtoggle决定恢复哪种输入法,cmdline搜索不会污染原有切换逻辑
 function! FcitxCmdline2en()
+  " auto-pairs 的 <BS> 映射 <C-R>=AutoPairsDelete()<CR> 会短暂进入
+  " 表达式寄存器(cmdline type '=')并在退出时触发 CmdlineLeave。
+  " 这种情况不是用户主动搜索/命令，跳过，避免按退格误切输入法。
+  if getcmdtype() ==# '='
+    return
+  endif
   if !executable('fcitx-remote') || exists('$SSH_TTY')
     return
   endif
