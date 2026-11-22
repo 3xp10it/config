@@ -2209,7 +2209,7 @@ EventMessageHandler(wParam, lParam, msg, hwnd) {
         } else if (procName=="hexin.exe" && class=="#32770") {
             try {
                 WinGetPos(&winX, &winY, &winW, &winH, "ahk_id " hwndTarget)
-                write("hexin.exe #32770 window:" . winX . "," . winY . "," . winW . "," . winH)
+                #write("hexin.exe #32770 window:" . winX . "," . winY . "," . winW . "," . winH)
                 if (winW==480 && winH==360) {
                     WinClose("ahk_id " hwndTarget)
                 } else if (winW==280 && winH==180) {
