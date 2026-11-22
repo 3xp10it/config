@@ -1,6 +1,14 @@
 #Requires AutoHotkey v2.0
 #SingleInstance Force
 DllCall("SetProcessDPIAware")
+; BT guard globals - defined at top so functions can read them
+BT_WM_WTSSESSION_CHANGE := 0x02B1
+BT_WTS_SESSION_LOCK := 0x07
+BT_WTS_SESSION_UNLOCK := 0x08
+BT_WTS_WND := 0
+BT_REG_PATH := "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\RadioManagement\SystemRadioState"
+BT_FIX_PS_B64 := "QQBkAGQALQBUAHkAcABlACAALQBBAHMAcwBlAG0AYgBsAHkATgBhAG0AZQAgAFMAeQBzAHQAZQBtAC4AUgB1AG4AdABpAG0AZQAuAFcAaQBuAGQAbwB3AHMAUgB1AG4AdABpAG0AZQAKAFsAVwBpAG4AZABvAHcAcwAuAEQAZQB2AGkAYwBlAHMALgBSAGEAZABpAG8AcwAuAFIAYQBkAGkAbwAsAFcAaQBuAGQAbwB3AHMALgBEAGUAdgBpAGMAZQBzAC4AUgBhAGQAaQBvAHMALABDAG8AbgB0AGUAbgB0AFQAeQBwAGUAPQBXAGkAbgBkAG8AdwBzAFIAdQBuAHQAaQBtAGUAXQAgAHwAIABPAHUAdAAtAE4AdQBsAGwACgBbAFcAaQBuAGQAbwB3AHMALgBEAGUAdgBpAGMAZQBzAC4AUgBhAGQAaQBvAHMALgBSAGEAZABpAG8AUwB0AGEAdABlACwAVwBpAG4AZABvAHcAcwAuAEQAZQB2AGkAYwBlAHMALgBSAGEAZABpAG8AcwAsAEMAbwBuAHQAZQBuAHQAVAB5AHAAZQA9AFcAaQBuAGQAbwB3AHMAUgB1AG4AdABpAG0AZQBdACAAfAAgAE8AdQB0AC0ATgB1AGwAbAAKAGYAdQBuAGMAdABpAG8AbgAgAEkAbgB2AG8AawBlAC0AQQBzAFQAYQBzAGsAKAAkAG8AcAAsAFsAdAB5AHAAZQBdACQAcgB0ACkAewAgACQAbQA9AFsAUwB5AHMAdABlAG0ALgBXAGkAbgBkAG8AdwBzAFIAdQBuAHQAaQBtAGUAUwB5AHMAdABlAG0ARQB4AHQAZQBuAHMAaQBvAG4AcwBdAC4ARwBlAHQATQBlAHQAaABvAGQAcwAoACkAIAB8ACAAPwB7ACAAJABfAC4ATgBhAG0AZQAgAC0AZQBxACAAJwBBAHMAVABhAHMAawAnACAALQBhAG4AZAAgACQAXwAuAEkAcwBHAGUAbgBlAHIAaQBjAE0AZQB0AGgAbwBkAEQAZQBmAGkAbgBpAHQAaQBvAG4AIAAtAGEAbgBkACAAJABfAC4ARwBlAHQAUABhAHIAYQBtAGUAdABlAHIAcwAoACkALgBDAG8AdQBuAHQAIAAtAGUAcQAgADEAIAB9ACAAfAAgAHMAZQBsAGUAYwB0ACAALQBmACAAMQA7ACAAJABnAD0AJABtAC4ATQBhAGsAZQBHAGUAbgBlAHIAaQBjAE0AZQB0AGgAbwBkACgAJAByAHQAKQA7ACAAcgBlAHQAdQByAG4AIAAkAGcALgBJAG4AdgBvAGsAZQAoACQAbgB1AGwAbAAsAEAAKAAkAG8AcAApACkALgBHAGUAdABBAHcAYQBpAHQAZQByACgAKQAuAEcAZQB0AFIAZQBzAHUAbAB0ACgAKQAgAH0ACgAkAGwAdAA9AFsAUwB5AHMAdABlAG0ALgBDAG8AbABsAGUAYwB0AGkAbwBuAHMALgBHAGUAbgBlAHIAaQBjAC4ASQBSAGUAYQBkAE8AbgBsAHkATABpAHMAdABgADEAXQAuAE0AYQBrAGUARwBlAG4AZQByAGkAYwBUAHkAcABlACgAWwBXAGkAbgBkAG8AdwBzAC4ARABlAHYAaQBjAGUAcwAuAFIAYQBkAGkAbwBzAC4AUgBhAGQAaQBvAF0AKQAKACQAcgBzAD0ASQBuAHYAbwBrAGUALQBBAHMAVABhAHMAawAgACgAWwBXAGkAbgBkAG8AdwBzAC4ARABlAHYAaQBjAGUAcwAuAFIAYQBkAGkAbwBzAC4AUgBhAGQAaQBvAF0AOgA6AEcAZQB0AFIAYQBkAGkAbwBzAEEAcwB5AG4AYwAoACkAKQAgACQAbAB0AAoAZgBvAHIAZQBhAGMAaAAoACQAcgAgAGkAbgAgACQAcgBzACkAewAgAGkAZgAoACQAcgAuAEsAaQBuAGQALgBUAG8AUwB0AHIAaQBuAGcAKAApACAALQBlAHEAIAAnAEIAbAB1AGUAdABvAG8AdABoACcAIAAtAGEAbgBkACAAJAByAC4AUwB0AGEAdABlAC4AVABvAFMAdAByAGkAbgBnACgAKQAgAC0AbgBlACAAJwBPAG4AJwApAHsAIAAkAG8AcAA9ACQAcgAuAFMAZQB0AFMAdABhAHQAZQBBAHMAeQBuAGMAKABbAFcAaQBuAGQAbwB3AHMALgBEAGUAdgBpAGMAZQBzAC4AUgBhAGQAaQBvAHMALgBSAGEAZABpAG8AUwB0AGEAdABlAF0AOgA6AE8AbgApADsAIAB0AHIAeQB7ACAASQBuAHYAbwBrAGUALQBBAHMAVABhAHMAawAgACQAbwBwACAAKABbAFcAaQBuAGQAbwB3AHMALgBEAGUAdgBpAGMAZQBzAC4AUgBhAGQAaQBvAHMALgBSAGEAZABpAG8AUwB0AGEAdABlAF0AKQAgAHwAIABPAHUAdAAtAE4AdQBsAGwAIAB9AGMAYQB0AGMAaAB7AH0AIAB9ACAAfQAKAA=="
+
 ; ============================================================
 ; 全局变量声明（函数外部无需加 global）
 ; ============================================================
@@ -178,6 +186,10 @@ CreateOverlays()
 
 ; 启动/重载标记，便于确认当前运行的是哪一版代码
 write("=== WindowManager 启动/重载 ===")
+
+; ---------- 蓝牙守护：锁屏防误触飞行模式（WTS 事件驱动）----------
+; 锁屏时检测到飞行模式被打开，自动把蓝牙开回来；解锁即停，零开销
+BTSessionInit()
 
 ; 退出处理
 OnExit(ExitFunc)
@@ -567,6 +579,16 @@ $~*LCtrl Up::{
     if (A_TickCount - g_injCtrlUpTick < 250)
         return
     SetTimer(WatchMouse, 0)
+    ; ===== TEMP DIAG 2026-11-21 (只读日志) =====
+    try FileAppend(
+        A_Hour ":" A_Min ":" A_Sec "." SubStr(A_MSec, 1, 3)
+        . " ctrlUp prior=" A_PriorKey
+        . " repeated=" g_ctrlRepeated
+        . " mouseUsed=" g_mouseUsed
+        . " willEsc=" (!g_ctrlRepeated && !g_mouseUsed && A_PriorKey = "LControl")
+        . "`n",
+        "C:\Users\Administrator\ctrl_tap_diag.log")
+    ; ===== END TEMP DIAG =====
     ; 只有「没用过、也没点过鼠标、A_PriorKey 仍是修饰键」的纯轻敲才补发 Esc。
     ; 按过其他键或触发过 Ctrl+J/K 时 repeated 已为 true，不会误发。
     if (!g_ctrlRepeated && !g_mouseUsed && A_PriorKey = "LControl") {
@@ -2219,6 +2241,84 @@ EventMessageHandler(wParam, lParam, msg, hwnd) {
         listview.Insert(1, , eventName, Format("0x{:X}", hwndTarget), class, title)
 }
 
+
+
+; ============================================================
+; 蓝牙守护：锁屏防误触飞行模式（WTS 会话事件驱动，解锁零开销）
+;
+; 原理：
+;   WTSRegisterSessionNotification 监听会话锁定/解锁事件。
+;   锁屏 -> 启动 2 秒定时器，读 SystemRadioState；一旦飞行模式被打开
+;          (值为 1)，调用内嵌的 PowerShell(WinRT) 把蓝牙开回来。
+;   解锁 -> 停掉定时器，恢复零开销。
+;
+; 开蓝牙动作走 WinRT SetStateAsync(On) —— 实测锁屏会话下有效。
+; PowerShell 源码以 UTF-16LE Base64 内嵌，运行时解码执行，无独立脚本文件。
+; ============================================================
+
+
+; 开蓝牙的 PowerShell 源码（UTF-16LE Base64）
+
+BTSessionInit() {
+    global BT_WTS_WND, BT_WM_WTSSESSION_CHANGE
+    ; 用脚本主窗口接收 WTS 会话通知（NOTIFY_FOR_THIS_SESSION = 0）
+    BT_WTS_WND := A_ScriptHwnd
+    ok := DllCall("wtsapi32\WTSRegisterSessionNotification", "ptr", BT_WTS_WND, "uint", 0, "int")
+    if (!ok) {
+        write("BTGuard: WTSRegisterSessionNotification 失败")
+        return
+    }
+    OnMessage(BT_WM_WTSSESSION_CHANGE, BTWtsMsg)
+    write("BTGuard: WTS 会话通知已注册，等待锁屏事件")
+}
+
+BTSessionCleanup() {
+    global BT_WTS_WND
+    if (BT_WTS_WND)
+        DllCall("wtsapi32\WTSUnRegisterSessionNotification", "ptr", BT_WTS_WND)
+    SetTimer(BTGuardTick, 0)
+}
+
+BTWtsMsg(wParam, lParam, msg, hwnd) {
+    global BT_WTS_SESSION_LOCK, BT_WTS_SESSION_UNLOCK
+    if (wParam = BT_WTS_SESSION_LOCK) {
+        ; 锁屏：启动检查定时器，并立即查一次
+        SetTimer(BTGuardTick, 2000)
+        BTGuardTick()
+        write("BTGuard: 检测到锁屏，启动蓝牙守护")
+    } else if (wParam = BT_WTS_SESSION_UNLOCK) {
+        ; 解锁：停掉定时器，恢复零开销
+        SetTimer(BTGuardTick, 0)
+        write("BTGuard: 检测到解锁，守护停止")
+    }
+}
+
+BTGuardTick() {
+    global BT_REG_PATH, BT_FIX_PS_B64
+    ; 读飞行模式状态：1 = 飞行模式开（AHK v2 的 RegRead 直接返回值）
+    state := 0
+    try {
+        state := RegRead(BT_REG_PATH)
+    } catch {
+        write("BTGuard: RegRead 失败")
+        return
+    }
+    if (state != 1)
+        return
+    ; 飞行模式被打开 -> 用 WinRT 把蓝牙开回来（隐藏窗口执行）
+    psCmd := "powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -EncodedCommand " BT_FIX_PS_B64
+    try {
+        Run(psCmd, , "Hide")
+        write("BTGuard: 飞行模式开，已执行蓝牙恢复命令")
+    } catch {
+        write("BTGuard: Run 失败")
+    }
+    ; 停掉定时器：蓝牙已开回来，直到下次锁屏再启用
+    SetTimer(BTGuardTick, 0)
+}
+
+
+
 GuiClose(*) {
     ExitApp
 }
@@ -2229,4 +2329,5 @@ ExitFunc(*) {
         UnhookWinEvent(hookShow)
     if (WinEventProcCallback)
         CallbackFree(WinEventProcCallback)
+    BTSessionCleanup()
 }
