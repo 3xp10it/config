@@ -1,3 +1,22 @@
+" ============================================================
+" 【本地插件改动提醒 — 重装/升级插件后务必检查】2026-11-24
+" 涉及两个插件，重装/升级后都要重新打补丁（本文件已无输入法相关代码）：
+"
+" 1) EasyMotion.vim 已还原为原版（2026-11-24），不再改插件本体。
+"    切英文改由本文件 s:MakeEasymotionModule() 包装 module 实现：
+"    重写 on_char_pre，检测 <Over>(easymotion) 时先 -s US 再调原函数。
+"    症状: / 搜索选字后第一次回车出现 a/b/c 高亮但输入法仍是中文 = 包装丢了。
+"    备份: EasyMotion.vim.bak-20261124（原始）、.bak-20261124b/.d（中间版本）。
+"
+" 2) ~/.vim/bundle/fcitx-vim-osx/plugin/fcitx-osx.vim
+"    a) Fcitx2en/Fcitx2zh 的 -c/-o 改为 -s 按 ID 幂等指定（US / SCIM.WBX）。
+"    b) 原在本文件的 FcitxCmdline2en() + augroup FcitxCmdline（CmdlineLeave
+"       收尾切英文）已整体迁入本插件，本文件不再保留副本。
+"    备份: fcitx-osx.vim.bak-20261124b（-s 前）、.bak-20261124d（迁入前）。
+"
+" 说明: 统一改用 fcitx-remote -s（TIS API 幂等按 ID 选中），不再依赖
+"       ~/.set_im_us.py；旧脚本保留作后备但已无引用。
+" ============================================================
 "下面这段是vundle要求的,加到vimrc的开头
 set nocompatible
 
@@ -66,7 +85,21 @@ Plugin 'w0rp/ale'
 "这个插件用来高亮光标所在区域
 Plugin 'junegunn/limelight.vim'
 "由于squirrel不好用了,后来换成下面这个实现自动切换中英文输入法
-Plugin 'CodeFalling/fcitx-vim-osx'
+" ============================================================
+" 【fcitx-vim-osx 注意事项 — 2026-11-24】
+" 1. 依赖 /usr/local/bin/fcitx-remote 必须是 SPECIFIC 版（编译参数 macos-wubi us，
+"    按 ID 幂等选中），不能用 GENERAL 版：GENERAL 版的 -c/-o/-s 全是 Ctrl+Shift+Z
+"    toggle，轮转历史一变就切错。
+" 2. 判别二进制版本：fcitx-remote -s com.fake.xxx 后跟 -n 看当前源——
+"    不动 = SPECIFIC(TIS) 正常；来回切 = 变回 GENERAL 热键版，需重编译。
+" 3. 插件本体已本地改过：Fcitx2en/Fcitx2zh 用 -s 指定 ID，且原 vimrc 的
+"    CmdlineLeave 逻辑（FcitxCmdline2en + augroup）也已迁入本插件。
+"    :BundleInstall / 升级会覆盖，届时从 fcitx-osx.vim.bak-20261124d 对照重打补丁。
+" 4. 输入法 ID 写死在插件里：US = com.apple.keylayout.US，
+"    中文 = com.apple.inputmethod.SCIM.WBX（系统自带五笔）。换输入法需同步改这两处。
+" ============================================================
+" 用自己 fork 的版本（-s 幂等切中英文 + CmdlineLeave 自动回英文）
+Plugin '3xp10it/fcitx-vim-osx'
 "安装添加替换成对符号插件vim-surround
 Plugin 'tpope/vim-surround'
 
@@ -253,10 +286,25 @@ noremap <silent><expr> zg? incsearch#go(<SID>config_fuzzyall({'is_stay': 1}))
 
 "incsearch-easymotion插件的设置
 """incsearch.vim x fuzzy x vim-easymotion
+" 【本地改动 2026-11-24】用包装 module 的方式，在 easymotion 触发前强制切英文，
+" 从而不必改 incsearch-easymotion 插件本体。手法仿官方 insert_register.vim：
+" 保存原 on_char_pre → 重写 → 检测 <Over>(easymotion) 时先切英文再调原函数。
+let s:EM_on_char_pre_orig = {}
+function! s:MakeEasymotionModule(...) abort
+  let m = call('incsearch#config#easymotion#module', a:000)
+  let s:EM_on_char_pre_orig = m.on_char_pre
+  function! m.on_char_pre(cmdline) abort dict
+    if a:cmdline.is_input('<Over>(easymotion)')
+      call system('/usr/local/bin/fcitx-remote -s com.apple.keylayout.US')
+    endif
+    return call(s:EM_on_char_pre_orig, [a:cmdline], self)
+  endfunction
+  return m
+endfunction
 function! s:config_easyfuzzymotion(...) abort
     return extend(copy({
                 \   'converters': [incsearch#config#fuzzy#converter()],
-                \   'modules': [incsearch#config#easymotion#module()],
+                \   'modules': [s:MakeEasymotionModule()],
                 \   'keymap': {"\<CR>": '<Over>(easymotion)'},
                 \   'is_expr': 0,
                 \   'is_stay': 1
@@ -287,7 +335,7 @@ nmap <Leader>l <Plug>(easymotion-overwin-line)
 " EasyMotion.
 function! s:incsearch_config(...) abort
     return incsearch#util#deepextend(deepcopy({
-                \   'modules': [incsearch#config#easymotion#module({'overwin': 1})],
+                \   'modules': [s:MakeEasymotionModule({'overwin': 1})],
                 \   'keymap': {
                 \     "\<CR>": '<Over>(easymotion)'
                 \   },
@@ -416,23 +464,3 @@ augroup pencil
   "autocmd FileType text         call pencil#init({'wrap': 'hard'})
 augroup END
 
-"从cmdline/搜索模式回到普通模式时也切回英文,但不碰fcitx插件用来记录插入模式输入法状态的b:inputtoggle
-"这样下一次按i时,仍然按进入cmdline之前的b:inputtoggle决定恢复哪种输入法,cmdline搜索不会污染原有切换逻辑
-function! FcitxCmdline2en()
-  " auto-pairs 的 <BS> 映射 <C-R>=AutoPairsDelete()<CR> 会短暂进入
-  " 表达式寄存器(cmdline type '=')并在退出时触发 CmdlineLeave。
-  " 这种情况不是用户主动搜索/命令，跳过，避免按退格误切输入法。
-  if getcmdtype() ==# '='
-    return
-  endif
-  if !executable('fcitx-remote') || exists('$SSH_TTY')
-    return
-  endif
-  if system('fcitx-remote') == 2
-    call system('fcitx-remote -c')
-  endif
-endfunction
-augroup FcitxCmdline
-  autocmd!
-  autocmd CmdlineLeave * call FcitxCmdline2en()
-augroup END
