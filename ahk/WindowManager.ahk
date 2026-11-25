@@ -647,6 +647,50 @@ MoveWindowVisually(x, y, w, h, winTitle) {
 }
 
 ; ============================================================
+; MuMu 模拟器：识别 / 结束整个进程家族
+; MuMu(Nx) 主窗口进程为 MuMuNxMain.exe，另有 NxService、RemoteBackend、
+; RemoteService、RemoteHealthd、NxDevice、CrashReporter 等。旧版 MuMu/Nemu
+; 用 NemuPlayer.exe / Nemu.exe。按进程名统一匹配 MuMu / Nemu。
+; ============================================================
+IsMuMuProcess(name) {
+    if !name
+        return false
+    lower := StrLower(name)
+    return (InStr(lower, "mumu") || InStr(lower, "nemu"))
+}
+
+KillMuMuProcesses() {
+    ; 1) 先结束用户态进程（主窗口立即消失）
+    userNames := ["MuMuNxMain.exe", "MuMuNxDevice.exe", "MuMuNxService.exe"
+        , "MuMuNxCrashReporter.exe", "MuMuManager.exe"
+        , "NemuPlayer.exe", "Nemu.exe", "NemuService.exe", "NemuWebRender.exe"
+        , "MuMuVMMHeadless.exe"]
+    for name in userNames {
+        try {
+            if ProcessExist(name)
+                ProcessClose(name)
+        } catch {
+            ; 进程可能刚好退出，忽略
+        }
+    }
+
+    ; 2) 后台服务以 SYSTEM 运行、且被 SCM 托管（被杀会自动重启），普通权限碰不了：
+    ;    MuMuRemoteService 是 Auto 服务（派生 RemoteBackend/RemoteHealthd/crashpad），
+    ;    MuMuVMMSVC 是独立的 VBox 服务进程。必须先停服务再结束进程树。
+    cmd := 'net stop MuMuRemoteService >nul 2>&1 & '
+        . 'taskkill /F /T /IM MuMuVMMSVC.exe >nul 2>&1 & '
+        . 'taskkill /F /T /IM MuMuRemoteService.exe >nul 2>&1 & '
+        . 'taskkill /F /T /IM MuMuRemoteBackend.exe >nul 2>&1 & '
+        . 'taskkill /F /T /IM MumuRemoteHealthd.exe >nul 2>&1'
+    if A_IsAdmin {
+        try RunWait(A_ComSpec ' /c ' cmd, , 'Hide')
+    } else {
+        ; 普通权限：弹一次 UAC 提权执行清理（不会等待，避免卡住热键）
+        try Run('*RunAs ' A_ComSpec ' /c ' cmd, , 'Hide')
+    }
+}
+
+; ============================================================
 ; 智能关闭窗口热键
 ; ============================================================
 $^w::SmartClose()
@@ -1614,7 +1658,7 @@ open_moniqi(retryCount := 0) {
 
         ; 等待窗口出现
         if !WinWait(windowTitle,, 30) {
-            MsgBox("等待窗口超时，请检查模拟器是否正常启动")
+            ;MsgBox("等待窗口超时，请检查模拟器是否正常启动")
             return
         }
         WinActivate(windowTitle)
@@ -1633,17 +1677,20 @@ open_moniqi(retryCount := 0) {
             }
         }
 
-        WinSetAlwaysOnTop(true, windowTitle)
-        ;“行情”需要点2次，因为有时候会有弹窗，点第一次相当于关闭弹窗，点第二次才是真的点到了行情
-        CoordMode("Mouse", "Window")
-        ControlClick("x236 y1365", windowTitle)
-        Sleep(1000)
-        CoordMode("Mouse", "Window")
-        ControlClick("x236 y1365", windowTitle)
-        Sleep(1000)
-        ControlClick("x349 y132", windowTitle)
-        WinActivate(windowTitle)
-        WinMove(2656, ok_y, 786, ok_h+1, windowTitle)
+        if WinExist(windowTitle) {
+            WinSetAlwaysOnTop(true, windowTitle)
+            ;“行情”需要点2次，因为有时候会有弹窗，点第一次相当于关闭弹窗，点第二次才是真的点到了行情
+            CoordMode("Mouse", "Window")
+            ControlClick("x236 y1365", windowTitle)
+            Sleep(1000)
+            CoordMode("Mouse", "Window")
+            ControlClick("x236 y1365", windowTitle)
+            Sleep(1000)
+            ControlClick("x349 y132", windowTitle)
+            WinActivate(windowTitle)
+            WinMove(2656, ok_y, 786, ok_h+1, windowTitle)
+        }
+
     }
 }
 
@@ -1777,6 +1824,12 @@ SmartClose() {
     ; WorkBuddy：Ctrl+W 关不掉它的窗口，直接结束进程（Electron 多进程，按名字杀全部）
     if (processName = "WorkBuddyAI.exe") {
         ProcessClose("WorkBuddyAI.exe")
+        return
+    }
+
+    ; MuMu 模拟器：Ctrl+W 直接结束整个 MuMu 进程家族（不再走 WinClose）
+    if IsMuMuProcess(processName) {
+        KillMuMuProcesses()
         return
     }
 
